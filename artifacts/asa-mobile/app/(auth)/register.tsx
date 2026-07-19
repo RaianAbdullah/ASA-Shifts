@@ -18,8 +18,8 @@ import colors from '@/constants/colors';
 const { light, government } = colors;
 
 type FormData = {
-  firstName: string;
-  lastName: string;
+  firstNameAr: string;
+  lastNameAr: string;
   employeeNumber: string;
   phoneNumber: string;
   department: string;
@@ -34,8 +34,8 @@ export default function RegisterScreen() {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [form, setForm] = useState<FormData>({
-    firstName: '',
-    lastName: '',
+    firstNameAr: '',
+    lastNameAr: '',
     employeeNumber: '',
     phoneNumber: '',
     department: '',
@@ -54,8 +54,8 @@ export default function RegisterScreen() {
 
   const validate = (): boolean => {
     const next: FormErrors = {};
-    if (!form.firstName.trim()) next.firstName = 'Required / مطلوب';
-    if (!form.lastName.trim()) next.lastName = 'Required / مطلوب';
+    if (!form.firstNameAr.trim()) next.firstNameAr = 'Required / مطلوب';
+    if (!form.lastNameAr.trim()) next.lastNameAr = 'Required / مطلوب';
     if (!/^\d{10}$/.test(form.employeeNumber)) next.employeeNumber = 'ID number must be exactly 10 digits';
     if (!form.phoneNumber.trim()) next.phoneNumber = 'Required / مطلوب';
     if (form.password.length < 12) next.password = 'Minimum 12 characters / 12 أحرف على الأقل';
@@ -136,10 +136,10 @@ export default function RegisterScreen() {
 
       <View style={styles.row}>
         <View style={{ flex: 1 }}>
-          {renderField('firstName', 'First Name', 'الاسم الأول', { autoCapitalize: 'words' })}
+          {renderField('firstNameAr', 'الاسم الأول', 'First Name (AR)', { autoCapitalize: 'words' })}
         </View>
         <View style={{ flex: 1 }}>
-          {renderField('lastName', 'Last Name', 'اسم العائلة', { autoCapitalize: 'words' })}
+          {renderField('lastNameAr', 'اسم العائلة', 'Last Name (AR)', { autoCapitalize: 'words' })}
         </View>
       </View>
 
