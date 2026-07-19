@@ -1,0 +1,258 @@
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Platform,
+} from 'react-native';
+import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import colors from '@/constants/colors';
+
+const { light, government } = colors;
+const OTP_LENGTH = 6;
+
+export default function VerifyOtpScreen() {
+  const insets = useSafeAreaInsets();
+  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+
+  const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const inputRef = useRef<TextInput>(null);
+
+  const handleVerify = () => {
+    if (otp.length !== OTP_LENGTH) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Incomplete Code', 'Please enter the full 6-digit code.');
+      return;
+    }
+    // TODO: Stage 3 — OTP verification implementation
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      Alert.alert(
+        'Coming Soon',
+        'OTP verification will be implemented in Stage 3.\n\nPOST /api/v1/auth/verify-otp is designed and ready.',
+        [{ text: 'OK' }]
+      );
+    }, 800);
+  };
+
+  const handleResend = () => {
+    if (resendCooldown > 0) return;
+    // TODO: Stage 3 — Resend OTP
+    Alert.alert('Resend', 'OTP resend will be implemented in Stage 3.');
+  };
+
+  // Render OTP digit boxes
+  const digits = otp.split('').concat(Array(OTP_LENGTH - otp.length).fill(''));
+
+  return (
+    <View style={[styles.container, { paddingTop: topPad + 24, paddingBottom: bottomPad + 24 }]}>
+      {/* Icon */}
+      <View style={styles.iconBox}>
+        <Ionicons name="mail-outline" size={36} color={government.gold} />
+      </View>
+
+      <Text style={styles.title}>Check Your Email</Text>
+      <Text style={styles.titleAr}>تحقق من بريدك الإلكتروني</Text>
+      <Text style={styles.description}>
+        We sent a 6-digit verification code to your work email.{'\n'}
+        أرسلنا رمز تحقق مكون من 6 أرقام إلى بريدك الوظيفي.
+      </Text>
+
+      {/* OTP digit display (taps hidden input) */}
+      <TouchableOpacity
+        style={styles.otpContainer}
+        onPress={() => inputRef.current?.focus()}
+        activeOpacity={1}
+      >
+        {digits.map((digit, i) => (
+          <View
+            key={i}
+            style={[
+              styles.digitBox,
+              digit ? styles.digitBoxFilled : null,
+              i === otp.length ? styles.digitBoxActive : null,
+            ]}
+          >
+            <Text style={styles.digitText}>{digit || ''}</Text>
+          </View>
+        ))}
+      </TouchableOpacity>
+
+      {/* Hidden real input */}
+      <TextInput
+        ref={inputRef}
+        style={styles.hiddenInput}
+        value={otp}
+        onChangeText={(t) => {
+          const cleaned = t.replace(/\D/g, '').slice(0, OTP_LENGTH);
+          setOtp(cleaned);
+          if (cleaned.length === OTP_LENGTH) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }
+        }}
+        keyboardType="number-pad"
+        maxLength={OTP_LENGTH}
+        autoFocus
+        testID="input-otp"
+      />
+
+      {/* Verify button */}
+      <TouchableOpacity
+        style={[styles.verifyBtn, (loading || otp.length !== OTP_LENGTH) && styles.verifyBtnDisabled]}
+        onPress={handleVerify}
+        disabled={loading || otp.length !== OTP_LENGTH}
+        activeOpacity={0.82}
+        testID="btn-verify"
+      >
+        <Text style={styles.verifyBtnText}>
+          {loading ? 'Verifying...' : 'Verify Account — تحقق'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Resend */}
+      <View style={styles.resendRow}>
+        <Text style={styles.resendLabel}>Didn't receive the code? </Text>
+        <TouchableOpacity onPress={handleResend} disabled={resendCooldown > 0}>
+          <Text style={[styles.resendBtn, resendCooldown > 0 && styles.resendBtnDisabled]}>
+            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Security note */}
+      <View style={styles.securityNote}>
+        <Ionicons name="time-outline" size={13} color={light.mutedForeground} />
+        <Text style={styles.securityText}>{'  '}Code expires in 5 minutes · الرمز ينتهي خلال 5 دقائق</Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: light.background,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  iconBox: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: government.navy,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 22,
+    fontFamily: 'Inter_700Bold',
+    color: light.text,
+    textAlign: 'center',
+  },
+  titleAr: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: light.mutedForeground,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  description: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: light.mutedForeground,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 36,
+  },
+  otpContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 8,
+  },
+  digitBox: {
+    width: 44,
+    height: 56,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: light.border,
+    backgroundColor: light.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  digitBoxFilled: {
+    borderColor: government.navy,
+    backgroundColor: 'rgba(27,58,107,0.04)',
+  },
+  digitBoxActive: {
+    borderColor: government.gold,
+    borderWidth: 2,
+  },
+  digitText: {
+    fontSize: 22,
+    fontFamily: 'Inter_700Bold',
+    color: light.text,
+  },
+  hiddenInput: {
+    position: 'absolute',
+    opacity: 0,
+    height: 1,
+    width: 1,
+  },
+  verifyBtn: {
+    backgroundColor: government.navy,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 24,
+  },
+  verifyBtnDisabled: {
+    opacity: 0.45,
+  },
+  verifyBtnText: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  resendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  resendLabel: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: light.mutedForeground,
+  },
+  resendBtn: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: government.navyLight,
+  },
+  resendBtnDisabled: {
+    color: light.mutedForeground,
+  },
+  securityNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 32,
+  },
+  securityText: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: light.mutedForeground,
+    textAlign: 'center',
+  },
+});

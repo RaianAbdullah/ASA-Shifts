@@ -47,3 +47,25 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Java / Maven
+backend/target/
+backend/*.jar
+*.class
+
+# Environment secrets — NEVER commit real .env files
+.env
+*.env
+!.env.example
+!backend/.env.example
+
+# Docker
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Application uploads
+uploads/
+backend/tmp/

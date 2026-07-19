@@ -1,0 +1,46 @@
+# Production profile (SPRING_PROFILES_ACTIVE=production)
+# STRICT security settings. Application MUST fail to start if required env vars
+# are missing or insecure defaults are detected.
+
+app:
+  cors:
+    # REQUIRED: No wildcard CORS in production.
+    # Example: https://asa-workforce.example.gov
+    allowed-origins: ${ALLOWED_CORS_ORIGINS}
+
+# Disable API documentation in production — never expose Swagger publicly
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.asa.workforce: INFO
+    # Never log at DEBUG/TRACE in production — sensitive data may appear
+
+# =====================================================================
+# Stage 2+ production configuration — uncomment when adding database
+# =====================================================================
+#
+# spring:
+#   datasource:
+#     url: jdbc:${DATABASE_URL}           # REQUIRED
+#     username: ${DATABASE_USERNAME}      # REQUIRED
+#     password: ${DATABASE_PASSWORD}      # REQUIRED
+#   jpa:
+#     hibernate:
+#       ddl-auto: validate
+#     open-in-view: false
+#   flyway:
+#     enabled: true
+#     validate-on-migrate: true
+#   data:
+#     redis:
+#       host: ${REDIS_HOST}               # REQUIRED
+#       port: ${REDIS_PORT:6379}
+#       password: ${REDIS_PASSWORD}       # REQUIRED
+#       ssl:
+#         enabled: ${REDIS_SSL:true}      # Enable TLS in production
