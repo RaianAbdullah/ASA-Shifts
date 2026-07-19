@@ -32,8 +32,8 @@ export default function WelcomeScreen() {
           resizeMode="contain"
         />
         <Text style={styles.appName}>Agency of Security Affairs</Text>
-        <Text style={styles.subtitleAr}>وكالة الشؤون الأمنية</Text>
-        <Text style={styles.subtitleEn}>Workforce Management System</Text>
+        <Text style={styles.subtitleAr}>وكالة وزارة الداخلية للشون الأمنية</Text>
+        <Text style={styles.subtitleEn}>إدارة العمليات الأمنية</Text>
       </View>
 
       {/* Push buttons to vertical center */}
