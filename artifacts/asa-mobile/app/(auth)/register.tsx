@@ -58,7 +58,7 @@ export default function RegisterScreen() {
     const next: FormErrors = {};
     if (!form.firstName.trim()) next.firstName = 'Required / مطلوب';
     if (!form.lastName.trim()) next.lastName = 'Required / مطلوب';
-    if (!form.employeeNumber.trim()) next.employeeNumber = 'Required / مطلوب';
+    if (!/^\d{10}$/.test(form.employeeNumber)) next.employeeNumber = 'ID number must be exactly 10 digits';
     if (!form.email.trim() || !form.email.includes('@')) next.email = 'Valid work email required';
     if (!form.phoneNumber.trim()) next.phoneNumber = 'Required / مطلوب';
     if (form.password.length < 12) next.password = 'Minimum 12 characters / 12 أحرف على الأقل';
@@ -146,9 +146,10 @@ export default function RegisterScreen() {
         </View>
       </View>
 
-      {renderField('employeeNumber', 'Employee Number', 'رقم الموظف', {
-        placeholder: 'EMP-00123',
-        autoCapitalize: 'characters',
+      {renderField('employeeNumber', 'ID Number', 'رقم الهوية', {
+        placeholder: '10-digit national ID',
+        keyboardType: 'number-pad',
+        autoCapitalize: 'none',
       })}
 
       {renderField('email', 'Work Email', 'البريد الوظيفي', {
