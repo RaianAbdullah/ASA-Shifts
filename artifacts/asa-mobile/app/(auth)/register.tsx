@@ -21,7 +21,6 @@ type FormData = {
   firstName: string;
   lastName: string;
   employeeNumber: string;
-  email: string;
   phoneNumber: string;
   department: string;
   password: string;
@@ -38,7 +37,6 @@ export default function RegisterScreen() {
     firstName: '',
     lastName: '',
     employeeNumber: '',
-    email: '',
     phoneNumber: '',
     department: '',
     password: '',
@@ -59,7 +57,6 @@ export default function RegisterScreen() {
     if (!form.firstName.trim()) next.firstName = 'Required / مطلوب';
     if (!form.lastName.trim()) next.lastName = 'Required / مطلوب';
     if (!/^\d{10}$/.test(form.employeeNumber)) next.employeeNumber = 'ID number must be exactly 10 digits';
-    if (!form.email.trim() || !form.email.includes('@')) next.email = 'Valid work email required';
     if (!form.phoneNumber.trim()) next.phoneNumber = 'Required / مطلوب';
     if (form.password.length < 12) next.password = 'Minimum 12 characters / 12 أحرف على الأقل';
     if (form.password !== form.confirmPassword) next.confirmPassword = 'Passwords do not match';
@@ -152,11 +149,6 @@ export default function RegisterScreen() {
         autoCapitalize: 'none',
       })}
 
-      {renderField('email', 'Work Email', 'البريد الوظيفي', {
-        placeholder: 'name@government.example',
-        keyboardType: 'email-address',
-        autoCapitalize: 'none',
-      })}
 
       {renderField('phoneNumber', 'Phone Number', 'رقم الهاتف', {
         placeholder: '+966 5X XXX XXXX',
