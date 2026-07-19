@@ -80,9 +80,9 @@ const styles = StyleSheet.create({
     paddingTop: 64,
   },
   logo: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
     marginBottom: 24,
     overflow: 'hidden',
   },
