@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   StatusBar,
   Platform,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import colors from '@/constants/colors';
 
 const { government } = colors;
@@ -26,11 +26,13 @@ export default function WelcomeScreen() {
 
       {/* Branding */}
       <View style={styles.brand}>
-        <View style={styles.emblem}>
-          <Ionicons name="shield-checkmark" size={40} color={government.gold} />
-        </View>
+        <Image
+          source={require('../assets/images/asa-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.appName}>Agency of Security Affairs</Text>
-        <Text style={styles.subtitleAr}>جهاز الشؤون الأمنية</Text>
+        <Text style={styles.subtitleAr}>وكالة الشؤون الأمنية</Text>
         <Text style={styles.subtitleEn}>Workforce Management System</Text>
       </View>
 
@@ -74,19 +76,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 64,
   },
-  emblem: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: government.navy,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logo: {
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     marginBottom: 24,
-    shadowColor: government.navy,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 6,
+    overflow: 'hidden',
   },
   appName: {
     fontSize: 26,
