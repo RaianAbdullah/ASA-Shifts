@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -132,6 +133,15 @@ export default function RegisterScreen() {
       contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
       keyboardShouldPersistTaps="handled"
     >
+      {/* Logo */}
+      <View style={styles.logoSection}>
+        <Image
+          source={require('../../assets/images/asa-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+
       <Text style={styles.sectionTitle}>Personal Information / المعلومات الشخصية</Text>
 
       <View style={styles.row}>
@@ -280,6 +290,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
     color: light.text,
+    outlineWidth: 0,
+  },
+  logoSection: {
+    alignItems: 'center',
+    paddingBottom: 8,
+  },
+  logo: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    overflow: 'hidden',
   },
   eyeBtn: {
     padding: 6,

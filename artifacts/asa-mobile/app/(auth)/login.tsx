@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -58,11 +59,13 @@ export default function LoginScreen() {
       contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Logo mark */}
+      {/* Logo */}
       <View style={styles.logoSection}>
-        <View style={styles.logoCircle}>
-          <Ionicons name="shield-checkmark" size={32} color={government.gold} />
-        </View>
+        <Image
+          source={require('../../assets/images/asa-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.heading}>Welcome Back</Text>
         <Text style={styles.headingAr}>أهلاً بعودتك</Text>
       </View>
@@ -188,14 +191,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 36,
   },
-  logoCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: government.navy,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     marginBottom: 16,
+    overflow: 'hidden',
   },
   heading: {
     fontSize: 22,
@@ -246,6 +247,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
     color: light.text,
+    outlineWidth: 0,
   },
   eyeBtn: {
     padding: 6,
