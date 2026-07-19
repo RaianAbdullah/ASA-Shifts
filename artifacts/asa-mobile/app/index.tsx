@@ -31,7 +31,8 @@ export default function WelcomeScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.appName}>Agency of Security Affairs</Text>
+        <Text style={styles.appNameSmall}>Agency of</Text>
+        <Text style={styles.appNameLarge}>Security Affairs</Text>
         <Text style={styles.subtitleAr}>وكالة الشؤون الأمنية</Text>
         <Text style={styles.subtitleEn}>Workforce Management System</Text>
       </View>
@@ -83,8 +84,16 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     overflow: 'hidden',
   },
-  appName: {
-    fontSize: 26,
+  appNameSmall: {
+    fontSize: 15,
+    fontFamily: 'Inter_700Bold',
+    color: '#1A2332',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    marginBottom: 1,
+  },
+  appNameLarge: {
+    fontSize: 28,
     fontFamily: 'Inter_700Bold',
     color: '#1A2332',
     letterSpacing: 0.2,
@@ -108,7 +117,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryBtn: {
-    backgroundColor: government.navy,
+    backgroundColor: '#4A5568',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
