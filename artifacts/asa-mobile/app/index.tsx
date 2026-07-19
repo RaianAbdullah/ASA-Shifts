@@ -36,7 +36,7 @@ export default function WelcomeScreen() {
         <Text style={styles.subtitleEn}>Workforce Management System</Text>
       </View>
 
-      {/* Spacer */}
+      {/* Push buttons to vertical center */}
       <View style={{ flex: 1 }} />
 
       {/* Actions */}
@@ -59,6 +59,9 @@ export default function WelcomeScreen() {
           <Text style={styles.secondaryBtnTextAr}>موظف جديد — تسجيل</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Equal spacer below buttons, footer pinned at bottom */}
+      <View style={{ flex: 1 }} />
 
       <Text style={styles.footer}>Government Internal System · للاستخدام الداخلي فقط</Text>
     </View>
