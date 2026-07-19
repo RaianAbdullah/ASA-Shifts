@@ -14,13 +14,6 @@ import colors from '@/constants/colors';
 
 const { government } = colors;
 
-const FEATURES: { icon: keyof typeof Ionicons.glyphMap; en: string; ar: string }[] = [
-  { icon: 'calendar-outline', en: 'Weekly Work Schedules', ar: 'الجداول الأسبوعية' },
-  { icon: 'checkmark-circle-outline', en: 'Attendance Check-In', ar: 'تسجيل الحضور' },
-  { icon: 'umbrella-outline', en: 'Vacation Requests', ar: 'طلبات الإجازة' },
-  { icon: 'shield-checkmark-outline', en: 'Secure & Audited', ar: 'آمن ومدقق' },
-];
-
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
 
@@ -29,32 +22,20 @@ export default function WelcomeScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: topPad, paddingBottom: bottomPad + 16 }]}>
-      <StatusBar barStyle="light-content" backgroundColor={government.navy} />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FB" />
 
       {/* Branding */}
       <View style={styles.brand}>
         <View style={styles.emblem}>
           <Ionicons name="shield-checkmark" size={40} color={government.gold} />
         </View>
-        <Text style={styles.appName}>ASA Workforce</Text>
-        <Text style={styles.subtitleAr}>نظام إدارة حضور القوى العاملة</Text>
-        <Text style={styles.subtitleEn}>Secure Workforce Management System</Text>
+        <Text style={styles.appName}>Agency of Security Affairs</Text>
+        <Text style={styles.subtitleAr}>جهاز الشؤون الأمنية</Text>
+        <Text style={styles.subtitleEn}>Workforce Management System</Text>
       </View>
 
-      {/* Feature highlights */}
-      <View style={styles.features}>
-        {FEATURES.map((f) => (
-          <View key={f.en} style={styles.featureRow}>
-            <View style={styles.featureIconBox}>
-              <Ionicons name={f.icon} size={22} color={government.gold} />
-            </View>
-            <View style={styles.featureLabels}>
-              <Text style={styles.featureEn}>{f.en}</Text>
-              <Text style={styles.featureAr}>{f.ar}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
+      {/* Spacer */}
+      <View style={{ flex: 1 }} />
 
       {/* Actions */}
       <View style={styles.actions}>
@@ -85,87 +66,54 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: government.navy,
-    paddingHorizontal: 24,
+    backgroundColor: '#F8F9FB',
+    paddingHorizontal: 28,
     justifyContent: 'space-between',
   },
   brand: {
     alignItems: 'center',
-    paddingTop: 32,
+    paddingTop: 64,
   },
   emblem: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: 'rgba(200, 168, 75, 0.15)',
-    borderWidth: 2,
-    borderColor: 'rgba(200, 168, 75, 0.4)',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: government.navy,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    shadowColor: government.navy,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 6,
   },
   appName: {
-    fontSize: 28,
+    fontSize: 26,
     fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    color: '#1A2332',
+    letterSpacing: 0.2,
+    marginBottom: 10,
+    textAlign: 'center',
   },
   subtitleAr: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'Inter_400Regular',
-    color: government.subtextOnNavy,
+    color: '#5B6B7E',
     marginBottom: 4,
     textAlign: 'center',
   },
   subtitleEn: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: government.subtextOnNavy,
+    color: '#8A9BB0',
     textAlign: 'center',
-  },
-  features: {
-    gap: 10,
-    flex: 1,
-    justifyContent: 'center',
-    paddingVertical: 24,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: government.surfaceOverlay,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 14,
-  },
-  featureIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: 'rgba(200, 168, 75, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureLabels: {
-    flex: 1,
-  },
-  featureEn: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-  },
-  featureAr: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: government.subtextOnNavy,
-    marginTop: 2,
   },
   actions: {
     gap: 12,
   },
   primaryBtn: {
-    backgroundColor: government.gold,
+    backgroundColor: government.navy,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -173,37 +121,38 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontSize: 15,
     fontFamily: 'Inter_600SemiBold',
-    color: government.navy,
+    color: '#FFFFFF',
   },
   primaryBtnTextAr: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: government.navyDark,
+    color: 'rgba(255,255,255,0.65)',
     marginTop: 2,
   },
   secondaryBtn: {
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: '#D0D9E4',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
   secondaryBtnText: {
     fontSize: 15,
     fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
+    color: '#1A2332',
   },
   secondaryBtnTextAr: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: government.subtextOnNavy,
+    color: '#5B6B7E',
     marginTop: 2,
   },
   footer: {
     textAlign: 'center',
     fontSize: 11,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.35)',
-    paddingTop: 12,
+    color: '#B0BEC5',
+    paddingTop: 16,
   },
 });
