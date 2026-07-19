@@ -71,16 +71,17 @@ export default function LoginScreen() {
       <View style={styles.form}>
         {/* Employee Number */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Employee Number <Text style={styles.labelAr}>رقم الموظف</Text></Text>
+          <Text style={styles.label}>ID Number <Text style={styles.labelAr}>رقم الهوية</Text></Text>
           <View style={[styles.inputRow, errors.employeeNumber ? styles.inputError : null]}>
-            <Ionicons name="person-outline" size={18} color={light.mutedForeground} style={styles.inputIcon} />
+            <Ionicons name="card-outline" size={18} color={light.mutedForeground} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="e.g. EMP-00123"
+              placeholder="10-digit national ID"
               placeholderTextColor={light.mutedForeground}
               value={employeeNumber}
-              onChangeText={(t) => { setEmployeeNumber(t); setErrors((e) => ({ ...e, employeeNumber: undefined })); }}
-              autoCapitalize="characters"
+              onChangeText={(t) => { setEmployeeNumber(t.replace(/\D/g, '').slice(0, 10)); setErrors((e) => ({ ...e, employeeNumber: undefined })); }}
+              keyboardType="number-pad"
+              autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
               testID="input-employee-number"
