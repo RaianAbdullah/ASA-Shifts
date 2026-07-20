@@ -50,7 +50,7 @@ public class Employee {
     @Builder.Default
     private Status status = Status.PENDING_VERIFICATION;
 
-    // OTP — stored in DB for Stage 3; moved to Redis in Stage 4
+    // OTP — stored in DB for Stage 3; moved to Redis in Stage 5
     @Column(name = "otp_code", length = 6)
     private String otpCode;
 
@@ -60,6 +60,24 @@ public class Employee {
     @Column(name = "otp_attempts", nullable = false)
     @Builder.Default
     private Short otpAttempts = 0;
+
+    // Login brute-force protection (V4)
+    @Column(name = "login_attempts", nullable = false)
+    @Builder.Default
+    private Short loginAttempts = 0;
+
+    @Column(name = "login_locked_until")
+    private OffsetDateTime loginLockedUntil;
+
+    // Admin review (V4)
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "reviewed_by")
+    private java.util.UUID reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private OffsetDateTime reviewedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

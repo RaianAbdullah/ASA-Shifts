@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  Platform,
-  Image,
+  View, Text, StyleSheet, TextInput,
+  TouchableOpacity, Alert, Platform, Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,23 +9,25 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import colors from '@/constants/colors';
+import { authApi, ApiError } from '@/services/api';
+import { saveSession } from '@/services/auth';
 
 const { light, government } = colors;
 
 export default function LoginScreen() {
-  const insets = useSafeAreaInsets();
+  const insets    = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [employeeNumber, setEmployeeNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ employeeNumber?: string; password?: string }>({});
+  const [password, setPassword]             = useState('');
+  const [showPassword, setShowPassword]     = useState(false);
+  const [loading, setLoading]               = useState(false);
+  const [errors, setErrors]                 = useState<{ employeeNumber?: string; password?: string }>({});
 
   const validate = () => {
     const next: typeof errors = {};
-    if (!employeeNumber.trim()) next.employeeNumber = 'Employee number is required';
-    if (!password) next.password = 'Password is required';
+    if (!/^\d{10}$/.test(employeeNumber)) next.employeeNumber = 'Enter your 10-digit national ID';
+    if (!password)                         next.password       = 'Password is required';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -41,16 +37,33 @@ export default function LoginScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
-    // TODO: Stage 4 — JWT login implementation
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await authApi.login({ nationalId: employeeNumber, password });
+      const data = res.data!;
+
+      await saveSession({
+        token:      data.token,
+        role:       data.role as 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE',
+        nameAr:     data.nameAr,
+        employeeId: data.employeeId,
+      });
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      // Admins go to the admin panel; regular employees go to main tabs
+      if (data.role === 'ADMIN') {
+        router.replace('/(admin)');
+      } else {
+        router.replace('/(tabs)');
+      }
+    } catch (err) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const msg = err instanceof ApiError ? err.message : 'Login failed. Please try again.';
+      Alert.alert('Sign In Failed', msg);
+    } finally {
       setLoading(false);
-      Alert.alert(
-        'Coming Soon',
-        'Authentication will be implemented in Stage 4.\n\nThe backend endpoint POST /api/v1/auth/login is designed and ready.',
-        [{ text: 'OK' }]
-      );
-    }, 800);
+    }
   };
 
   return (
@@ -82,7 +95,10 @@ export default function LoginScreen() {
               placeholder="10-digit national ID"
               placeholderTextColor={light.mutedForeground}
               value={employeeNumber}
-              onChangeText={(t) => { setEmployeeNumber(t.replace(/\D/g, '').slice(0, 10)); setErrors((e) => ({ ...e, employeeNumber: undefined })); }}
+              onChangeText={(t) => {
+                setEmployeeNumber(t.replace(/\D/g, '').slice(0, 10));
+                setErrors((e) => ({ ...e, employeeNumber: undefined }));
+              }}
               keyboardType="number-pad"
               autoCapitalize="none"
               autoCorrect={false}
@@ -103,17 +119,16 @@ export default function LoginScreen() {
               placeholder="Enter your password"
               placeholderTextColor={light.mutedForeground}
               value={password}
-              onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: undefined })); }}
+              onChangeText={(t) => {
+                setPassword(t);
+                setErrors((e) => ({ ...e, password: undefined }));
+              }}
               secureTextEntry={!showPassword}
               returnKeyType="done"
               onSubmitEditing={handleLogin}
               testID="input-password"
             />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeBtn}
-              testID="btn-toggle-password"
-            >
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                 size={18}
@@ -127,7 +142,7 @@ export default function LoginScreen() {
         {/* Forgot password */}
         <TouchableOpacity
           style={styles.forgotBtn}
-          onPress={() => Alert.alert('Password Reset', 'Password reset will be available in Stage 4.')}
+          onPress={() => Alert.alert('Password Reset', 'Contact your HR administrator to reset your password.')}
         >
           <Text style={styles.forgotText}>Forgot password? / نسيت كلمة المرور؟</Text>
         </TouchableOpacity>
@@ -141,7 +156,7 @@ export default function LoginScreen() {
           testID="btn-login"
         >
           {loading ? (
-            <Text style={styles.loginBtnText}>Signing in...</Text>
+            <Text style={styles.loginBtnText}>Signing in…</Text>
           ) : (
             <>
               <Text style={styles.loginBtnText}>Sign In</Text>
@@ -171,158 +186,44 @@ export default function LoginScreen() {
       {/* Security note */}
       <View style={styles.securityNote}>
         <Ionicons name="lock-closed" size={11} color={light.mutedForeground} />
-        <Text style={styles.securityNoteText}>  End-to-end encrypted · JWT authentication</Text>
+        <Text style={styles.securityNoteText}>  HS512 JWT · BCrypt · Rate-limited</Text>
       </View>
     </KeyboardAwareScrollViewCompat>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: light.background,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-  },
-  logoSection: {
-    alignItems: 'center',
-    marginBottom: 36,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  heading: {
-    fontSize: 22,
-    fontFamily: 'Inter_700Bold',
-    color: light.text,
-  },
-  headingAr: {
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
-    marginTop: 4,
-  },
-  form: {
-    flex: 1,
-    gap: 18,
-  },
-  fieldGroup: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
-    color: light.text,
-  },
-  labelAr: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: light.card,
-    borderWidth: 1.5,
-    borderColor: light.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    height: 52,
-  },
-  inputError: {
-    borderColor: light.destructive,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    color: light.text,
-    outlineWidth: 0,
-  },
-  eyeBtn: {
-    padding: 6,
-  },
-  errorText: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: light.destructive,
-    marginTop: 2,
-  },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginTop: -4,
-  },
-  forgotText: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: government.navyLight,
-  },
-  loginBtn: {
-    backgroundColor: government.navy,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  loginBtnDisabled: {
-    opacity: 0.6,
-  },
-  loginBtnText: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-  },
-  loginBtnTextAr: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: light.border,
-  },
-  dividerText: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
-  },
-  registerBtn: {
-    borderWidth: 1.5,
-    borderColor: light.border,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  registerBtnText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: light.text,
-  },
-  securityNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 28,
-  },
-  securityNoteText: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
-  },
+  scroll:       { flex: 1, backgroundColor: light.background },
+  content:      { flexGrow: 1, paddingHorizontal: 24, paddingTop: 32 },
+  logoSection:  { alignItems: 'center', marginBottom: 36 },
+  logo:         { width: 80, height: 80, borderRadius: 40, marginBottom: 16, overflow: 'hidden' },
+  heading:      { fontSize: 22, fontFamily: 'Inter_700Bold', color: light.text },
+  headingAr:    { fontSize: 15, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 4 },
+  form:         { flex: 1, gap: 18 },
+  fieldGroup:   { gap: 6 },
+  label:        { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: light.text },
+  labelAr:      { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.mutedForeground },
+  inputRow:     { flexDirection: 'row', alignItems: 'center', backgroundColor: light.card,
+                  borderWidth: 1.5, borderColor: light.border, borderRadius: 10,
+                  paddingHorizontal: 14, height: 52 },
+  inputError:   { borderColor: light.destructive },
+  inputIcon:    { marginRight: 10 },
+  input:        { flex: 1, fontSize: 15, fontFamily: 'Inter_400Regular', color: light.text,
+                  ...Platform.select({ web: { outlineWidth: 0 } as any }) },
+  eyeBtn:       { padding: 6 },
+  errorText:    { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.destructive, marginTop: 2 },
+  forgotBtn:    { alignSelf: 'flex-end', marginTop: -4 },
+  forgotText:   { fontSize: 13, fontFamily: 'Inter_400Regular', color: government.navyLight },
+  loginBtn:     { backgroundColor: government.navy, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
+  loginBtnDisabled: { opacity: 0.6 },
+  loginBtnText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  loginBtnTextAr: { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+  divider:      { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dividerLine:  { flex: 1, height: 1, backgroundColor: light.border },
+  dividerText:  { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground },
+  registerBtn:  { borderWidth: 1.5, borderColor: light.border, borderRadius: 12,
+                  paddingVertical: 16, alignItems: 'center' },
+  registerBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: light.text },
+  securityNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 28 },
+  securityNoteText: { fontSize: 11, fontFamily: 'Inter_400Regular', color: light.mutedForeground },
 });

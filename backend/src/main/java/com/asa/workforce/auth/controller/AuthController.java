@@ -5,6 +5,7 @@ import com.asa.workforce.auth.service.AuthService;
 import com.asa.workforce.common.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/auth")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Authentication", description = "Registration, OTP verification, and status")
+@Tag(name = "Authentication", description = "Registration, OTP verification, login, and status")
 public class AuthController {
 
     private final AuthService authService;
@@ -24,9 +25,10 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "Register a new employee account")
     public ResponseEntity<ApiResponse<RegisterResponse>> register(
-            @Valid @RequestBody RegisterRequest request) {
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpReq) {
 
-        RegisterResponse data = authService.register(request);
+        RegisterResponse data = authService.register(request, httpReq);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(data));
     }
@@ -34,9 +36,20 @@ public class AuthController {
     @PostMapping("/verify-otp")
     @Operation(summary = "Verify the OTP sent after registration")
     public ResponseEntity<ApiResponse<VerifyOtpResponse>> verifyOtp(
-            @Valid @RequestBody VerifyOtpRequest request) {
+            @Valid @RequestBody VerifyOtpRequest request,
+            HttpServletRequest httpReq) {
 
-        VerifyOtpResponse data = authService.verifyOtp(request);
+        VerifyOtpResponse data = authService.verifyOtp(request, httpReq);
+        return ResponseEntity.ok(ApiResponse.ok(data));
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "Authenticate with national ID and password — returns JWT")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpReq) {
+
+        LoginResponse data = authService.login(request, httpReq);
         return ResponseEntity.ok(ApiResponse.ok(data));
     }
 

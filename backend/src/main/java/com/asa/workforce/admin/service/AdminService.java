@@ -1,0 +1,159 @@
+package com.asa.workforce.admin.service;
+
+import com.asa.workforce.admin.dto.AdminActionRequest;
+import com.asa.workforce.admin.dto.PendingEmployeeDto;
+import com.asa.workforce.audit.AuditService;
+import com.asa.workforce.entity.Employee;
+import com.asa.workforce.entity.Employee.Status;
+import com.asa.workforce.notification.PushNotificationService;
+import com.asa.workforce.repository.EmployeeRepository;
+import com.asa.workforce.repository.PushTokenRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AdminService {
+
+    private final EmployeeRepository   employeeRepository;
+    private final PushTokenRepository  pushTokenRepository;
+    private final PushNotificationService pushService;
+    private final AuditService         auditService;
+
+    // ── List pending ─────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Page<PendingEmployeeDto> listPending(int page, int size, String adminNationalId,
+                                                HttpServletRequest httpReq) {
+        Employee admin = employeeRepository.findByNationalId(adminNationalId)
+                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+
+        auditService.log(AuditService.ADMIN_PENDING_VIEW, admin,
+                Map.of("page", page, "size", size), httpReq);
+
+        return employeeRepository
+                .findByStatus(Status.PENDING_APPROVAL,
+                        PageRequest.of(page, size, Sort.by("updatedAt").descending()))
+                .map(this::toDto);
+    }
+
+    // ── Approve ──────────────────────────────────────────────────────────────
+
+    @Transactional
+    public Map<String, Object> approve(UUID employeeId, String adminNationalId,
+                                       HttpServletRequest httpReq) {
+        Employee admin = employeeRepository.findByNationalId(adminNationalId)
+                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+        Employee emp   = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        if (emp.getStatus() != Status.PENDING_APPROVAL) {
+            throw new IllegalStateException(
+                    "Employee is not in PENDING_APPROVAL status (current: " + emp.getStatus() + ")");
+        }
+
+        emp.setStatus(Status.ACTIVE);
+        emp.setReviewedBy(admin.getId());
+        emp.setReviewedAt(OffsetDateTime.now());
+        employeeRepository.save(emp);
+
+        auditService.log(AuditService.ADMIN_APPROVE, admin, "EMPLOYEE", emp.getId(),
+                Map.of("employeeName", emp.getFirstNameAr() + " " + emp.getLastNameAr(),
+                        "newStatus", "ACTIVE"),
+                httpReq);
+
+        log.info("[ADMIN] {} approved employee {}", adminNationalId, employeeId);
+
+        // Notify the employee
+        List<String> tokens = pushTokenRepository.findTokensByEmployeeId(emp.getId());
+        pushService.sendToTokens(tokens,
+                "تمت الموافقة على حسابك — Account Approved",
+                "Your account has been approved. You can now sign in to ASA Workforce.",
+                Map.of("type", "account_approved"));
+
+        return Map.of("employeeId", employeeId.toString(),
+                "newStatus", "ACTIVE",
+                "approvedBy", adminNationalId,
+                "approvedAt", emp.getReviewedAt().toString());
+    }
+
+    // ── Reject ───────────────────────────────────────────────────────────────
+
+    @Transactional
+    public Map<String, Object> reject(UUID employeeId, String adminNationalId,
+                                      AdminActionRequest req, HttpServletRequest httpReq) {
+        Employee admin = employeeRepository.findByNationalId(adminNationalId)
+                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+        Employee emp   = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        if (emp.getStatus() != Status.PENDING_APPROVAL) {
+            throw new IllegalStateException(
+                    "Employee is not in PENDING_APPROVAL status (current: " + emp.getStatus() + ")");
+        }
+
+        String reason = req.getReason() != null ? req.getReason() : "No reason provided";
+        emp.setStatus(Status.REJECTED);
+        emp.setRejectionReason(reason);
+        emp.setReviewedBy(admin.getId());
+        emp.setReviewedAt(OffsetDateTime.now());
+        employeeRepository.save(emp);
+
+        auditService.log(AuditService.ADMIN_REJECT, admin, "EMPLOYEE", emp.getId(),
+                Map.of("employeeName", emp.getFirstNameAr() + " " + emp.getLastNameAr(),
+                        "reason", reason,
+                        "newStatus", "REJECTED"),
+                httpReq);
+
+        log.info("[ADMIN] {} rejected employee {} — reason: {}", adminNationalId, employeeId, reason);
+
+        // Notify the employee
+        List<String> tokens = pushTokenRepository.findTokensByEmployeeId(emp.getId());
+        pushService.sendToTokens(tokens,
+                "تم رفض طلبك — Registration Rejected",
+                "Your registration request was not approved. Please contact HR for details.",
+                Map.of("type", "account_rejected"));
+
+        return Map.of("employeeId", employeeId.toString(),
+                "newStatus", "REJECTED",
+                "rejectedBy", adminNationalId,
+                "rejectedAt", emp.getReviewedAt().toString());
+    }
+
+    // ── DTO mapping ──────────────────────────────────────────────────────────
+
+    private PendingEmployeeDto toDto(Employee emp) {
+        return PendingEmployeeDto.builder()
+                .id(emp.getId().toString())
+                .nationalId(maskId(emp.getNationalId()))
+                .firstNameAr(emp.getFirstNameAr())
+                .lastNameAr(emp.getLastNameAr())
+                .maskedPhone(maskPhone(emp.getPhoneNumber()))
+                .status(emp.getStatus().name())
+                .registeredAt(emp.getCreatedAt())
+                .otpVerifiedAt(emp.getUpdatedAt())
+                .build();
+    }
+
+    private String maskId(String id) {
+        if (id == null || id.length() < 4) return "****";
+        return "******" + id.substring(id.length() - 4);
+    }
+
+    private String maskPhone(String p) {
+        if (p == null || p.length() < 4) return "****";
+        return "*".repeat(p.length() - 4) + p.substring(p.length() - 4);
+    }
+}

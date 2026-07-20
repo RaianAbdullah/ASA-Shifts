@@ -48,3 +48,16 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
     out-of-order: false
+
+# ── JWT ─────────────────────────────────────────────────────────────────────
+jwt:
+  secret: ${JWT_SECRET:ASA_WORKFORCE_DEV_ONLY_INSECURE_SECRET_SET_JWT_SECRET_IN_PRODUCTION_64_BYTES_MIN!!}
+  expiry-hours: 8
+
+# ── Async + scheduling (rate-limiter cleanup, push retries) ──────────────────
+spring.task:
+  execution.pool:
+    core-size: 4
+    max-size: 8
+    queue-capacity: 100
+  scheduling.pool.size: 2
