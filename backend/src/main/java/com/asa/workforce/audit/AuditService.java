@@ -48,20 +48,40 @@ public class AuditService {
 
     // ── Public API ───────────────────────────────────────────────────────────
 
-    @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    /**
+     * Primary log method. Extracts IP/UA from the request SYNCHRONOUSLY on the
+     * caller's thread before handing off to the async executor — Tomcat recycles
+     * the request object immediately after the controller returns, so we must not
+     * read it inside the @Async thread.
+     */
     public void log(String action,
                     Employee actor,
                     String resourceType,
                     UUID resourceId,
                     Map<String, Object> details,
                     HttpServletRequest request) {
+        // Extract before async hand-off
+        String ip = extractIp(request);
+        String ua = extractUserAgent(request);
+        UUID   actorId = actor != null ? actor.getId() : null;
+        doLog(action, actorId, resourceType, resourceId, details, ip, ua);
+    }
+
+    /** Convenience — log without a resource. */
+    public void log(String action, Employee actor, Map<String, Object> details,
+                    HttpServletRequest request) {
+        log(action, actor, null, null, details, request);
+    }
+
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected void doLog(String action, UUID actorId,
+                         String resourceType, UUID resourceId,
+                         Map<String, Object> details, String ip, String ua) {
         try {
-            // Re-fetch the actor in this new transaction so the entity is managed.
-            // If the actor UUID no longer exists (e.g. stale session), log with null actor.
             Employee managedActor = null;
-            if (actor != null) {
-                managedActor = employeeRepository.findById(actor.getId()).orElse(null);
+            if (actorId != null) {
+                managedActor = employeeRepository.findById(actorId).orElse(null);
             }
             AuditLog entry = AuditLog.builder()
                     .action(action)
@@ -69,26 +89,17 @@ public class AuditService {
                     .resourceType(resourceType)
                     .resourceId(resourceId)
                     .details(details)
-                    .ipAddress(extractIp(request))
-                    .userAgent(extractUserAgent(request))
+                    .ipAddress(ip)
+                    .userAgent(ua)
                     .build();
             auditLogRepository.save(entry);
             log.debug("[AUDIT] {} actor={} resource={}:{}",
                     action,
-                    actor != null ? actor.getNationalId() : "anonymous",
+                    managedActor != null ? managedActor.getNationalId() : "anonymous",
                     resourceType, resourceId);
         } catch (Exception ex) {
-            // Audit must never crash the caller
             log.error("[AUDIT] Failed to persist audit record: {}", ex.getMessage(), ex);
         }
-    }
-
-    /** Convenience — log without a resource. */
-    @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void log(String action, Employee actor, Map<String, Object> details,
-                    HttpServletRequest request) {
-        log(action, actor, null, null, details, request);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
