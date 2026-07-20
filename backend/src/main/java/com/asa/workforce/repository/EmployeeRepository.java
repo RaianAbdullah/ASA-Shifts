@@ -24,4 +24,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     // Push notification targeting
     @Query("SELECT e FROM Employee e WHERE e.role = :role AND e.status = 'ACTIVE'")
     List<Employee> findActiveByRole(Employee.Role role);
+
+    // Department-scoped queries (for DEPARTMENT_MANAGER access control)
+    Page<Employee> findByDepartmentId(java.util.UUID departmentId, org.springframework.data.domain.Pageable pageable);
 }

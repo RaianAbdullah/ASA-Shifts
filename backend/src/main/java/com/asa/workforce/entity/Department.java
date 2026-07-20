@@ -22,8 +22,9 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 150)
-    private String name;
+    /** English name — maps to the legacy `name` column */
+    @Column(name = "name", nullable = false, length = 150)
+    private String nameEn;
 
     @Column(name = "name_ar", nullable = false, length = 150)
     private String nameAr;
@@ -34,6 +35,14 @@ public class Department {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    /**
+     * Designated manager for this department (DEPARTMENT_MANAGER or MAIN_MANAGER role).
+     * Nullable — a department can exist before a manager is assigned.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id")
+    private Employee manager;
 
     @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
     private List<Employee> employees;

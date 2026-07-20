@@ -60,7 +60,7 @@ export default function HomeScreen() {
 
       <View style={styles.body}>
         {/* Admin panel shortcut */}
-        {session?.role === 'ADMIN' && (
+        {['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'].includes(session?.role ?? '') && (
           <TouchableOpacity
             style={styles.adminCard}
             onPress={() => router.push('/(admin)')}

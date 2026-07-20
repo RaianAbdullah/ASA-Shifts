@@ -102,8 +102,9 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/v3/api-docs/**"
                 ).permitAll()
-                // Admin routes — ADMIN role required
-                .requestMatchers("/v1/admin/**").hasRole("ADMIN")
+                // Admin routes — SYSTEM_ADMIN, MAIN_MANAGER, or DEPARTMENT_MANAGER
+                .requestMatchers("/v1/admin/**")
+                    .hasAnyRole("SYSTEM_ADMIN", "MAIN_MANAGER", "DEPARTMENT_MANAGER")
                 // Notification token registration — any authenticated user
                 .requestMatchers(HttpMethod.POST, "/v1/notifications/push-token").authenticated()
                 // Everything else — authenticated

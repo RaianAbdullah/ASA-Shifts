@@ -17,10 +17,10 @@ public interface PushTokenRepository extends JpaRepository<PushToken, UUID> {
     /** All tokens for a specific employee */
     List<PushToken> findByEmployeeId(UUID employeeId);
 
-    /** Collect push tokens belonging to all active ADMINs */
+    /** Collect push tokens for SYSTEM_ADMIN and MAIN_MANAGER (registration approvers) */
     @Query("""
         SELECT pt.token FROM PushToken pt
-        WHERE pt.employee.role = 'ADMIN'
+        WHERE pt.employee.role IN ('SYSTEM_ADMIN', 'MAIN_MANAGER')
           AND pt.employee.status = 'ACTIVE'
     """)
     List<String> findAdminPushTokens();

@@ -51,8 +51,9 @@ export default function LoginScreen() {
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Admins go to the admin panel; regular employees go to main tabs
-      if (data.role === 'ADMIN') {
+      // Management roles go to the admin panel; employees go to main tabs
+      const managementRoles = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'];
+      if (managementRoles.includes(data.role)) {
         router.replace('/(admin)');
       } else {
         router.replace('/(tabs)');

@@ -38,7 +38,13 @@ public class AdminService {
     public Page<PendingEmployeeDto> listPending(int page, int size, String adminNationalId,
                                                 HttpServletRequest httpReq) {
         Employee admin = employeeRepository.findByNationalId(adminNationalId)
-                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Approver not found"));
+
+        boolean isApprover = admin.getRole() == Employee.Role.SYSTEM_ADMIN
+                || admin.getRole() == Employee.Role.MAIN_MANAGER;
+        if (!isApprover) {
+            throw new IllegalStateException("Only System Admins and Main Managers can view pending registrations");
+        }
 
         auditService.log(AuditService.ADMIN_PENDING_VIEW, admin,
                 Map.of("page", page, "size", size), httpReq);

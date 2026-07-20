@@ -90,7 +90,16 @@ public class Employee {
     // ── Enums ────────────────────────────────────────────────
 
     public enum Role {
-        ADMIN, SUPERVISOR, EMPLOYEE
+        /** Full platform access — manages departments, accounts, and security settings */
+        SYSTEM_ADMIN,
+        /** Manages all employees across departments; approves leave; monitors activity */
+        MAIN_MANAGER,
+        /** Views and manages employees within their own department only */
+        DEPARTMENT_MANAGER,
+        /** Standard workforce member — checks in, views schedule, submits leave */
+        EMPLOYEE,
+        /** Receives approved leave notifications and handles required follow-up */
+        RESPONSIBLE_OFFICER
     }
 
     public enum Status {

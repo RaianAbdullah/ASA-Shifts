@@ -35,7 +35,7 @@ public class AdminController {
     // ── GET /v1/admin/registrations/pending ──────────────────────────────────
 
     @GetMapping("/registrations/pending")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER')")
     @Operation(summary = "List employees awaiting approval (PENDING_APPROVAL)")
     public ResponseEntity<ApiResponse<Page<PendingEmployeeDto>>> listPending(
             @RequestParam(defaultValue = "0")  int page,
@@ -51,7 +51,7 @@ public class AdminController {
     // ── PATCH /v1/admin/registrations/{id}/approve ───────────────────────────
 
     @PatchMapping("/registrations/{employeeId}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER')")
     @Operation(summary = "Approve a pending employee registration")
     public ResponseEntity<ApiResponse<Map<String, Object>>> approve(
             @PathVariable UUID employeeId,
@@ -66,7 +66,7 @@ public class AdminController {
     // ── PATCH /v1/admin/registrations/{id}/reject ────────────────────────────
 
     @PatchMapping("/registrations/{employeeId}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER')")
     @Operation(summary = "Reject a pending employee registration")
     public ResponseEntity<ApiResponse<Map<String, Object>>> reject(
             @PathVariable UUID employeeId,
