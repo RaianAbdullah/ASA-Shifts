@@ -10,7 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import colors from '@/constants/colors';
 import { authApi, ApiError } from '@/services/api';
-import { saveSession } from '@/services/auth';
+import { saveSession, Session } from '@/services/auth';
 
 const { light, government } = colors;
 
@@ -44,7 +44,7 @@ export default function LoginScreen() {
 
       await saveSession({
         token:      data.token,
-        role:       data.role as 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE',
+        role:       data.role as Session['role'],
         nameAr:     data.nameAr,
         employeeId: data.employeeId,
       });

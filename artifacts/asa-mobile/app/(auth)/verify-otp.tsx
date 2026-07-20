@@ -48,7 +48,7 @@ export default function VerifyOtpScreen() {
     try {
       await authApi.verifyOtp({ nationalId, otpCode: otp });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(auth)/waiting');
+      router.replace({ pathname: '/(auth)/waiting', params: { nationalId } });
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const msg = err instanceof ApiError ? err.message : 'Verification failed. Please try again.';

@@ -36,7 +36,7 @@ async function remove(key: string) {
 
 export interface Session {
   token:      string;
-  role:       'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE';
+  role:       'SYSTEM_ADMIN' | 'MAIN_MANAGER' | 'DEPARTMENT_MANAGER' | 'EMPLOYEE' | 'RESPONSIBLE_OFFICER';
   nameAr:     string;
   employeeId: string;
 }

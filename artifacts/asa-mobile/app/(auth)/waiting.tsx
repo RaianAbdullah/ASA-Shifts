@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,25 +6,80 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
+  Alert,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import colors from '@/constants/colors';
+import { authApi, ApiError } from '@/services/api';
 
 const { light, government } = colors;
 
 const STEPS = [
   { icon: 'checkmark-circle', label: 'Registration submitted', labelAr: 'تم تقديم الطلب', done: true },
-  { icon: 'checkmark-circle', label: 'Email verified', labelAr: 'تم التحقق من البريد', done: true },
+  { icon: 'checkmark-circle', label: 'OTP verified', labelAr: 'تم التحقق من الرمز', done: true },
   { icon: 'time', label: 'Pending admin review', labelAr: 'في انتظار مراجعة المسؤول', done: false },
   { icon: 'ellipse-outline', label: 'Account activation', labelAr: 'تفعيل الحساب', done: false },
 ];
+
+const POLL_INTERVAL_MS = 10_000; // 10 seconds
 
 export default function WaitingScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+
+  const { nationalId } = useLocalSearchParams<{ nationalId?: string }>();
+  const [checking, setChecking] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const checkStatus = async (silent = false) => {
+    if (!nationalId) return;
+    if (!silent) setChecking(true);
+    try {
+      const res = await authApi.getStatus(nationalId);
+      const status = res.data?.status;
+      if (status === 'ACTIVE') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Stop polling
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        Alert.alert(
+          '✅ Account Approved! — تم قبول حسابك',
+          'Your account has been approved. Please sign in.',
+          [{ text: 'Sign In', onPress: () => router.replace('/(auth)/login') }],
+          { cancelable: false }
+        );
+      } else if (status === 'REJECTED') {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        Alert.alert(
+          'Registration Rejected — تم رفض الطلب',
+          'Your registration was rejected. Please contact your HR administrator.',
+          [{ text: 'OK', onPress: () => router.replace('/') }]
+        );
+      }
+    } catch (err) {
+      if (!silent) {
+        const msg = err instanceof ApiError ? err.message : 'Could not check status.';
+        Alert.alert('Status Check Failed', msg);
+      }
+    } finally {
+      if (!silent) setChecking(false);
+    }
+  };
+
+  // Auto-poll every 10 seconds
+  useEffect(() => {
+    if (!nationalId) return;
+    // Initial check on mount
+    checkStatus(true);
+    intervalRef.current = setInterval(() => checkStatus(true), POLL_INTERVAL_MS);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nationalId]);
 
   return (
     <View style={[styles.container, { paddingTop: topPad, paddingBottom: bottomPad }]}>
@@ -75,15 +130,30 @@ export default function WaitingScreen() {
         </View>
       </View>
 
+      {/* Auto-poll notice */}
+      <View style={styles.pollNotice}>
+        <Ionicons name="sync-outline" size={13} color={light.mutedForeground} />
+        <Text style={styles.pollNoticeText}>
+          {'  '}Checking for updates every 10 seconds · يتحقق كل 10 ثوانٍ
+        </Text>
+      </View>
+
       {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={styles.checkStatusBtn}
-          onPress={() => {}}
+          style={[styles.checkStatusBtn, checking && styles.btnDisabled]}
+          onPress={() => checkStatus(false)}
+          disabled={checking}
           activeOpacity={0.82}
         >
-          <Ionicons name="refresh-outline" size={18} color={government.navy} />
-          <Text style={styles.checkStatusText}>Check Status — تحقق من الحالة</Text>
+          <Ionicons
+            name={checking ? 'hourglass-outline' : 'refresh-outline'}
+            size={18}
+            color={government.navy}
+          />
+          <Text style={styles.checkStatusText}>
+            {checking ? 'Checking…' : 'Check Status — تحقق من الحالة'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -204,6 +274,15 @@ const styles = StyleSheet.create({
   connectorDone: {
     backgroundColor: '#1A7A3E',
   },
+  pollNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pollNoticeText: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: light.mutedForeground,
+  },
   actions: {
     width: '100%',
     gap: 12,
@@ -217,6 +296,9 @@ const styles = StyleSheet.create({
     borderColor: government.navy,
     borderRadius: 12,
     paddingVertical: 14,
+  },
+  btnDisabled: {
+    opacity: 0.5,
   },
   checkStatusText: {
     fontSize: 14,

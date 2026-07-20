@@ -24,7 +24,6 @@ type FormData = {
   lastNameAr: string;
   employeeNumber: string;
   phoneNumber: string;
-  department: string;
   password: string;
   confirmPassword: string;
 };
@@ -40,7 +39,6 @@ export default function RegisterScreen() {
     lastNameAr: '',
     employeeNumber: '',
     phoneNumber: '',
-    department: '',
     password: '',
     confirmPassword: '',
   });
@@ -177,10 +175,6 @@ export default function RegisterScreen() {
         placeholder: '+966 5X XXX XXXX',
         keyboardType: 'phone-pad',
         autoCapitalize: 'none',
-      })}
-
-      {renderField('department', 'Department (optional)', 'القسم (اختياري)', {
-        placeholder: 'e.g. Human Resources',
       })}
 
       <Text style={[styles.sectionTitle, { marginTop: 20 }]}>
