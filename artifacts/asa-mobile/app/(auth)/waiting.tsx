@@ -13,8 +13,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import colors from '@/constants/colors';
-import { authApi, ApiError } from '@/services/api';
+import { authApi, notificationApi, ApiError } from '@/services/api';
 
 const { light, government } = colors;
 
@@ -41,6 +43,17 @@ function completedSteps(status: string): number {
 
 const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
+/** Navigate to login immediately with haptic feedback and an alert. */
+function navigateToLogin() {
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  Alert.alert(
+    '✅ Account Approved! — تم قبول حسابك',
+    'Your account has been approved. Please sign in.',
+    [{ text: 'Sign In', onPress: () => router.replace('/(auth)/login') }],
+    { cancelable: false }
+  );
+}
+
 export default function WaitingScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
@@ -53,6 +66,8 @@ export default function WaitingScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Guard against navigating twice (poll + notification arriving simultaneously)
+  const navigatedRef = useRef(false);
 
   const clearPoll = () => {
     if (intervalRef.current !== null) {
@@ -60,6 +75,13 @@ export default function WaitingScreen() {
       intervalRef.current = null;
     }
   };
+
+  const handleApproval = useCallback(() => {
+    if (navigatedRef.current) return;
+    navigatedRef.current = true;
+    clearPoll();
+    navigateToLogin();
+  }, []);
 
   const fetchStatus = useCallback(async (silent = false) => {
     if (!nationalId) return;
@@ -71,21 +93,17 @@ export default function WaitingScreen() {
       setStatus(newStatus);
 
       if (newStatus.toUpperCase() === 'ACTIVE') {
-        clearPoll();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          '✅ Account Approved! — تم قبول حسابك',
-          'Your account has been approved. Please sign in.',
-          [{ text: 'Sign In', onPress: () => router.replace('/(auth)/login') }],
-          { cancelable: false }
-        );
+        handleApproval();
       } else if (newStatus.toUpperCase() === 'REJECTED') {
-        clearPoll();
-        Alert.alert(
-          'Registration Rejected — تم رفض الطلب',
-          'Your registration was rejected. Please contact your HR administrator.',
-          [{ text: 'OK', onPress: () => router.replace('/') }]
-        );
+        if (!navigatedRef.current) {
+          navigatedRef.current = true;
+          clearPoll();
+          Alert.alert(
+            'Registration Rejected — تم رفض الطلب',
+            'Your registration was rejected. Please contact your HR administrator.',
+            [{ text: 'OK', onPress: () => router.replace('/') }]
+          );
+        }
       }
     } catch (err) {
       if (!silent) {
@@ -95,7 +113,7 @@ export default function WaitingScreen() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [nationalId]);
+  }, [nationalId, handleApproval]);
 
   // Initial fetch + 30-second auto-poll (silent background polls)
   useEffect(() => {
@@ -104,6 +122,63 @@ export default function WaitingScreen() {
     intervalRef.current = setInterval(() => fetchStatus(true), POLL_INTERVAL_MS);
     return clearPoll;
   }, [fetchStatus, nationalId]);
+
+  // ── Push notification registration ────────────────────────────────────────
+  useEffect(() => {
+    if (Platform.OS === 'web' || !Device.isDevice || !nationalId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const existing = await Notifications.getPermissionsAsync() as any;
+        let granted: boolean = Boolean(existing?.granted);
+
+        if (!granted) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const requested = await Notifications.requestPermissionsAsync() as any;
+          granted = Boolean(requested?.granted);
+        }
+
+        if (!granted || cancelled) return;
+
+        const tokenData = await Notifications.getExpoPushTokenAsync();
+        const platform  = Platform.OS === 'ios' ? 'ios' : 'android';
+
+        // Non-fatal — token registration failing doesn't break polling fallback
+        await notificationApi.registerPendingToken(nationalId, tokenData.data, platform);
+      } catch {
+        // Silently degrade; polling is still active as fallback
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [nationalId]);
+
+  // ── Foreground notification listener ─────────────────────────────────────
+  useEffect(() => {
+    // Listen for notifications while the app is foregrounded on this screen
+    const foregroundSub = Notifications.addNotificationReceivedListener((notification) => {
+      const data = notification.request.content.data as Record<string, unknown> | null;
+      if (data?.type === 'ACCOUNT_APPROVED') {
+        handleApproval();
+      }
+    });
+
+    // Also handle the user tapping a notification that arrives while backgrounded
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as Record<string, unknown> | null;
+      if (data?.type === 'ACCOUNT_APPROVED') {
+        handleApproval();
+      }
+    });
+
+    return () => {
+      foregroundSub.remove();
+      responseSub.remove();
+    };
+  }, [handleApproval]);
 
   // Step state derivation
   const doneCount = completedSteps(status);

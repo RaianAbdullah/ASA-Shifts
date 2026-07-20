@@ -219,10 +219,26 @@ export const adminAttendanceApi = {
 // ── Notification endpoints ────────────────────────────────────────────────────
 
 export const notificationApi = {
+  /** Register a push token for an already-authenticated user. */
   registerToken: (token: string, platform: 'ios' | 'android' | 'unknown') =>
     request<{ status: string }>(
       '/v1/notifications/push-token',
       { method: 'POST', body: JSON.stringify({ token, platform }) },
       true
+    ),
+
+  /**
+   * Register a push token for a pending (unauthenticated) user.
+   * Called from the waiting screen where no JWT exists yet.
+   */
+  registerPendingToken: (
+    nationalId: string,
+    token: string,
+    platform: 'ios' | 'android' | 'unknown',
+  ) =>
+    request<{ status: string }>(
+      '/v1/notifications/push-token/pending',
+      { method: 'POST', body: JSON.stringify({ nationalId, token, platform }) },
+      false
     ),
 };
