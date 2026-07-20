@@ -72,9 +72,16 @@ public class SecurityConfig {
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                 // Prevent MIME-type sniffing
                 .contentTypeOptions(HeadersConfigurer.ContentTypeOptionsConfig::disable)
-                // Content Security Policy — API only, no HTML served
+                // Content Security Policy — relaxed for Swagger UI in dev
+                // (Swagger needs inline scripts and styles to render)
                 .contentSecurityPolicy(csp -> csp
-                    .policyDirectives("default-src 'none'; frame-ancestors 'none'"))
+                    .policyDirectives(
+                        "default-src 'self'; " +
+                        "script-src 'self' 'unsafe-inline'; " +
+                        "style-src 'self' 'unsafe-inline'; " +
+                        "img-src 'self' data:; " +
+                        "connect-src 'self'; " +
+                        "frame-ancestors 'none'"))
                 // Referrer policy
                 .referrerPolicy(rp -> rp
                     .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
