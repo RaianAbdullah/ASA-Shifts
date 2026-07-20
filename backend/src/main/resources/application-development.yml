@@ -20,7 +20,7 @@ app:
   geofence:
     latitude: 24.7136
     longitude: 46.6753
-    radius-meters: 200
+    radius-meters: 50
 
 springdoc:
   swagger-ui:
