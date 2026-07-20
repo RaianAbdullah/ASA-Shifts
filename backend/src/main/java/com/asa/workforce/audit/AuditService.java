@@ -3,6 +3,7 @@ package com.asa.workforce.audit;
 import com.asa.workforce.entity.AuditLog;
 import com.asa.workforce.entity.Employee;
 import com.asa.workforce.repository.AuditLogRepository;
+import com.asa.workforce.repository.EmployeeRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,8 @@ import java.util.UUID;
 @Slf4j
 public class AuditService {
 
-    private final AuditLogRepository auditLogRepository;
+    private final AuditLogRepository  auditLogRepository;
+    private final EmployeeRepository   employeeRepository;
 
     // ── Actions ──────────────────────────────────────────────────────────────
 
@@ -55,9 +57,15 @@ public class AuditService {
                     Map<String, Object> details,
                     HttpServletRequest request) {
         try {
+            // Re-fetch the actor in this new transaction so the entity is managed.
+            // If the actor UUID no longer exists (e.g. stale session), log with null actor.
+            Employee managedActor = null;
+            if (actor != null) {
+                managedActor = employeeRepository.findById(actor.getId()).orElse(null);
+            }
             AuditLog entry = AuditLog.builder()
                     .action(action)
-                    .actor(actor)
+                    .actor(managedActor)
                     .resourceType(resourceType)
                     .resourceId(resourceId)
                     .details(details)
