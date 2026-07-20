@@ -264,6 +264,7 @@ export default function HomeScreen() {
       {/* Clock-in / Clock-out button */}
       {today?.canCheckIn && (
         <TouchableOpacity
+          testID="btn-check-in"
           style={[styles.clockBtn, styles.clockBtnIn, isBusy && styles.clockBtnDisabled]}
           onPress={handleCheckIn}
           disabled={isBusy}
@@ -283,6 +284,7 @@ export default function HomeScreen() {
 
       {today?.canCheckOut && (
         <TouchableOpacity
+          testID="btn-check-out"
           style={[styles.clockBtn, styles.clockBtnOut, isBusy && styles.clockBtnDisabled]}
           onPress={handleCheckOut}
           disabled={isBusy}
