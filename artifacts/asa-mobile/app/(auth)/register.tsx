@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import colors from '@/constants/colors';
+import { authApi, ApiError } from '@/services/api';
 
 const { light, government } = colors;
 
@@ -65,21 +66,33 @@ export default function RegisterScreen() {
     return Object.keys(next).length === 0;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!validate()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
-    // TODO: Stage 3 — Registration implementation
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await authApi.register({
+        nationalId: form.employeeNumber,
+        firstNameAr: form.firstNameAr.trim(),
+        lastNameAr: form.lastNameAr.trim(),
+        phoneNumber: form.phoneNumber.trim(),
+        password: form.password,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Pass nationalId so verify-otp can call the correct endpoint
+      router.push({
+        pathname: '/(auth)/verify-otp',
+        params: { nationalId: form.employeeNumber, maskedPhone: res.data?.maskedPhone ?? '' },
+      });
+    } catch (err) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const msg = err instanceof ApiError ? err.message : 'Registration failed. Please try again.';
+      Alert.alert('Registration Error', msg);
+    } finally {
       setLoading(false);
-      Alert.alert(
-        'Coming Soon',
-        'Registration will be implemented in Stage 3.\n\nPOST /api/v1/auth/register is designed and ready.',
-        [{ text: 'OK' }]
-      );
-    }, 800);
+    }
   };
 
   const renderField = (
@@ -88,7 +101,7 @@ export default function RegisterScreen() {
     labelAr: string,
     options: {
       placeholder?: string;
-      keyboardType?: 'default' | 'email-address' | 'phone-pad';
+      keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'number-pad';
       autoCapitalize?: 'none' | 'words' | 'characters';
       secureTextEntry?: boolean;
       toggleSecure?: () => void;

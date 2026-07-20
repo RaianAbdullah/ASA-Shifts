@@ -1,0 +1,85 @@
+package com.asa.workforce.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "employees")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "national_id", nullable = false, unique = true, length = 10)
+    private String nationalId;
+
+    @Column(name = "first_name_ar", nullable = false, length = 100)
+    private String firstNameAr;
+
+    @Column(name = "last_name_ar", nullable = false, length = 100)
+    private String lastNameAr;
+
+    @Column(name = "phone_number", nullable = false, length = 20)
+    private String phoneNumber;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private Role role = Role.EMPLOYEE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    @Builder.Default
+    private Status status = Status.PENDING_VERIFICATION;
+
+    // OTP — stored in DB for Stage 3; moved to Redis in Stage 4
+    @Column(name = "otp_code", length = 6)
+    private String otpCode;
+
+    @Column(name = "otp_expires_at")
+    private OffsetDateTime otpExpiresAt;
+
+    @Column(name = "otp_attempts", nullable = false)
+    @Builder.Default
+    private Short otpAttempts = 0;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private OffsetDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
+
+    // ── Enums ────────────────────────────────────────────────
+
+    public enum Role {
+        ADMIN, SUPERVISOR, EMPLOYEE
+    }
+
+    public enum Status {
+        PENDING_VERIFICATION,   // registered, OTP not yet verified
+        PENDING_APPROVAL,       // OTP verified, awaiting admin activation
+        ACTIVE,                 // fully active
+        SUSPENDED,              // temporarily disabled
+        REJECTED                // registration rejected by admin
+    }
+}

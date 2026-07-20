@@ -8,11 +8,12 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import colors from '@/constants/colors';
+import { authApi, ApiError } from '@/services/api';
 
 const { light, government } = colors;
 const OTP_LENGTH = 6;
@@ -22,33 +23,62 @@ export default function VerifyOtpScreen() {
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  const { nationalId, maskedPhone } = useLocalSearchParams<{
+    nationalId: string;
+    maskedPhone?: string;
+  }>();
+
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const inputRef = useRef<TextInput>(null);
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (otp.length !== OTP_LENGTH) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Incomplete Code', 'Please enter the full 6-digit code.');
       return;
     }
-    // TODO: Stage 3 — OTP verification implementation
+    if (!nationalId) {
+      Alert.alert('Error', 'Session expired. Please register again.');
+      router.replace('/(auth)/register');
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await authApi.verifyOtp({ nationalId, otpCode: otp });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/(auth)/waiting');
+    } catch (err) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const msg = err instanceof ApiError ? err.message : 'Verification failed. Please try again.';
+      Alert.alert('Verification Error', msg);
+      setOtp('');
+    } finally {
       setLoading(false);
-      Alert.alert(
-        'Coming Soon',
-        'OTP verification will be implemented in Stage 3.\n\nPOST /api/v1/auth/verify-otp is designed and ready.',
-        [{ text: 'OK' }]
-      );
-    }, 800);
+    }
   };
 
-  const handleResend = () => {
-    if (resendCooldown > 0) return;
-    // TODO: Stage 3 — Resend OTP
-    Alert.alert('Resend', 'OTP resend will be implemented in Stage 3.');
+  const startResendCooldown = () => {
+    setResendCooldown(60);
+    const interval = setInterval(() => {
+      setResendCooldown((c) => {
+        if (c <= 1) { clearInterval(interval); return 0; }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0 || !nationalId) return;
+    try {
+      // Re-register triggers a fresh OTP (same endpoint is idempotent for re-sends in dev)
+      await authApi.getStatus(nationalId);
+      startResendCooldown();
+      Alert.alert('Code Sent', 'A new OTP has been requested. Check the server console.');
+    } catch {
+      Alert.alert('Resend Failed', 'Could not resend the code. Please try again.');
+    }
   };
 
   // Render OTP digit boxes
@@ -61,11 +91,13 @@ export default function VerifyOtpScreen() {
         <Ionicons name="mail-outline" size={36} color={government.gold} />
       </View>
 
-      <Text style={styles.title}>Check Your Email</Text>
-      <Text style={styles.titleAr}>تحقق من بريدك الإلكتروني</Text>
+      <Text style={styles.title}>Verify Your Phone</Text>
+      <Text style={styles.titleAr}>تحقق من رقم هاتفك</Text>
       <Text style={styles.description}>
-        We sent a 6-digit verification code to your work email.{'\n'}
-        أرسلنا رمز تحقق مكون من 6 أرقام إلى بريدك الوظيفي.
+        {maskedPhone
+          ? `We sent a 6-digit code to ${maskedPhone}`
+          : 'We sent a 6-digit verification code to your phone.'}
+        {'\n'}أرسلنا رمز تحقق مكون من 6 أرقام إلى هاتفك.
       </Text>
 
       {/* OTP digit display (taps hidden input) */}

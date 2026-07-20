@@ -1,16 +1,15 @@
 # Development profile (SPRING_PROFILES_ACTIVE=development)
 # Used in the Replit environment and local developer machines.
-# Stage 2+ will enable JPA, Redis, Flyway here.
 
 logging:
   level:
     com.asa.workforce: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web: INFO
+    org.flywaydb: INFO
 
 app:
   cors:
-    # Development: allow all origins (Expo dev server, web preview)
     allowed-origins: "*"
 
 springdoc:
@@ -19,34 +18,33 @@ springdoc:
   api-docs:
     enabled: true
 
-# =====================================================================
-# Stage 2+ configuration — uncomment when adding database support
-# =====================================================================
-#
-# spring:
-#   datasource:
-#     # Replit PostgreSQL URL format: postgresql://user:pass@host:5432/db
-#     # Spring requires: jdbc:postgresql://user:pass@host:5432/db
-#     url: jdbc:${DATABASE_URL}
-#     driver-class-name: org.postgresql.Driver
-#   jpa:
-#     hibernate:
-#       ddl-auto: validate
-#     show-sql: false
-#     open-in-view: false
-#     properties:
-#       hibernate:
-#         dialect: org.hibernate.dialect.PostgreSQLDialect
-#         format_sql: false
-#         default_schema: public
-#   flyway:
-#     enabled: true
-#     locations: classpath:db/migration
-#     baseline-on-migrate: true
-#     validate-on-migrate: true
-#   data:
-#     redis:
-#       host: ${REDIS_HOST:localhost}
-#       port: ${REDIS_PORT:6379}
-#       password: ${REDIS_PASSWORD:}
-#       timeout: 2000ms
+spring:
+  datasource:
+    # Replit also exposes individual PG* vars — safer than parsing DATABASE_URL
+    url: "jdbc:postgresql://${PGHOST}:${PGPORT:5432}/${PGDATABASE}"
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        default_schema: public
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: false

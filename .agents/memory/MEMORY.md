@@ -1,0 +1,2 @@
+- [PostgreSQL JDBC URL format](pg-jdbc-url.md) — use PG* vars to build JDBC URL; don't prefix DATABASE_URL with jdbc:
+- [Hibernate vs PostgreSQL type mapping](hibernate-pg-types.md) — CHAR(n)→bpchar and INET need Flyway migrations to VARCHAR/TEXT for Hibernate validation to pass

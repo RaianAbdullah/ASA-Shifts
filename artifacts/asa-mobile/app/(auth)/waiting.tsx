@@ -59,7 +59,7 @@ export default function WaitingScreen() {
               <Ionicons
                 name={step.icon as any}
                 size={20}
-                color={step.done ? government.success ?? '#1A7A3E' : light.mutedForeground}
+                color={step.done ? '#1A7A3E' : light.mutedForeground}
               />
               <View style={styles.stepLabels}>
                 <Text style={[styles.stepLabel, !step.done && styles.stepLabelPending]}>
