@@ -69,21 +69,28 @@ export async function updateTokens(accessToken: string, refreshToken: string): P
 }
 
 export async function loadSession(): Promise<Session | null> {
-  const [token, refreshToken, role, nameAr, employeeId] = await Promise.all([
-    load(TOKEN_KEY),
-    load(REFRESH_KEY),
-    load(ROLE_KEY),
-    load(NAME_KEY),
-    load(EID_KEY),
-  ]);
-  if (!token || !role) return null;
-  return {
-    token,
-    refreshToken: refreshToken ?? '',
-    role: role as Session['role'],
-    nameAr: nameAr ?? '',
-    employeeId: employeeId ?? '',
-  };
+  try {
+    const [token, refreshToken, role, nameAr, employeeId] = await Promise.all([
+      load(TOKEN_KEY),
+      load(REFRESH_KEY),
+      load(ROLE_KEY),
+      load(NAME_KEY),
+      load(EID_KEY),
+    ]);
+    if (!token || !role) return null;
+    return {
+      token,
+      refreshToken: refreshToken ?? '',
+      role: role as Session['role'],
+      nameAr: nameAr ?? '',
+      employeeId: employeeId ?? '',
+    };
+  } catch {
+    // SecureStore can fail if the keychain is locked or the device is in an
+    // unusual state. Treat this as "no session" so the app can redirect to
+    // the login screen rather than crashing.
+    return null;
+  }
 }
 
 export async function clearSession(): Promise<void> {
