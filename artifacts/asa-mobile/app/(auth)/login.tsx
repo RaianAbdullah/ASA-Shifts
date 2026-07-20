@@ -43,10 +43,11 @@ export default function LoginScreen() {
       const data = res.data!;
 
       await saveSession({
-        token:      data.token,
-        role:       data.role as Session['role'],
-        nameAr:     data.nameAr,
-        employeeId: data.employeeId,
+        token:        data.accessToken,
+        refreshToken: data.refreshToken,
+        role:         data.role as Session['role'],
+        nameAr:       data.nameAr,
+        employeeId:   data.employeeId,
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -143,7 +144,7 @@ export default function LoginScreen() {
         {/* Forgot password */}
         <TouchableOpacity
           style={styles.forgotBtn}
-          onPress={() => Alert.alert('Password Reset', 'Contact your HR administrator to reset your password.')}
+          onPress={() => router.push('/(auth)/forgot-password')}
         >
           <Text style={styles.forgotText}>Forgot password? / نسيت كلمة المرور؟</Text>
         </TouchableOpacity>

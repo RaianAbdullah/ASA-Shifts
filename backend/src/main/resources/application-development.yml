@@ -71,7 +71,10 @@ spring:
 # ── JWT ─────────────────────────────────────────────────────────────────────
 jwt:
   secret: ${JWT_SECRET:ASA_WORKFORCE_DEV_ONLY_INSECURE_SECRET_SET_JWT_SECRET_IN_PRODUCTION_64_BYTES_MIN!!}
-  expiry-hours: 8
+  # Short-lived access token — 15 minutes in production, relaxed to 60 min for dev convenience
+  access-expiry-minutes: 60
+  # Rotating refresh token — 3 days
+  refresh-expiry-days: 3
 
 # ── Async + scheduling (rate-limiter cleanup, push retries) ──────────────────
 spring.task:

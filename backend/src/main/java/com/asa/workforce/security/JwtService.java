@@ -39,11 +39,13 @@ public class JwtService {
     @Value("${jwt.secret:" + DEV_DEFAULT + "}")
     private String secret;
 
-    @Value("${jwt.expiry-hours:8}")
-    private int expiryHours;
+    @Value("${jwt.access-expiry-minutes:15}")
+    private int accessExpiryMinutes;
 
     @Value("${spring.profiles.active:development}")
     private String activeProfile;
+
+    public int getAccessExpiryMinutes() { return accessExpiryMinutes; }
 
     private SecretKey key;
 
@@ -77,8 +79,8 @@ public class JwtService {
         }
 
         this.key = Keys.hmacShaKeyFor(keyBytes);
-        log.info("[JWT] Initialized — expiry={}h, keyBytes={}, issuer={}",
-                expiryHours, keyBytes.length, ISSUER);
+        log.info("[JWT] Initialized — access-expiry={}m, keyBytes={}, issuer={}",
+                accessExpiryMinutes, keyBytes.length, ISSUER);
     }
 
     // ── Token generation ─────────────────────────────────────────────────────
@@ -93,7 +95,7 @@ public class JwtService {
                 .claim("role",       employee.getRole().name())
                 .claim("name",       employee.getFirstNameAr() + " " + employee.getLastNameAr())
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(expiryHours, ChronoUnit.HOURS)))
+                .expiration(Date.from(now.plus(accessExpiryMinutes, ChronoUnit.MINUTES)))
                 .signWith(key, Jwts.SIG.HS512)
                 .compact();
     }

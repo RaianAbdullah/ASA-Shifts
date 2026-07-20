@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "ASA Workforce",
-    "slug": "asa-mobile",
+    "name": "ASA shifts",
+    "slug": "asashifts",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "asa-mobile",
+    "scheme": "asashifts",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -14,9 +14,12 @@
       "backgroundColor": "#1B3A6B"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.asashifts.app"
     },
-    "android": {},
+    "android": {
+      "package": "com.asashifts.app"
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },

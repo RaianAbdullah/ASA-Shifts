@@ -54,7 +54,14 @@ public class AuditService {
     public static final String PUSH_TOKEN_REG     = "PUSH_TOKEN_REGISTERED";
     public static final String CHECK_IN           = "ATTENDANCE_CHECK_IN";
     public static final String CHECK_OUT          = "ATTENDANCE_CHECK_OUT";
-    public static final String TOKEN_REVOKED      = "AUTH_TOKEN_REVOKED";
+    public static final String TOKEN_REVOKED           = "AUTH_TOKEN_REVOKED";
+    public static final String REFRESH_SUCCESS          = "AUTH_REFRESH_SUCCESS";
+    public static final String REFRESH_REUSE_DETECTED  = "AUTH_REFRESH_REUSE_DETECTED";
+    public static final String FORGOT_PASSWORD         = "AUTH_FORGOT_PASSWORD";
+    public static final String PASSWORD_RESET          = "AUTH_PASSWORD_RESET";
+    public static final String PASSWORD_CHANGED        = "AUTH_PASSWORD_CHANGED";
+    public static final String LOGOUT_ALL              = "AUTH_LOGOUT_ALL";
+    public static final String SESSION_REVOKED         = "AUTH_SESSION_REVOKED";
 
     // ── Public API ────────────────────────────────────────────────────────────
 

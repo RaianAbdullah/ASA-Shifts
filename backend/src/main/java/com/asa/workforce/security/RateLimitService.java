@@ -39,7 +39,19 @@ public class RateLimitService {
     public static final int  LOGOUT_MAX    = 10;
     public static final long LOGOUT_WIN    = 60 * 60_000L;
 
-    public static final int  ADMIN_MAX     = 200;
+    public static final int  REFRESH_MAX      = 30;
+    public static final long REFRESH_WIN      = 60 * 60_000L;
+
+    public static final int  FORGOT_MAX       = 5;           // strict — prevents enumeration
+    public static final long FORGOT_WIN       = 60 * 60_000L;
+
+    public static final int  RESET_MAX        = 5;
+    public static final long RESET_WIN        = 60 * 60_000L;
+
+    public static final int  CHANGE_PW_MAX    = 5;
+    public static final long CHANGE_PW_WIN    = 60 * 60_000L;
+
+    public static final int  ADMIN_MAX     = 1000;   // admin users legitimately make many requests
     public static final long ADMIN_WIN     = 60 * 60_000L;
 
     // ── State ────────────────────────────────────────────────────────────────

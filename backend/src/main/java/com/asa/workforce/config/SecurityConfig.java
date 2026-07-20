@@ -123,7 +123,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST,
                     "/v1/auth/register",
                     "/v1/auth/verify-otp",
-                    "/v1/auth/login"
+                    "/v1/auth/login",
+                    "/v1/auth/refresh",
+                    "/v1/auth/forgot-password",
+                    "/v1/auth/reset-password"
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/v1/auth/status/**",
@@ -131,8 +134,14 @@ public class SecurityConfig {
                     "/actuator/health",
                     "/actuator/info"
                 ).permitAll()
-                // Logout requires a valid token (to revoke it)
-                .requestMatchers(HttpMethod.POST, "/v1/auth/logout").authenticated()
+                // Authenticated auth operations
+                .requestMatchers(HttpMethod.POST,
+                    "/v1/auth/logout",
+                    "/v1/auth/logout-all",
+                    "/v1/auth/change-password"
+                ).authenticated()
+                .requestMatchers(HttpMethod.GET,  "/v1/auth/sessions").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/v1/auth/sessions/**").authenticated()
                 // Swagger — only when enabled (disabled in production profile)
                 .requestMatchers(
                     "/swagger-ui/**",

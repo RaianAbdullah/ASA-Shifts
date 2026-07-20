@@ -6,11 +6,13 @@ import lombok.Data;
 @Data
 @Builder
 public class LoginResponse {
-    private String  token;
-    private String  tokenType;    // "Bearer"
-    private int     expiresInHours;
-    private String  employeeId;
-    private String  role;
-    private String  nameAr;
-    private String  status;
+    private String accessToken;
+    private String refreshToken;
+    private String tokenType;            // "Bearer"
+    private long   accessExpiresInSeconds;
+    private long   refreshExpiresInDays;
+    private String employeeId;
+    private String role;
+    private String nameAr;
+    private String status;
 }

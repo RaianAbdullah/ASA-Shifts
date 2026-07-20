@@ -19,6 +19,18 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'house', selected: 'house.fill' }} />
         <Label>Home</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="schedule">
+        <Icon sf={{ default: 'calendar', selected: 'calendar.fill' }} />
+        <Label>Schedule</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="vacations">
+        <Icon sf={{ default: 'sun.max', selected: 'sun.max.fill' }} />
+        <Label>Vacations</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <Icon sf={{ default: 'person.circle', selected: 'person.circle.fill' }} />
+        <Label>Profile</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -73,6 +85,45 @@ function ClassicTabLayout() {
             ),
         }}
       />
+      <Tabs.Screen
+        name="schedule"
+        options={{
+          title: 'My Schedule',
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="calendar" tintColor={color} size={24} />
+            ) : (
+              <Feather name="calendar" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="vacations"
+        options={{
+          title: 'Vacations',
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="sun.max" tintColor={color} size={24} />
+            ) : (
+              <Feather name="sun" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          headerShown: false,
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="person.circle" tintColor={color} size={24} />
+            ) : (
+              <Feather name="user" size={22} color={color} />
+            ),
+        }}
+      />
+      {/* Hidden from tab bar — navigated to via push */}
+      <Tabs.Screen name="change-password" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -9,8 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, authApi, PendingEmployee, ApiError } from '@/services/api';
-import { clearSession } from '@/services/auth';
+import { adminApi, authApi, vacationApi, PendingEmployee, ApiError } from '@/services/api';
+import { loadSession, clearSession } from '@/services/auth';
 import colors from '@/constants/colors';
 
 const { light, government } = colors;
@@ -88,7 +88,8 @@ export default function AdminPendingScreen() {
   }, [rejectModal.employee, rejectReason, rejectMutation]);
 
   const handleSignOut = useCallback(async () => {
-    try { await authApi.logout(); } catch { /* ignore — clear session regardless */ }
+    const current = await loadSession();
+    try { await authApi.logout(current?.refreshToken); } catch { /* ignore */ }
     await clearSession();
     router.replace('/');
   }, []);
@@ -169,6 +170,12 @@ export default function AdminPendingScreen() {
               <Text style={styles.badgeText}>{pending.length}</Text>
             </View>
           )}
+          <TouchableOpacity
+            onPress={() => router.push('/(admin)/vacations')}
+            style={styles.vacationBtn}
+          >
+            <Ionicons name="sunny-outline" size={22} color={government.navy} />
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
             <Ionicons name="log-out-outline" size={22} color={government.navy} />
           </TouchableOpacity>
@@ -280,7 +287,8 @@ const styles = StyleSheet.create({
   badge:       { backgroundColor: light.destructive, borderRadius: 12, minWidth: 24,
                  height: 24, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   badgeText:   { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#fff' },
-  signOutBtn:  { padding: 4 },
+  vacationBtn: { padding: 4, marginRight: 4 },
+ signOutBtn:  { padding: 4 },
   list:        { paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   emptyList:   { flex: 1 },
   card:        { backgroundColor: light.card, borderRadius: 14, padding: 16,

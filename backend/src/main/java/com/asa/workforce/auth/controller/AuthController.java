@@ -11,13 +11,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/v1/auth")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Authentication", description = "Registration, OTP verification, login, logout, and status")
+@Tag(name = "Authentication", description = "Registration, OTP, login, token refresh, logout")
 public class AuthController {
 
     private final AuthService authService;
@@ -28,9 +33,8 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request,
             HttpServletRequest httpReq) {
 
-        RegisterResponse data = authService.register(request, httpReq);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(data));
+                .body(ApiResponse.ok(authService.register(request, httpReq)));
     }
 
     @PostMapping("/verify-otp")
@@ -39,36 +43,107 @@ public class AuthController {
             @Valid @RequestBody VerifyOtpRequest request,
             HttpServletRequest httpReq) {
 
-        VerifyOtpResponse data = authService.verifyOtp(request, httpReq);
-        return ResponseEntity.ok(ApiResponse.ok(data));
+        return ResponseEntity.ok(ApiResponse.ok(authService.verifyOtp(request, httpReq)));
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Authenticate with national ID and password — returns JWT")
+    @Operation(summary = "Authenticate — returns short-lived access token + rotating refresh token")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpReq) {
 
-        LoginResponse data = authService.login(request, httpReq);
-        return ResponseEntity.ok(ApiResponse.ok(data));
+        return ResponseEntity.ok(ApiResponse.ok(authService.login(request, httpReq)));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Rotate a refresh token and receive a new access token + refresh token")
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(
+            @Valid @RequestBody RefreshRequest request,
+            HttpServletRequest httpReq) {
+
+        return ResponseEntity.ok(ApiResponse.ok(authService.refresh(request, httpReq)));
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "Invalidate the current JWT — adds its jti to the revocation blacklist")
+    @Operation(summary = "Revoke the current access token and (optionally) the refresh token")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader("Authorization") String authHeader,
+            @RequestBody(required = false) LogoutRequest body,
             HttpServletRequest httpReq) {
 
-        authService.logout(authHeader, httpReq);
+        authService.logout(authHeader, body, httpReq);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     @GetMapping("/status/{nationalId}")
-    @Operation(summary = "Check the registration status of an employee")
+    @Operation(summary = "Check the registration status of an employee (rate-limited)")
     public ResponseEntity<ApiResponse<StatusResponse>> getStatus(
             @PathVariable String nationalId) {
 
-        StatusResponse data = authService.getStatus(nationalId);
-        return ResponseEntity.ok(ApiResponse.ok(data));
+        return ResponseEntity.ok(ApiResponse.ok(authService.getStatus(nationalId)));
+    }
+
+    // ── Password reset ────────────────────────────────────────────────────────
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Initiate a password reset (always 200 — no enumeration)")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request,
+            HttpServletRequest httpReq) {
+
+        authService.forgotPassword(request, httpReq);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Complete a password reset using the reset token")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request,
+            HttpServletRequest httpReq) {
+
+        authService.resetPassword(request, httpReq);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    // ── Authenticated password / session operations ───────────────────────────
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change password (authenticated — also revokes all refresh sessions)")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal UserDetails user,
+            @Valid @RequestBody ChangePasswordRequest request,
+            HttpServletRequest httpReq) {
+
+        authService.changePassword(user.getUsername(), request, httpReq);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @GetMapping("/sessions")
+    @Operation(summary = "List active refresh token sessions for the current employee")
+    public ResponseEntity<ApiResponse<List<SessionDto>>> getSessions(
+            @AuthenticationPrincipal UserDetails user) {
+
+        return ResponseEntity.ok(ApiResponse.ok(authService.getSessions(user.getUsername())));
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    @Operation(summary = "Revoke a specific refresh session")
+    public ResponseEntity<ApiResponse<Void>> revokeSession(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable UUID sessionId,
+            HttpServletRequest httpReq) {
+
+        authService.revokeSession(user.getUsername(), sessionId, httpReq);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/logout-all")
+    @Operation(summary = "Revoke the current access token and ALL refresh sessions")
+    public ResponseEntity<ApiResponse<Void>> logoutAll(
+            @RequestHeader("Authorization") String authHeader,
+            HttpServletRequest httpReq) {
+
+        authService.logoutAll(authHeader, httpReq);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }
