@@ -161,7 +161,8 @@ export default function WaitingScreen() {
     // Listen for notifications while the app is foregrounded on this screen
     const foregroundSub = Notifications.addNotificationReceivedListener((notification) => {
       const data = notification.request.content.data as Record<string, unknown> | null;
-      if (data?.type === 'ACCOUNT_APPROVED') {
+      // Backend sends lowercase "account_approved" — compare case-insensitively
+      if (String(data?.type ?? '').toUpperCase() === 'ACCOUNT_APPROVED') {
         handleApproval();
       }
     });
@@ -169,7 +170,7 @@ export default function WaitingScreen() {
     // Also handle the user tapping a notification that arrives while backgrounded
     const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as Record<string, unknown> | null;
-      if (data?.type === 'ACCOUNT_APPROVED') {
+      if (String(data?.type ?? '').toUpperCase() === 'ACCOUNT_APPROVED') {
         handleApproval();
       }
     });

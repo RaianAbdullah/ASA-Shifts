@@ -8,11 +8,11 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
   Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, useFonts,
 } from '@expo-google-fonts/inter';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { notificationApi } from '@/services/api';
+import { notificationApi, setSessionExpiredCallback } from '@/services/api';
 import { loadSession } from '@/services/auth';
 
 SplashScreen.preventAutoHideAsync();
@@ -88,6 +88,15 @@ export default function RootLayout() {
       registerPushToken();
     }
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    // Wire up the session-expired redirect so api.ts can trigger navigation
+    // when a token refresh fails anywhere in the app.
+    setSessionExpiredCallback(() => {
+      // router.replace navigates from any screen back to the welcome/login root
+      router.replace('/');
+    });
+  }, []);
 
   if (!fontsLoaded && !fontError) return null;
 

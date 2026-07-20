@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   Alert, ActivityIndicator, RefreshControl, TextInput,
@@ -22,6 +22,13 @@ export default function AdminPendingScreen() {
     visible: false, employee: null,
   });
   const [rejectReason, setRejectReason] = useState('');
+
+  // Guard: redirect to root if session was cleared (e.g. token expired while admin was on-screen)
+  useEffect(() => {
+    loadSession().then(session => {
+      if (!session) router.replace('/');
+    });
+  }, []);
 
   // ── Data ──────────────────────────────────────────────────────────────────
 

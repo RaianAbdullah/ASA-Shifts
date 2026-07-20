@@ -107,8 +107,7 @@ export default function HomeScreen() {
     mutationFn: async () => {
       setLocating(true);
       const coords = await getCurrentLocation().finally(() => setLocating(false));
-      // In dev, always send bypassGeofence so testers can check in from anywhere
-      return attendanceApi.checkIn(coords.latitude, coords.longitude, true);
+      return attendanceApi.checkIn(coords.latitude, coords.longitude, false);
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

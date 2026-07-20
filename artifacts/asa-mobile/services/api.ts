@@ -17,6 +17,18 @@ const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
   : '/api';
 
+// ── Session-expired callback (registered by root layout) ─────────────────────
+// When a token cannot be refreshed the app must navigate to the login screen.
+// Because api.ts is not a React module it cannot call router directly — instead
+// it invokes this callback which is wired up by _layout.tsx on mount.
+let _onSessionExpired: (() => void) | null = null;
+export function setSessionExpiredCallback(cb: () => void) {
+  _onSessionExpired = cb;
+}
+function triggerSessionExpired() {
+  _onSessionExpired?.();
+}
+
 // ── Refresh lock (prevents concurrent refresh stampede) ──────────────────────
 let refreshInFlight: Promise<boolean> | null = null;
 
@@ -26,7 +38,11 @@ async function silentRefresh(): Promise<boolean> {
   refreshInFlight = (async () => {
     try {
       const session = await loadSession();
-      if (!session?.refreshToken) { await clearSession(); return false; }
+      if (!session?.refreshToken) {
+        await clearSession();
+        triggerSessionExpired();
+        return false;
+      }
 
       const res = await fetch(`${BASE_URL}/v1/auth/refresh`, {
         method: 'POST',
@@ -34,15 +50,24 @@ async function silentRefresh(): Promise<boolean> {
         body: JSON.stringify({ refreshToken: session.refreshToken }),
       });
 
-      if (!res.ok) { await clearSession(); return false; }
+      if (!res.ok) {
+        await clearSession();
+        triggerSessionExpired();
+        return false;
+      }
 
       const json = await res.json() as ApiResponse<LoginResponse>;
-      if (!json.success || !json.data) { await clearSession(); return false; }
+      if (!json.success || !json.data) {
+        await clearSession();
+        triggerSessionExpired();
+        return false;
+      }
 
       await updateTokens(json.data.accessToken, json.data.refreshToken);
       return true;
     } catch {
       await clearSession();
+      triggerSessionExpired();
       return false;
     } finally {
       refreshInFlight = null;

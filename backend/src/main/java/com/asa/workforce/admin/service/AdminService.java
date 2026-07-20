@@ -88,7 +88,7 @@ public class AdminService {
         pushService.sendToTokens(tokens,
                 "تمت الموافقة على حسابك — Account Approved",
                 "Your account has been approved. You can now sign in to ASA Workforce.",
-                Map.of("type", "account_approved"));
+                Map.of("type", "ACCOUNT_APPROVED"));
 
         return Map.of("employeeId", employeeId.toString(),
                 "newStatus", "ACTIVE",
@@ -131,7 +131,7 @@ public class AdminService {
         pushService.sendToTokens(tokens,
                 "تم رفض طلبك — Registration Rejected",
                 "Your registration request was not approved. Please contact HR for details.",
-                Map.of("type", "account_rejected"));
+                Map.of("type", "ACCOUNT_REJECTED"));
 
         return Map.of("employeeId", employeeId.toString(),
                 "newStatus", "REJECTED",
