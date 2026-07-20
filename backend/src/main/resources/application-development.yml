@@ -18,9 +18,10 @@ app:
   # Dev tip: set radius-meters to 999999 to disable distance checks,
   #   or send bypassGeofence: true in the check-in request body.
   geofence:
-    latitude: 24.7136
-    longitude: 46.6753
-    radius-meters: 50
+    # MM9W+W5 Al Olaya, Riyadh
+    latitude: 24.669812
+    longitude: 46.695437
+    radius-meters: 100
 
 springdoc:
   swagger-ui:
