@@ -12,6 +12,16 @@ app:
   cors:
     allowed-origins: "*"
 
+  # ── Office geofence ────────────────────────────────────────
+  # Set these to your real office coordinates before deployment.
+  # radius-meters: how close the employee must be to check in.
+  # Dev tip: set radius-meters to 999999 to disable distance checks,
+  #   or send bypassGeofence: true in the check-in request body.
+  geofence:
+    latitude: 24.7136
+    longitude: 46.6753
+    radius-meters: 200
+
 springdoc:
   swagger-ui:
     enabled: true

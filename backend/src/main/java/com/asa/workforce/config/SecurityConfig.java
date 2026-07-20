@@ -107,9 +107,10 @@ public class SecurityConfig {
                     .hasAnyRole("SYSTEM_ADMIN", "MAIN_MANAGER", "DEPARTMENT_MANAGER")
                 // Notification token registration — any authenticated user
                 .requestMatchers(HttpMethod.POST, "/v1/notifications/push-token").authenticated()
+                // Attendance — authenticated employees
+                .requestMatchers("/v1/attendance/**").authenticated()
                 // Everything else — authenticated
-                // TODO Stage 5: change to .anyRequest().authenticated()
-                .anyRequest().permitAll()
+                .anyRequest().authenticated()
             )
 
             // ── Filters ───────────────────────────────────────────────────────

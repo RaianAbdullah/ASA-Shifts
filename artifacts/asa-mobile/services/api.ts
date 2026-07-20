@@ -147,6 +147,75 @@ export const adminApi = {
     ),
 };
 
+// ── Attendance endpoints ──────────────────────────────────────────────────────
+
+export interface AttendanceResponse {
+  id?:               string;
+  attendanceDate:    string;
+  status:            'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED' | 'HOLIDAY';
+  checkInTime?:      string;
+  checkInLatitude?:  number;
+  checkInLongitude?: number;
+  checkOutTime?:     string;
+  checkOutLatitude?: number;
+  checkOutLongitude?:number;
+  minutesLate:       number;
+  geofenceOverride:  boolean;
+  shiftStart?:       string;
+  shiftEnd?:         string;
+  canCheckIn:        boolean;
+  canCheckOut:       boolean;
+  workedMinutes?:    number;
+}
+
+export interface AdminAttendanceSummary {
+  date:         string;
+  totalActive:  number;
+  checkedIn:    number;
+  late:         number;
+  absent:       number;
+  excused:      number;
+  records:      AdminAttendanceRow[];
+}
+
+export interface AdminAttendanceRow {
+  id:               string;
+  employeeId:       string;
+  firstNameAr:      string;
+  lastNameAr:       string;
+  departmentNameAr: string;
+  departmentNameEn: string;
+  status:           string;
+  checkInTime?:     string;
+  checkOutTime?:    string;
+  minutesLate:      number;
+  workedMinutes?:   number;
+}
+
+export const attendanceApi = {
+  checkIn: (latitude: number, longitude: number, bypassGeofence = false) =>
+    request<AttendanceResponse>('/v1/attendance/check-in',
+      { method: 'POST', body: JSON.stringify({ latitude, longitude, bypassGeofence }) }, true),
+
+  checkOut: (latitude: number, longitude: number) =>
+    request<AttendanceResponse>('/v1/attendance/check-out',
+      { method: 'POST', body: JSON.stringify({ latitude, longitude }) }, true),
+
+  getToday: () =>
+    request<AttendanceResponse>('/v1/attendance/today', {}, true),
+
+  getHistory: (page = 0, size = 30) =>
+    request<PageResponse<AttendanceResponse>>(
+      `/v1/attendance/history?page=${page}&size=${size}`, {}, true),
+};
+
+export const adminAttendanceApi = {
+  getTodaySummary: (departmentId?: string) =>
+    request<AdminAttendanceSummary>(
+      `/v1/admin/attendance/today${departmentId ? `?departmentId=${departmentId}` : ''}`,
+      {}, true),
+};
+
 // ── Notification endpoints ────────────────────────────────────────────────────
 
 export const notificationApi = {

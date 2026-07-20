@@ -41,6 +41,8 @@ public class AuditService {
     public static final String ADMIN_REJECT       = "ADMIN_EMPLOYEE_REJECTED";
     public static final String ADMIN_PENDING_VIEW = "ADMIN_PENDING_LIST_VIEWED";
     public static final String PUSH_TOKEN_REG     = "PUSH_TOKEN_REGISTERED";
+    public static final String CHECK_IN           = "ATTENDANCE_CHECK_IN";
+    public static final String CHECK_OUT          = "ATTENDANCE_CHECK_OUT";
 
     // ── Public API ───────────────────────────────────────────────────────────
 
