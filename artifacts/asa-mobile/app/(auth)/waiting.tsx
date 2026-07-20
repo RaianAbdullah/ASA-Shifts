@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Platform,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,14 +18,28 @@ import { authApi, ApiError } from '@/services/api';
 
 const { light, government } = colors;
 
-const STEPS = [
-  { icon: 'checkmark-circle', label: 'Registration submitted', labelAr: 'تم تقديم الطلب', done: true },
-  { icon: 'checkmark-circle', label: 'OTP verified', labelAr: 'تم التحقق من الرمز', done: true },
-  { icon: 'time', label: 'Pending admin review', labelAr: 'في انتظار مراجعة المسؤول', done: false },
-  { icon: 'ellipse-outline', label: 'Account activation', labelAr: 'تفعيل الحساب', done: false },
+const STEP_DEFINITIONS = [
+  { label: 'Registration submitted', labelAr: 'تم تقديم الطلب' },
+  { label: 'OTP verified',           labelAr: 'تم التحقق من الرمز' },
+  { label: 'Pending admin review',   labelAr: 'في انتظار مراجعة المسؤول' },
+  { label: 'Account activation',     labelAr: 'تفعيل الحساب' },
 ];
 
-const POLL_INTERVAL_MS = 10_000; // 10 seconds
+// Backend emits exactly three status values (Employee.Status enum):
+//   PENDING_VERIFICATION — registered, OTP not yet verified
+//   PENDING_APPROVAL     — OTP verified, awaiting admin activation
+//   ACTIVE               — fully activated
+/** Map API status → how many of the four steps are complete. */
+function completedSteps(status: string): number {
+  switch (status?.toUpperCase()) {
+    case 'PENDING_VERIFICATION': return 1; // registration submitted only
+    case 'PENDING_APPROVAL':     return 2; // + OTP verified
+    case 'ACTIVE':               return 4; // all four steps done
+    default:                     return 1; // safe fallback
+  }
+}
+
+const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
 export default function WaitingScreen() {
   const insets = useSafeAreaInsets();
@@ -32,27 +47,40 @@ export default function WaitingScreen() {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const { nationalId } = useLocalSearchParams<{ nationalId?: string }>();
-  const [checking, setChecking] = useState(false);
+
+  const [status, setStatus] = useState<string>('PENDING_VERIFICATION');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const checkStatus = async (silent = false) => {
+  const clearPoll = () => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const fetchStatus = useCallback(async (silent = false) => {
     if (!nationalId) return;
-    if (!silent) setChecking(true);
+    if (!silent) setLoading(true);
+    setError(null);
     try {
       const res = await authApi.getStatus(nationalId);
-      const status = res.data?.status;
-      if (status === 'ACTIVE') {
+      const newStatus = res.data?.status ?? 'PENDING_VERIFICATION';
+      setStatus(newStatus);
+
+      if (newStatus.toUpperCase() === 'ACTIVE') {
+        clearPoll();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Stop polling
-        if (intervalRef.current) clearInterval(intervalRef.current);
         Alert.alert(
           '✅ Account Approved! — تم قبول حسابك',
           'Your account has been approved. Please sign in.',
           [{ text: 'Sign In', onPress: () => router.replace('/(auth)/login') }],
           { cancelable: false }
         );
-      } else if (status === 'REJECTED') {
-        if (intervalRef.current) clearInterval(intervalRef.current);
+      } else if (newStatus.toUpperCase() === 'REJECTED') {
+        clearPoll();
         Alert.alert(
           'Registration Rejected — تم رفض الطلب',
           'Your registration was rejected. Please contact your HR administrator.',
@@ -61,25 +89,26 @@ export default function WaitingScreen() {
       }
     } catch (err) {
       if (!silent) {
-        const msg = err instanceof ApiError ? err.message : 'Could not check status.';
-        Alert.alert('Status Check Failed', msg);
+        const msg = err instanceof ApiError ? err.message : 'Could not reach the server. Please try again.';
+        setError(msg);
       }
     } finally {
-      if (!silent) setChecking(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, [nationalId]);
 
-  // Auto-poll every 10 seconds
+  // Initial fetch + 30-second auto-poll (silent background polls)
   useEffect(() => {
     if (!nationalId) return;
-    // Initial check on mount
-    checkStatus(true);
-    intervalRef.current = setInterval(() => checkStatus(true), POLL_INTERVAL_MS);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nationalId]);
+    fetchStatus(true);
+    intervalRef.current = setInterval(() => fetchStatus(true), POLL_INTERVAL_MS);
+    return clearPoll;
+  }, [fetchStatus, nationalId]);
+
+  // Step state derivation
+  const doneCount = completedSteps(status);
+  // The "current" step is the first incomplete one; -1 when all are done.
+  const currentIdx = doneCount < STEP_DEFINITIONS.length ? doneCount : -1;
 
   return (
     <View style={[styles.container, { paddingTop: topPad, paddingBottom: bottomPad }]}>
@@ -109,50 +138,65 @@ export default function WaitingScreen() {
       <View style={styles.stepsCard}>
         <Text style={styles.stepsTitle}>Registration Progress — تقدم التسجيل</Text>
         <View style={styles.steps}>
-          {STEPS.map((step, i) => (
-            <View key={i} style={styles.stepRow}>
-              <Ionicons
-                name={step.icon as any}
-                size={20}
-                color={step.done ? '#1A7A3E' : light.mutedForeground}
-              />
-              <View style={styles.stepLabels}>
-                <Text style={[styles.stepLabel, !step.done && styles.stepLabelPending]}>
-                  {step.label}
-                </Text>
-                <Text style={styles.stepLabelAr}>{step.labelAr}</Text>
+          {STEP_DEFINITIONS.map((step, i) => {
+            const isCompleted = i < doneCount;
+            const isCurrent   = i === currentIdx;
+            return (
+              <View key={i} style={styles.stepRow}>
+                <Ionicons
+                  name={
+                    isCompleted ? 'checkmark-circle'
+                    : isCurrent  ? 'time'
+                    :              'ellipse-outline'
+                  }
+                  size={20}
+                  color={isCompleted ? '#1A7A3E' : isCurrent ? government.gold : light.mutedForeground}
+                />
+                <View style={styles.stepLabels}>
+                  <Text style={[styles.stepLabel, !isCompleted && styles.stepLabelPending]}>
+                    {step.label}
+                  </Text>
+                  <Text style={styles.stepLabelAr}>{step.labelAr}</Text>
+                </View>
+                {i < STEP_DEFINITIONS.length - 1 && (
+                  <View style={[styles.connector, isCompleted && styles.connectorDone]} />
+                )}
               </View>
-              {i < STEPS.length - 1 && (
-                <View style={[styles.connector, step.done && styles.connectorDone]} />
-              )}
-            </View>
-          ))}
+            );
+          })}
         </View>
       </View>
 
-      {/* Auto-poll notice */}
-      <View style={styles.pollNotice}>
-        <Ionicons name="sync-outline" size={13} color={light.mutedForeground} />
-        <Text style={styles.pollNoticeText}>
-          {'  '}Checking for updates every 10 seconds · يتحقق كل 10 ثوانٍ
-        </Text>
-      </View>
+      {/* Inline error */}
+      {error ? (
+        <View style={styles.errorRow}>
+          <Ionicons name="alert-circle-outline" size={14} color="#B91C1C" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <View style={styles.pollNotice}>
+          <Ionicons name="sync-outline" size={13} color={light.mutedForeground} />
+          <Text style={styles.pollNoticeText}>
+            {'  '}Checking for updates every 30 seconds · يتحقق كل 30 ثانية
+          </Text>
+        </View>
+      )}
 
       {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={[styles.checkStatusBtn, checking && styles.btnDisabled]}
-          onPress={() => checkStatus(false)}
-          disabled={checking}
+          style={[styles.checkStatusBtn, loading && styles.btnDisabled]}
+          onPress={() => fetchStatus(false)}
+          disabled={loading}
           activeOpacity={0.82}
         >
-          <Ionicons
-            name={checking ? 'hourglass-outline' : 'refresh-outline'}
-            size={18}
-            color={government.navy}
-          />
+          {loading ? (
+            <ActivityIndicator size="small" color={government.navy} />
+          ) : (
+            <Ionicons name="refresh-outline" size={18} color={government.navy} />
+          )}
           <Text style={styles.checkStatusText}>
-            {checking ? 'Checking…' : 'Check Status — تحقق من الحالة'}
+            {loading ? 'Checking…' : 'Check Status — تحقق من الحالة'}
           </Text>
         </TouchableOpacity>
 
@@ -282,6 +326,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     color: light.mutedForeground,
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  errorText: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#B91C1C',
   },
   actions: {
     width: '100%',
