@@ -37,6 +37,16 @@ public class Department {
     private Boolean isActive = true;
 
     /**
+     * When true, the department manager gets cross-department privileges:
+     *   • can assign any employee (from any department) to this department's shifts
+     *   • can read leave/vacation records for any employee in the system
+     * Used exclusively by the Weekend Duty department (code = 'WKD').
+     */
+    @Column(name = "is_cross_department", nullable = false)
+    @Builder.Default
+    private Boolean isCrossDepartment = false;
+
+    /**
      * Designated manager for this department (DEPARTMENT_MANAGER or MAIN_MANAGER role).
      * Nullable — a department can exist before a manager is assigned.
      */
