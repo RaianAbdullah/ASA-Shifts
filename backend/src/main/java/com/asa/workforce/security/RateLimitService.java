@@ -10,30 +10,37 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
- * In-memory sliding-window rate limiter (no Redis required for Stage 4).
+ * In-memory sliding-window rate limiter.
  *
- * Each bucket is keyed by a string (typically "endpoint:clientIp").
- * Timestamps older than the window are purged on each check and by a
- * scheduled cleanup task.
+ * Each bucket is keyed by "endpoint:clientIp".
+ * Thread-safe: ConcurrentHashMap + ConcurrentLinkedDeque.
  *
- * Thread-safe: uses ConcurrentHashMap + ConcurrentLinkedDeque.
+ * Note: in-memory only — limits do not share across multiple instances.
+ * For multi-instance deployments, replace with a Redis-backed implementation.
  */
 @Service
 @Slf4j
 public class RateLimitService {
 
-    /** Predefined limits — tunable via application properties in a later stage */
-    public static final int  REGISTER_MAX   = 5;    // 5 registrations
-    public static final long REGISTER_WIN   = 60 * 60_000L; // per hour per IP
+    // ── Limits ───────────────────────────────────────────────────────────────
 
-    public static final int  OTP_IP_MAX     = 15;   // 15 OTP attempts
-    public static final long OTP_IP_WIN     = 60 * 60_000L; // per hour per IP
+    public static final int  REGISTER_MAX  = 3;
+    public static final long REGISTER_WIN  = 60 * 60_000L;  // per hour per IP
 
-    public static final int  LOGIN_MAX      = 10;   // 10 login attempts
-    public static final long LOGIN_WIN      = 60 * 60_000L; // per hour per IP
+    public static final int  OTP_IP_MAX    = 10;
+    public static final long OTP_IP_WIN    = 60 * 60_000L;
 
-    public static final int  ADMIN_MAX      = 200;
-    public static final long ADMIN_WIN      = 60 * 60_000L;
+    public static final int  LOGIN_MAX     = 10;
+    public static final long LOGIN_WIN     = 60 * 60_000L;
+
+    public static final int  STATUS_MAX    = 20;             // account enumeration protection
+    public static final long STATUS_WIN    = 60 * 60_000L;
+
+    public static final int  LOGOUT_MAX    = 10;
+    public static final long LOGOUT_WIN    = 60 * 60_000L;
+
+    public static final int  ADMIN_MAX     = 200;
+    public static final long ADMIN_WIN     = 60 * 60_000L;
 
     // ── State ────────────────────────────────────────────────────────────────
 
@@ -42,11 +49,11 @@ public class RateLimitService {
     // ── Public API ───────────────────────────────────────────────────────────
 
     /**
-     * Returns true if the request is allowed; false if the limit is exceeded.
+     * Returns true if the request is allowed; false if limit is exceeded.
      *
-     * @param key        unique bucket key, e.g. "register:1.2.3.4"
-     * @param maxEvents  maximum number of events in the window
-     * @param windowMs   window duration in milliseconds
+     * @param key       unique bucket key, e.g. "login:1.2.3.4"
+     * @param maxEvents maximum number of events in the window
+     * @param windowMs  window duration in milliseconds
      */
     public boolean isAllowed(String key, int maxEvents, long windowMs) {
         Deque<Long> timestamps = buckets.computeIfAbsent(key, k -> new ConcurrentLinkedDeque<>());
@@ -59,8 +66,8 @@ public class RateLimitService {
         }
 
         if (timestamps.size() >= maxEvents) {
-            log.warn("[RATE-LIMIT] Bucket '{}' exceeded ({}/{} in {}ms window)",
-                    key, timestamps.size(), maxEvents, windowMs);
+            log.warn("[RATE-LIMIT] Bucket '{}' exceeded ({}/{} in {}s window)",
+                    key, timestamps.size(), maxEvents, windowMs / 1000);
             return false;
         }
 
@@ -68,7 +75,7 @@ public class RateLimitService {
         return true;
     }
 
-    /** Remaining capacity for a key (useful for Retry-After headers). */
+    /** Remaining capacity for a key (for X-RateLimit-Remaining header). */
     public int remaining(String key, int maxEvents, long windowMs) {
         Deque<Long> d = buckets.get(key);
         if (d == null) return maxEvents;

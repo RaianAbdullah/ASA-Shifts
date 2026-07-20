@@ -12,6 +12,14 @@ app:
   cors:
     allowed-origins: "*"
 
+  # OTP logging — dev only. Set to false (or omit) in production.
+  otp:
+    log-to-console: true
+
+  # Trusted reverse-proxy CIDR prefixes for X-Forwarded-For extraction.
+  # Empty = never trust X-Forwarded-For (safe default for single-server dev).
+  trusted-proxy-cidrs: ""
+
   # ── Office geofence ────────────────────────────────────────
   # Set these to your real office coordinates before deployment.
   # radius-meters: how close the employee must be to check in.

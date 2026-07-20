@@ -1,12 +1,27 @@
 # Production profile (SPRING_PROFILES_ACTIVE=production)
-# STRICT security settings. Application MUST fail to start if required env vars
-# are missing or insecure defaults are detected.
+# STRICT security settings. Application MUST fail to start if required
+# environment variables are missing or insecure defaults are detected.
 
 app:
   cors:
-    # REQUIRED: No wildcard CORS in production.
-    # Example: https://asa-workforce.example.gov
+    # REQUIRED: explicit origin list — no wildcard in production.
+    # Example: https://asa-workforce.example.gov.sa
     allowed-origins: ${ALLOWED_CORS_ORIGINS}
+
+  # OTP must NEVER be logged in production — no override allowed.
+  otp:
+    log-to-console: false
+
+  # Configure your reverse-proxy CIDR(s) so X-Forwarded-For is trusted
+  # only from known infrastructure. Example: "10.0.0.0,172.16.0."
+  # Leave empty if deploying without a reverse proxy.
+  trusted-proxy-cidrs: ${TRUSTED_PROXY_CIDRS:}
+
+  geofence:
+    # MM9W+W5 Al Olaya, Riyadh
+    latitude:      ${OFFICE_LATITUDE:24.669812}
+    longitude:     ${OFFICE_LONGITUDE:46.695437}
+    radius-meters: ${OFFICE_RADIUS_METERS:100}
 
 # Disable API documentation in production — never expose Swagger publicly
 springdoc:
@@ -19,28 +34,54 @@ logging:
   level:
     root: WARN
     com.asa.workforce: INFO
-    # Never log at DEBUG/TRACE in production — sensitive data may appear
+    # Never log at DEBUG/TRACE in production — sensitive data may appear in debug logs
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.flywaydb: WARN
 
-# =====================================================================
-# Stage 2+ production configuration — uncomment when adding database
-# =====================================================================
-#
-# spring:
-#   datasource:
-#     url: jdbc:${DATABASE_URL}           # REQUIRED
-#     username: ${DATABASE_USERNAME}      # REQUIRED
-#     password: ${DATABASE_PASSWORD}      # REQUIRED
-#   jpa:
-#     hibernate:
-#       ddl-auto: validate
-#     open-in-view: false
-#   flyway:
-#     enabled: true
-#     validate-on-migrate: true
-#   data:
-#     redis:
-#       host: ${REDIS_HOST}               # REQUIRED
-#       port: ${REDIS_PORT:6379}
-#       password: ${REDIS_PASSWORD}       # REQUIRED
-#       ssl:
-#         enabled: ${REDIS_SSL:true}      # Enable TLS in production
+spring:
+  datasource:
+    url: "jdbc:postgresql://${PGHOST}:${PGPORT:5432}/${PGDATABASE}"
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      # Validate connections before handing to application
+      connection-test-query: SELECT 1
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        default_schema: public
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    validate-on-migrate: true
+    out-of-order: false
+
+# ── JWT ──────────────────────────────────────────────────────────────────────
+# JWT_SECRET is REQUIRED in production. Startup will fail without it.
+# Generate with: openssl rand -base64 64
+jwt:
+  secret: ${JWT_SECRET}   # No fallback — hard failure if not set
+  expiry-hours: ${JWT_EXPIRY_HOURS:8}
+
+# ── Async + scheduling ───────────────────────────────────────────────────────
+spring.task:
+  execution.pool:
+    core-size: 4
+    max-size: 16
+    queue-capacity: 200
+  scheduling.pool.size: 4

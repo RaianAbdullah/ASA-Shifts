@@ -102,6 +102,10 @@ export const authApi = {
   login: (body: LoginRequest) =>
     request<LoginResponse>('/v1/auth/login', { method: 'POST', body: JSON.stringify(body) }),
 
+  /** Revokes the current JWT on the server side — always call before clearSession(). */
+  logout: () =>
+    request<void>('/v1/auth/logout', { method: 'POST' }, true),
+
   getStatus: (nationalId: string) =>
     request<{ status: string; message: string }>(`/v1/auth/status/${nationalId}`),
 };

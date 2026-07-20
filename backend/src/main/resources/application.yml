@@ -7,6 +7,11 @@ spring:
     name: asa-workforce-api
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:development}
+  # Limit multipart upload size — prevents memory exhaustion / DoS
+  servlet:
+    multipart:
+      max-file-size:    2MB
+      max-request-size: 2MB
 
 server:
   # PORT is injected by the Replit artifact workflow (default 8080)
@@ -23,6 +28,10 @@ server:
     include-stacktrace: never
     include-message: never
     include-binding-errors: never
+  # Limit request body size — prevents memory exhaustion / DoS attacks
+  tomcat:
+    max-http-form-post-size: 512KB
+    max-swallow-size:        512KB
 
 app:
   cors:

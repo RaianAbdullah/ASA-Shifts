@@ -166,6 +166,7 @@ export default function HomeScreen() {
   }, [checkOutMutation, timer]);
 
   const handleSignOut = useCallback(async () => {
+    try { await authApi.logout(); } catch { /* ignore — clear session regardless */ }
     await clearSession();
     router.replace('/');
   }, []);

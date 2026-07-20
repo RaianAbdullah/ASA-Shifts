@@ -10,15 +10,19 @@ import com.asa.workforce.repository.DepartmentRepository;
 import com.asa.workforce.repository.EmployeeRepository;
 import com.asa.workforce.repository.PushTokenRepository;
 import com.asa.workforce.security.JwtService;
+import com.asa.workforce.security.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,21 +32,30 @@ import java.util.UUID;
 @Slf4j
 public class AuthService {
 
-    private static final int OTP_EXPIRY_MINUTES  = 5;
-    private static final int MAX_OTP_ATTEMPTS    = 3;   // hard lockout → contact HR
-    private static final int MAX_LOGIN_ATTEMPTS  = 5;   // 30-min timed lockout
-    private static final int LOGIN_LOCK_MINUTES  = 30;
+    private static final int OTP_EXPIRY_MINUTES = 5;
+    private static final int MAX_OTP_ATTEMPTS   = 3;   // hard lockout → contact HR
+    private static final int MAX_LOGIN_ATTEMPTS = 5;   // 30-min timed lockout
+    private static final int LOGIN_LOCK_MINUTES = 30;
 
-    private final EmployeeRepository    employeeRepository;
-    private final DepartmentRepository  departmentRepository;
-    private final PushTokenRepository   pushTokenRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
-    private final JwtService            jwtService;
-    private final AuditService          auditService;
+    private final EmployeeRepository     employeeRepository;
+    private final DepartmentRepository   departmentRepository;
+    private final PushTokenRepository    pushTokenRepository;
+    private final BCryptPasswordEncoder  passwordEncoder;
+    private final JwtService             jwtService;
+    private final TokenBlacklistService  blacklistService;
+    private final AuditService           auditService;
     private final PushNotificationService pushService;
-    private final SecureRandom          secureRandom = new SecureRandom();
+    private final SecureRandom           secureRandom = new SecureRandom();
 
-    // ── Register ────────────────────────────────────────────────────────────
+    /**
+     * When true, the generated OTP is printed to the server console.
+     * Set to true in development only — NEVER in production.
+     * Controlled via app.otp.log-to-console in application-development.yml.
+     */
+    @Value("${app.otp.log-to-console:false}")
+    private boolean otpLogToConsole;
+
+    // ── Register ─────────────────────────────────────────────────────────────
 
     @Transactional
     public RegisterResponse register(RegisterRequest req, HttpServletRequest httpReq) {
@@ -61,8 +74,8 @@ public class AuthService {
             dept = departmentRepository.findById(UUID.fromString(req.getDepartmentId())).orElse(null);
         }
 
-        String otp       = generateOtp();
-        OffsetDateTime x = OffsetDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES);
+        String      otp     = generateOtp();
+        OffsetDateTime xAt  = OffsetDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES);
 
         Employee emp = Employee.builder()
                 .nationalId(req.getNationalId())
@@ -73,13 +86,15 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
                 .status(Status.PENDING_VERIFICATION)
                 .otpCode(otp)
-                .otpExpiresAt(x)
+                .otpExpiresAt(xAt)
                 .build();
 
         emp = employeeRepository.save(emp);
 
-        // Dev: log OTP. Production Stage 5+: replace with SMS gateway.
-        log.info("[DEV OTP] National ID={} OTP={} (expires {})", req.getNationalId(), otp, x);
+        // Log OTP to console ONLY in development — never in production
+        if (otpLogToConsole) {
+            log.info("[DEV OTP] National ID={} OTP={} (expires {})", req.getNationalId(), otp, xAt);
+        }
 
         auditService.log(AuditService.REGISTER, emp,
                 Map.of("maskedId", mask(req.getNationalId())), httpReq);
@@ -97,11 +112,12 @@ public class AuthService {
                 .status(emp.getStatus().name())
                 .message("Registration submitted. Please verify with the OTP sent to your phone.")
                 .maskedPhone(maskPhone(req.getPhoneNumber()))
-                .otpHint("[DEV] OTP logged to server console")
+                // Only expose dev hint when OTP logging is enabled
+                .otpHint(otpLogToConsole ? "[DEV] OTP logged to server console" : null)
                 .build();
     }
 
-    // ── Verify OTP ──────────────────────────────────────────────────────────
+    // ── Verify OTP ───────────────────────────────────────────────────────────
 
     @Transactional
     public VerifyOtpResponse verifyOtp(VerifyOtpRequest req, HttpServletRequest httpReq) {
@@ -115,7 +131,8 @@ public class AuthService {
             auditService.log(AuditService.OTP_LOCKED, emp,
                     Map.of("attempts", emp.getOtpAttempts()), httpReq);
             throw new IllegalStateException(
-                    "Account locked after " + MAX_OTP_ATTEMPTS + " failed OTP attempts. Please contact HR.");
+                    "Account locked after " + MAX_OTP_ATTEMPTS +
+                    " failed OTP attempts. Please contact HR.");
         }
         if (emp.getOtpExpiresAt() == null || OffsetDateTime.now().isAfter(emp.getOtpExpiresAt())) {
             throw new IllegalStateException("OTP has expired. Please request a new one.");
@@ -124,7 +141,8 @@ public class AuthService {
             emp.setOtpAttempts((short) (emp.getOtpAttempts() + 1));
             employeeRepository.save(emp);
             auditService.log(AuditService.OTP_VERIFY_FAILURE, emp,
-                    Map.of("attempts", emp.getOtpAttempts(), "remaining", MAX_OTP_ATTEMPTS - emp.getOtpAttempts()),
+                    Map.of("attempts", emp.getOtpAttempts(),
+                           "remaining", MAX_OTP_ATTEMPTS - emp.getOtpAttempts()),
                     httpReq);
             int remaining = MAX_OTP_ATTEMPTS - emp.getOtpAttempts();
             throw new IllegalArgumentException(
@@ -139,9 +157,9 @@ public class AuthService {
 
         auditService.log(AuditService.OTP_VERIFY_SUCCESS, emp,
                 Map.of("status", "PENDING_APPROVAL"), httpReq);
-        log.info("[AUTH] Employee {} OTP verified → PENDING_APPROVAL", req.getNationalId());
+        log.info("[AUTH] Employee {} OTP verified → PENDING_APPROVAL", mask(req.getNationalId()));
 
-        // Notify admins that this employee is now pending approval
+        // Notify admins this employee is now pending approval
         List<String> adminTokens = pushTokenRepository.findAdminPushTokens();
         pushService.sendToTokens(adminTokens,
                 "موظف ينتظر الموافقة — Awaiting Approval",
@@ -154,7 +172,7 @@ public class AuthService {
                 .build();
     }
 
-    // ── Login ────────────────────────────────────────────────────────────────
+    // ── Login ─────────────────────────────────────────────────────────────────
 
     @Transactional
     public LoginResponse login(LoginRequest req, HttpServletRequest httpReq) {
@@ -167,8 +185,8 @@ public class AuthService {
             auditService.log(AuditService.LOGIN_LOCKED, emp,
                     Map.of("lockedUntil", emp.getLoginLockedUntil().toString()), httpReq);
             throw new IllegalStateException(
-                    "Account temporarily locked due to too many failed login attempts. Try again in " +
-                    LOGIN_LOCK_MINUTES + " minutes.");
+                    "Account temporarily locked due to too many failed login attempts. " +
+                    "Try again in " + LOGIN_LOCK_MINUTES + " minutes.");
         }
 
         // Verify password
@@ -221,12 +239,51 @@ public class AuthService {
                 .build();
     }
 
-    // ── Status check ─────────────────────────────────────────────────────────
+    // ── Logout ────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public void logout(String bearerToken, HttpServletRequest httpReq) {
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) return;
+        String token = bearerToken.substring(7);
+
+        String jti = jwtService.extractJti(token);
+        if (jti == null) return;
+
+        Instant expiry = jwtService.extractExpiry(token);
+        String nationalId = jwtService.extractSubjectUnchecked(token);
+
+        Employee emp = null;
+        try {
+            emp = employeeRepository.findByNationalId(nationalId).orElse(null);
+        } catch (Exception ignored) {}
+
+        blacklistService.revoke(
+                jti, emp,
+                expiry != null
+                    ? OffsetDateTime.ofInstant(expiry, ZoneOffset.UTC)
+                    : OffsetDateTime.now().plusHours(8),
+                "LOGOUT");
+
+        auditService.log(AuditService.LOGOUT, emp,
+                Map.of("maskedId", mask(nationalId)), httpReq);
+        log.info("[AUTH] Logout: {}", mask(nationalId));
+    }
+
+    // ── Status check ──────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public StatusResponse getStatus(String nationalId) {
-        Employee emp = employeeRepository.findByNationalId(nationalId)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+        // Return identical response shape whether the account exists or not —
+        // prevents unauthenticated enumeration of valid national IDs.
+        Employee emp = employeeRepository.findByNationalId(nationalId).orElse(null);
+
+        if (emp == null) {
+            return StatusResponse.builder()
+                    .nationalId(mask(nationalId))
+                    .status("UNKNOWN")
+                    .message("No account found for this ID.")
+                    .build();
+        }
 
         String message = switch (emp.getStatus()) {
             case PENDING_VERIFICATION -> "OTP verification pending.";
@@ -243,7 +300,7 @@ public class AuthService {
                 .build();
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private String generateOtp() {
         return String.valueOf(100_000 + secureRandom.nextInt(900_000));

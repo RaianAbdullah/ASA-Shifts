@@ -7,6 +7,7 @@ import com.asa.workforce.repository.EmployeeRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,22 +20,30 @@ import java.util.UUID;
  * Writes immutable audit records for every security-relevant action.
  *
  * All writes are:
- * - Async (non-blocking for the caller)
- * - In a NEW transaction (audit records persist even if the calling transaction rolls back)
+ * - Async       (non-blocking for the caller)
+ * - REQUIRES_NEW transaction (persists even if the caller's transaction rolls back)
+ *
+ * IP extraction only trusts X-Forwarded-For when running behind a configured
+ * trusted proxy. Without that config, remoteAddr is always used to prevent
+ * IP address spoofing in audit records.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuditService {
 
-    private final AuditLogRepository  auditLogRepository;
-    private final EmployeeRepository   employeeRepository;
+    private final AuditLogRepository auditLogRepository;
+    private final EmployeeRepository employeeRepository;
 
-    // ── Actions ──────────────────────────────────────────────────────────────
+    @Value("${app.trusted-proxy-cidrs:}")
+    private String trustedProxyCidrs;
+
+    // ── Actions ───────────────────────────────────────────────────────────────
 
     public static final String LOGIN_SUCCESS      = "AUTH_LOGIN_SUCCESS";
     public static final String LOGIN_FAILURE      = "AUTH_LOGIN_FAILURE";
     public static final String LOGIN_LOCKED       = "AUTH_LOGIN_LOCKED";
+    public static final String LOGOUT             = "AUTH_LOGOUT";
     public static final String REGISTER           = "AUTH_REGISTER";
     public static final String OTP_VERIFY_SUCCESS = "AUTH_OTP_VERIFIED";
     public static final String OTP_VERIFY_FAILURE = "AUTH_OTP_FAILURE";
@@ -45,8 +54,9 @@ public class AuditService {
     public static final String PUSH_TOKEN_REG     = "PUSH_TOKEN_REGISTERED";
     public static final String CHECK_IN           = "ATTENDANCE_CHECK_IN";
     public static final String CHECK_OUT          = "ATTENDANCE_CHECK_OUT";
+    public static final String TOKEN_REVOKED      = "AUTH_TOKEN_REVOKED";
 
-    // ── Public API ───────────────────────────────────────────────────────────
+    // ── Public API ────────────────────────────────────────────────────────────
 
     /**
      * Primary log method. Extracts IP/UA from the request SYNCHRONOUSLY on the
@@ -60,10 +70,9 @@ public class AuditService {
                     UUID resourceId,
                     Map<String, Object> details,
                     HttpServletRequest request) {
-        // Extract before async hand-off
         String ip = extractIp(request);
         String ua = extractUserAgent(request);
-        UUID   actorId = actor != null ? actor.getId() : null;
+        UUID actorId = actor != null ? actor.getId() : null;
         doLog(action, actorId, resourceType, resourceId, details, ip, ua);
     }
 
@@ -102,21 +111,48 @@ public class AuditService {
         }
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * Extracts the client IP address.
+     *
+     * X-Forwarded-For is only trusted when the direct TCP connection comes from
+     * a configured trusted proxy CIDR range. Without trusted-proxy-cidrs set,
+     * remoteAddr is always used — safe default for single-server deployments.
+     *
+     * When trusted, we take the LAST IP in the X-Forwarded-For chain (added by
+     * the trusted proxy itself) rather than the first (which the client controls).
+     */
     private String extractIp(HttpServletRequest request) {
         if (request == null) return null;
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        String remoteAddr = request.getRemoteAddr();
+
+        if (trustedProxyCidrs == null || trustedProxyCidrs.isBlank()) {
+            return remoteAddr;
         }
-        return request.getRemoteAddr();
+
+        if (isTrustedProxy(remoteAddr)) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                String[] parts = forwarded.split(",");
+                return parts[parts.length - 1].trim();
+            }
+        }
+
+        return remoteAddr;
+    }
+
+    private boolean isTrustedProxy(String ip) {
+        if (ip == null || trustedProxyCidrs == null || trustedProxyCidrs.isBlank()) return false;
+        for (String cidr : trustedProxyCidrs.split(",")) {
+            if (ip.startsWith(cidr.trim())) return true;
+        }
+        return false;
     }
 
     private String extractUserAgent(HttpServletRequest request) {
         if (request == null) return null;
         String ua = request.getHeader("User-Agent");
-        // Truncate to avoid storing huge UA strings
         return ua != null && ua.length() > 512 ? ua.substring(0, 512) : ua;
     }
 }

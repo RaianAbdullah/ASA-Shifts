@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, PendingEmployee, ApiError } from '@/services/api';
+import { adminApi, authApi, PendingEmployee, ApiError } from '@/services/api';
 import { clearSession } from '@/services/auth';
 import colors from '@/constants/colors';
 
@@ -88,6 +88,7 @@ export default function AdminPendingScreen() {
   }, [rejectModal.employee, rejectReason, rejectMutation]);
 
   const handleSignOut = useCallback(async () => {
+    try { await authApi.logout(); } catch { /* ignore — clear session regardless */ }
     await clearSession();
     router.replace('/');
   }, []);

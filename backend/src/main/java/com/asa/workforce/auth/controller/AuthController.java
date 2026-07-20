@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/auth")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Authentication", description = "Registration, OTP verification, login, and status")
+@Tag(name = "Authentication", description = "Registration, OTP verification, login, logout, and status")
 public class AuthController {
 
     private final AuthService authService;
@@ -51,6 +51,16 @@ public class AuthController {
 
         LoginResponse data = authService.login(request, httpReq);
         return ResponseEntity.ok(ApiResponse.ok(data));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Invalidate the current JWT — adds its jti to the revocation blacklist")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestHeader("Authorization") String authHeader,
+            HttpServletRequest httpReq) {
+
+        authService.logout(authHeader, httpReq);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     @GetMapping("/status/{nationalId}")
