@@ -237,6 +237,16 @@ export interface PageResponse<T> {
   last:          boolean;
 }
 
+export interface EmployeeSummaryDto {
+  id:               string;
+  nationalId:       string;
+  firstNameAr:      string;
+  lastNameAr:       string;
+  departmentId?:    string;
+  departmentNameAr?:string;
+  role:             string;
+}
+
 export const adminApi = {
   listPending: (page = 0, size = 20) =>
     request<PageResponse<PendingEmployee>>(
@@ -255,6 +265,9 @@ export const adminApi = {
       `/v1/admin/registrations/${employeeId}/reject`,
       { method: 'PATCH', body: JSON.stringify({ reason }) }, true
     ),
+
+  listEmployees: () =>
+    request<EmployeeSummaryDto[]>('/v1/admin/employees', {}, true),
 };
 
 // ── Attendance endpoints ──────────────────────────────────────────────────────
@@ -343,7 +356,23 @@ export interface DepartmentDto {
 
 export const departmentApi = {
   listActive: () => request<DepartmentDto[]>('/v1/departments', {}, true),
+  listAll:    () => request<DepartmentDto[]>('/v1/departments/all', {}, true),
   getById:    (id: string) => request<DepartmentDto>(`/v1/departments/${id}`, {}, true),
+
+  create: (nameEn: string, nameAr: string, code: string, managerId?: string) =>
+    request<DepartmentDto>('/v1/departments', {
+      method: 'POST',
+      body: JSON.stringify({ nameEn, nameAr, code, managerId }),
+    }, true),
+
+  update: (id: string, fields: { nameEn?: string; nameAr?: string; managerId?: string; isActive?: boolean }) =>
+    request<DepartmentDto>(`/v1/departments/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(fields),
+    }, true),
+
+  deactivate: (id: string) =>
+    request<void>(`/v1/departments/${id}`, { method: 'DELETE' }, true),
 };
 
 // ── Schedule endpoints ────────────────────────────────────────────────────────
@@ -362,6 +391,26 @@ export interface ScheduleDto {
 export const scheduleApi = {
   getMySchedule:  () => request<ScheduleDto | null>('/v1/schedules/my', {}, true),
   getMyRecent:    () => request<ScheduleDto[]>('/v1/schedules/my/recent', {}, true),
+
+  // Admin — returns recent schedules across all employees (reuses /my/recent for simplicity)
+  getAdminRecent: () => request<ScheduleDto[]>('/v1/schedules/my/recent', {}, true),
+
+  create: (data: {
+    employeeId:    string;
+    weekStart:     string;
+    workDays:      string;
+    shiftStart:    string;
+    shiftEnd:      string;
+    isWeekendDuty: boolean;
+    notes?:        string;
+  }) =>
+    request<ScheduleDto>('/v1/schedules', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, true),
+
+  deleteSchedule: (id: string) =>
+    request<void>(`/v1/schedules/${id}`, { method: 'DELETE' }, true),
 };
 
 // ── Vacation endpoints ────────────────────────────────────────────────────────

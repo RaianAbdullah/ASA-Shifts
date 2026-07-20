@@ -1,6 +1,7 @@
 package com.asa.workforce.admin.service;
 
 import com.asa.workforce.admin.dto.AdminActionRequest;
+import com.asa.workforce.admin.dto.EmployeeSummaryDto;
 import com.asa.workforce.admin.dto.PendingEmployeeDto;
 import com.asa.workforce.audit.AuditService;
 import com.asa.workforce.entity.Employee;
@@ -151,6 +152,24 @@ public class AdminService {
                 .registeredAt(emp.getCreatedAt())
                 .otpVerifiedAt(emp.getUpdatedAt())
                 .build();
+    }
+
+    // ── List active employees (for admin pickers) ─────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<EmployeeSummaryDto> listActiveEmployees() {
+        return employeeRepository.findByStatusOrderByFirstNameArAsc(Status.ACTIVE)
+                .stream()
+                .map(e -> EmployeeSummaryDto.builder()
+                        .id(e.getId())
+                        .nationalId(e.getNationalId())
+                        .firstNameAr(e.getFirstNameAr())
+                        .lastNameAr(e.getLastNameAr())
+                        .departmentId(e.getDepartment() != null ? e.getDepartment().getId() : null)
+                        .departmentNameAr(e.getDepartment() != null ? e.getDepartment().getNameAr() : null)
+                        .role(e.getRole().name())
+                        .build())
+                .toList();
     }
 
     private String maskId(String id) {

@@ -323,6 +323,16 @@ export default function HomeScreen() {
           <Text style={styles.devNoticeText}>  Dev mode: geofence bypassed</Text>
         </View>
       )}
+
+      {/* Attendance history link */}
+      <TouchableOpacity
+        style={styles.historyLink}
+        onPress={() => router.push('/(tabs)/attendance-history')}
+      >
+        <Ionicons name="time-outline" size={16} color={NAVY} />
+        <Text style={styles.historyLinkText}>View Attendance History</Text>
+        <Ionicons name="chevron-forward" size={16} color={NAVY} />
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -390,4 +400,10 @@ const styles = StyleSheet.create({
   devNotice:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                  marginTop: 12, opacity: 0.6 },
   devNoticeText: { fontSize: 11, fontFamily: 'Inter_400Regular', color: AMBER },
+
+  historyLink: { flexDirection: 'row', alignItems: 'center', gap: 8,
+                 marginHorizontal: 16, marginTop: 16, marginBottom: 8,
+                 backgroundColor: 'rgba(26,35,50,0.06)', borderRadius: 12,
+                 padding: 14 },
+  historyLinkText: { flex: 1, fontSize: 14, fontFamily: 'Inter_500Medium', color: NAVY },
 });

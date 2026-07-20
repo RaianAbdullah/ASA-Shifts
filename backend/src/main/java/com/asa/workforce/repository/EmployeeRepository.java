@@ -27,4 +27,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     // Department-scoped queries (for DEPARTMENT_MANAGER access control)
     Page<Employee> findByDepartmentId(java.util.UUID departmentId, org.springframework.data.domain.Pageable pageable);
+
+    // Active employee list (for schedule assignment picker)
+    List<Employee> findByStatusOrderByFirstNameArAsc(Employee.Status status);
 }

@@ -123,7 +123,8 @@ function ClassicTabLayout() {
         }}
       />
       {/* Hidden from tab bar — navigated to via push */}
-      <Tabs.Screen name="change-password" options={{ href: null }} />
+      <Tabs.Screen name="change-password"      options={{ href: null }} />
+      <Tabs.Screen name="attendance-history"   options={{ href: null }} />
     </Tabs>
   );
 }

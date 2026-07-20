@@ -1,6 +1,7 @@
 package com.asa.workforce.admin.controller;
 
 import com.asa.workforce.admin.dto.AdminActionRequest;
+import com.asa.workforce.admin.dto.EmployeeSummaryDto;
 import com.asa.workforce.admin.dto.PendingEmployeeDto;
 import com.asa.workforce.admin.service.AdminService;
 import com.asa.workforce.common.dto.ApiResponse;
@@ -16,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -77,5 +79,14 @@ public class AdminController {
         Map<String, Object> result =
                 adminService.reject(employeeId, auth.getName(), req, request);
         return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    // ── GET /v1/admin/employees ──────────────────────────────────────────────
+
+    @GetMapping("/employees")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER','DEPARTMENT_MANAGER')")
+    @Operation(summary = "List all active employees (for admin pickers)")
+    public ResponseEntity<ApiResponse<List<EmployeeSummaryDto>>> listEmployees() {
+        return ResponseEntity.ok(ApiResponse.ok(adminService.listActiveEmployees()));
     }
 }

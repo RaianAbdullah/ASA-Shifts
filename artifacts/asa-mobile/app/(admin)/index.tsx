@@ -182,6 +182,22 @@ export default function AdminPendingScreen() {
         </View>
       </View>
 
+      {/* Quick nav row */}
+      <View style={styles.quickNav}>
+        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/departments')}>
+          <Ionicons name="business-outline" size={20} color={government.navy} />
+          <Text style={styles.quickNavText}>Departments</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/schedules')}>
+          <Ionicons name="calendar-outline" size={20} color={government.navy} />
+          <Text style={styles.quickNavText}>Schedules</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/notifications')}>
+          <Ionicons name="notifications-outline" size={20} color={government.navy} />
+          <Text style={styles.quickNavText}>Notifications</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* List */}
       {isLoading ? (
         <View style={styles.centered}>
@@ -323,6 +339,11 @@ const styles = StyleSheet.create({
   emptyTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: light.text, marginTop: 12 },
   emptySubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: light.mutedForeground, textAlign: 'center' },
   emptySubtitleAr: { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground, textAlign: 'center' },
+  quickNav:     { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12,
+                  backgroundColor: light.card, borderBottomWidth: 1, borderBottomColor: light.border },
+  quickNavBtn:  { flex: 1, alignItems: 'center', gap: 4, backgroundColor: light.background,
+                  borderRadius: 12, paddingVertical: 10, borderWidth: 1, borderColor: light.border },
+  quickNavText: { fontSize: 11, fontFamily: 'Inter_500Medium', color: government.navy },
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard:   { backgroundColor: light.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
