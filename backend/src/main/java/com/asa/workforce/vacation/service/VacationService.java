@@ -1,6 +1,7 @@
 package com.asa.workforce.vacation.service;
 
 import com.asa.workforce.entity.Employee;
+import com.asa.workforce.entity.Employee.Role;
 import com.asa.workforce.entity.VacationRequest;
 import com.asa.workforce.entity.VacationRequest.VacationStatus;
 import com.asa.workforce.repository.EmployeeRepository;
@@ -9,8 +10,6 @@ import com.asa.workforce.vacation.dto.ReviewVacationRequest;
 import com.asa.workforce.vacation.dto.SubmitVacationRequest;
 import com.asa.workforce.vacation.dto.VacationRequestDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -32,8 +31,7 @@ public class VacationService {
 
     @Transactional
     public VacationRequestDto submit(String nationalId, SubmitVacationRequest req) {
-        Employee emp = employeeRepository.findByNationalId(nationalId)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+        Employee emp = findEmployee(nationalId);
 
         if (emp.getStatus() != Employee.Status.ACTIVE) {
             throw new IllegalStateException("Only active employees can submit vacation requests");
@@ -41,8 +39,7 @@ public class VacationService {
         if (req.getStartDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Start date cannot be in the past");
         }
-        if (!req.getEndDate().isAfter(req.getStartDate()) &&
-                !req.getEndDate().equals(req.getStartDate())) {
+        if (req.getEndDate().isBefore(req.getStartDate())) {
             throw new IllegalArgumentException("End date must be on or after start date");
         }
 
@@ -51,7 +48,7 @@ public class VacationService {
                 .startDate(req.getStartDate())
                 .endDate(req.getEndDate())
                 .reason(req.getReason())
-                .status(VacationStatus.PENDING)
+                .status(VacationStatus.PENDING_DEPT_MANAGER)
                 .build();
 
         return toDto(vacationRepository.save(vr));
@@ -61,85 +58,177 @@ public class VacationService {
 
     @Transactional(readOnly = true)
     public List<VacationRequestDto> getMyRequests(String nationalId) {
-        Employee emp = employeeRepository.findByNationalId(nationalId)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+        Employee emp = findEmployee(nationalId);
         return vacationRepository.findByEmployeeIdOrderByCreatedAtDesc(emp.getId())
                 .stream().map(this::toDto).toList();
     }
 
     @Transactional
     public void cancel(String nationalId, UUID requestId) {
-        Employee emp = employeeRepository.findByNationalId(nationalId)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
-        VacationRequest vr = vacationRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+        Employee emp = findEmployee(nationalId);
+        VacationRequest vr = findRequest(requestId);
 
         if (!vr.getEmployee().getId().equals(emp.getId())) {
             throw new SecurityException("Request does not belong to this employee");
         }
-        if (vr.getStatus() != VacationStatus.PENDING) {
-            throw new IllegalStateException("Only pending requests can be cancelled");
+        if (vr.getStatus() != VacationStatus.PENDING_DEPT_MANAGER) {
+            throw new IllegalStateException(
+                    "Only requests awaiting department-manager review can be cancelled");
         }
         vr.setStatus(VacationStatus.CANCELLED);
         vacationRepository.save(vr);
     }
 
-    // ── Admin/Manager: list pending ────────────────────────────────────────────
+    // ── Manager: list pending (role-aware) ────────────────────────────────────
 
+    /**
+     * Department managers see requests at stage 1 (PENDING_DEPT_MANAGER) for
+     * their own department only.
+     * Main managers and system admins see requests at stage 2 (PENDING_MAIN_MANAGER).
+     */
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER')")
     @Transactional(readOnly = true)
-    public List<VacationRequestDto> getPending() {
-        return vacationRepository.findByStatusOrderByCreatedAtAsc(VacationStatus.PENDING)
+    public List<VacationRequestDto> getPending(String reviewerNationalId) {
+        Employee reviewer = findEmployee(reviewerNationalId);
+
+        if (reviewer.getRole() == Role.DEPARTMENT_MANAGER) {
+            if (reviewer.getDepartment() == null) {
+                return List.of();
+            }
+            return vacationRepository
+                    .findByStatusAndEmployeeDepartmentIdOrderByCreatedAtAsc(
+                            VacationStatus.PENDING_DEPT_MANAGER,
+                            reviewer.getDepartment().getId())
+                    .stream().map(this::toDto).toList();
+        }
+
+        // MAIN_MANAGER / SYSTEM_ADMIN — see stage-2 queue
+        return vacationRepository
+                .findByStatusOrderByCreatedAtAsc(VacationStatus.PENDING_MAIN_MANAGER)
                 .stream().map(this::toDto).toList();
     }
 
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER')")
     @Transactional(readOnly = true)
-    public List<VacationRequestDto> getAll() {
-        return vacationRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+    public List<VacationRequestDto> getAll(String reviewerNationalId) {
+        Employee reviewer = findEmployee(reviewerNationalId);
+
+        if (reviewer.getRole() == Role.DEPARTMENT_MANAGER) {
+            if (reviewer.getDepartment() == null) return List.of();
+            // Dept manager sees only their department's requests
+            UUID deptId = reviewer.getDepartment().getId();
+            return vacationRepository
+                    .findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                    .stream()
+                    .filter(vr -> vr.getEmployee().getDepartment() != null
+                            && vr.getEmployee().getDepartment().getId().equals(deptId))
+                    .map(this::toDto)
+                    .toList();
+        }
+
+        // MAIN_MANAGER / SYSTEM_ADMIN see everything
+        return vacationRepository
+                .findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
                 .stream().map(this::toDto).toList();
     }
 
-    // ── Admin/Manager: approve / reject ────────────────────────────────────────
+    // ── Manager: approve (role-aware, two-stage) ──────────────────────────────
 
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER')")
     @Transactional
     public VacationRequestDto approve(String reviewerNationalId, UUID requestId, ReviewVacationRequest body) {
-        return review(reviewerNationalId, requestId, VacationStatus.APPROVED, body.getNotes());
+        Employee reviewer = findEmployee(reviewerNationalId);
+        VacationRequest vr = findRequest(requestId);
+
+        if (reviewer.getRole() == Role.DEPARTMENT_MANAGER) {
+            // Stage 1: dept manager approves → advances to stage 2
+            requireStatus(vr, VacationStatus.PENDING_DEPT_MANAGER);
+            requireSameDepartment(reviewer, vr);
+
+            vr.setDeptReviewedBy(reviewer);
+            vr.setDeptReviewedAt(OffsetDateTime.now());
+            vr.setDeptReviewNotes(body.getNotes());
+            vr.setStatus(VacationStatus.PENDING_MAIN_MANAGER);
+
+        } else {
+            // Stage 2: main manager / admin gives final approval
+            requireStatus(vr, VacationStatus.PENDING_MAIN_MANAGER);
+
+            vr.setReviewedBy(reviewer);
+            vr.setReviewedAt(OffsetDateTime.now());
+            vr.setReviewNotes(body.getNotes());
+            vr.setStatus(VacationStatus.APPROVED);
+        }
+
+        return toDto(vacationRepository.save(vr));
     }
+
+    // ── Manager: reject (role-aware, either stage) ────────────────────────────
 
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER')")
     @Transactional
     public VacationRequestDto reject(String reviewerNationalId, UUID requestId, ReviewVacationRequest body) {
-        return review(reviewerNationalId, requestId, VacationStatus.REJECTED, body.getNotes());
-    }
+        Employee reviewer = findEmployee(reviewerNationalId);
+        VacationRequest vr = findRequest(requestId);
 
-    private VacationRequestDto review(String reviewerNationalId, UUID requestId,
-                                      VacationStatus decision, String notes) {
-        Employee reviewer = employeeRepository.findByNationalId(reviewerNationalId)
-                .orElseThrow(() -> new IllegalArgumentException("Reviewer not found"));
-        VacationRequest vr = vacationRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+        if (reviewer.getRole() == Role.DEPARTMENT_MANAGER) {
+            requireStatus(vr, VacationStatus.PENDING_DEPT_MANAGER);
+            requireSameDepartment(reviewer, vr);
 
-        if (vr.getStatus() != VacationStatus.PENDING) {
-            throw new IllegalStateException("Only pending requests can be reviewed");
+            vr.setDeptReviewedBy(reviewer);
+            vr.setDeptReviewedAt(OffsetDateTime.now());
+            vr.setDeptReviewNotes(body.getNotes());
+
+        } else {
+            requireStatus(vr, VacationStatus.PENDING_MAIN_MANAGER);
+
+            vr.setReviewedBy(reviewer);
+            vr.setReviewedAt(OffsetDateTime.now());
+            vr.setReviewNotes(body.getNotes());
         }
 
-        vr.setStatus(decision);
-        vr.setReviewedBy(reviewer);
-        vr.setReviewedAt(OffsetDateTime.now());
-        vr.setReviewNotes(notes);
+        vr.setStatus(VacationStatus.REJECTED);
         return toDto(vacationRepository.save(vr));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private Employee findEmployee(String nationalId) {
+        return employeeRepository.findByNationalId(nationalId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+    }
+
+    private VacationRequest findRequest(UUID requestId) {
+        return vacationRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+    }
+
+    private void requireStatus(VacationRequest vr, VacationStatus expected) {
+        if (vr.getStatus() != expected) {
+            throw new IllegalStateException(
+                    "Request is not in the expected state. Current: " + vr.getStatus()
+                            + ", expected: " + expected);
+        }
+    }
+
+    private void requireSameDepartment(Employee reviewer, VacationRequest vr) {
+        if (reviewer.getDepartment() == null
+                || vr.getEmployee().getDepartment() == null
+                || !reviewer.getDepartment().getId()
+                        .equals(vr.getEmployee().getDepartment().getId())) {
+            throw new SecurityException(
+                    "Department manager can only review requests from their own department");
+        }
     }
 
     // ── DTO mapping ───────────────────────────────────────────────────────────
 
     private VacationRequestDto toDto(VacationRequest vr) {
-        Employee emp  = vr.getEmployee();
-        Employee dept_emp = emp;  // same entity — read lazily
-        String deptNameAr = (emp.getDepartment() != null) ? emp.getDepartment().getNameAr() : null;
-        Employee reviewer = vr.getReviewedBy();
+        Employee emp      = vr.getEmployee();
+        Employee deptRev  = vr.getDeptReviewedBy();
+        Employee finalRev = vr.getReviewedBy();
 
+        String deptNameAr = (emp.getDepartment() != null) ? emp.getDepartment().getNameAr() : null;
         int totalDays = (int) (vr.getEndDate().toEpochDay() - vr.getStartDate().toEpochDay() + 1);
 
         return VacationRequestDto.builder()
@@ -152,8 +241,14 @@ public class VacationService {
                 .totalDays(totalDays)
                 .reason(vr.getReason())
                 .status(vr.getStatus().name())
-                .reviewerNameAr(reviewer != null
-                        ? reviewer.getFirstNameAr() + " " + reviewer.getLastNameAr() : null)
+                // Stage 1
+                .deptReviewerNameAr(deptRev != null
+                        ? deptRev.getFirstNameAr() + " " + deptRev.getLastNameAr() : null)
+                .deptReviewedAt(vr.getDeptReviewedAt())
+                .deptReviewNotes(vr.getDeptReviewNotes())
+                // Stage 2
+                .reviewerNameAr(finalRev != null
+                        ? finalRev.getFirstNameAr() + " " + finalRev.getLastNameAr() : null)
                 .reviewedAt(vr.getReviewedAt())
                 .reviewNotes(vr.getReviewNotes())
                 .createdAt(vr.getCreatedAt())

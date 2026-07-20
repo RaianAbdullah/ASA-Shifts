@@ -1,6 +1,11 @@
 /**
- * Admin — Vacation Request Management
- * Approve or reject pending vacation requests.
+ * Admin/Manager — Vacation Request Management
+ *
+ * Two-stage approval chain:
+ *   - DEPARTMENT_MANAGER sees PENDING_DEPT_MANAGER requests for their dept.
+ *     Approve → advances to PENDING_MAIN_MANAGER. Reject → REJECTED.
+ *   - MAIN_MANAGER / SYSTEM_ADMIN sees PENDING_MAIN_MANAGER requests.
+ *     Approve → APPROVED. Reject → REJECTED.
  */
 import React, { useState } from 'react';
 import {
@@ -19,10 +24,25 @@ const GRAY   = '#6B7280';
 const BG     = '#F8F9FA';
 const CARD   = '#FFFFFF';
 const GREEN  = '#10B981';
+const BLUE   = '#3B82F6';
 const RED    = '#EF4444';
 const BORDER = '#E5E7EB';
 
 type TabKey = 'pending' | 'all';
+
+const STATUS_META: Record<string, { bg: string; text: string; label: string }> = {
+  PENDING_DEPT_MANAGER:  { bg: '#FEF3C7', text: '#92400E', label: 'Awaiting Dept. Manager' },
+  PENDING_MAIN_MANAGER:  { bg: '#DBEAFE', text: '#1E40AF', label: 'Awaiting Main Manager' },
+  APPROVED:              { bg: '#D1FAE5', text: '#065F46', label: 'Approved' },
+  REJECTED:              { bg: '#FEE2E2', text: '#991B1B', label: 'Rejected' },
+  CANCELLED:             { bg: '#F3F4F6', text: '#6B7280', label: 'Cancelled' },
+};
+
+function stageBadgeColor(status: string) {
+  if (status === 'PENDING_DEPT_MANAGER') return { bg: '#FEF3C7', text: '#92400E' };
+  if (status === 'PENDING_MAIN_MANAGER') return { bg: '#DBEAFE', text: '#1E40AF' };
+  return { bg: '#F3F4F6', text: GRAY };
+}
 
 export default function AdminVacationsScreen() {
   const qc = useQueryClient();
@@ -61,10 +81,16 @@ export default function AdminVacationsScreen() {
     onError: (err) => Alert.alert('Error', err instanceof ApiError ? err.message : 'Failed to reject'),
   });
 
+  const approveLabel = (status: string) =>
+    status === 'PENDING_DEPT_MANAGER' ? '✓ Forward to Manager' : '✓ Final Approve';
+
   const confirmApprove = (req: VacationRequestDto) => {
+    const action = req.status === 'PENDING_DEPT_MANAGER'
+      ? 'forward this request to the main manager'
+      : 'give final approval for this vacation';
     Alert.alert(
       'Approve Vacation',
-      `Approve ${req.totalDays}-day vacation for ${req.employeeNameAr}?\n${req.startDate} → ${req.endDate}`,
+      `${req.employeeNameAr} · ${req.totalDays} day(s)\n${req.startDate} → ${req.endDate}\n\nThis will ${action}.`,
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Approve', onPress: () => approveMutation.mutate({ id: req.id, note: notes[req.id] }) },
@@ -84,13 +110,18 @@ export default function AdminVacationsScreen() {
     );
   };
 
-  const displayList  = tab === 'pending' ? pending : all;
-  const isLoading    = tab === 'pending' ? loadingPending : loadingAll;
-  const isFetching   = tab === 'pending' ? fetchingPending : fetchingAll;
-  const doRefetch    = tab === 'pending' ? refetchPending : refetchAll;
+  const displayList = tab === 'pending' ? pending : all;
+  const isLoading   = tab === 'pending' ? loadingPending : loadingAll;
+  const isFetching  = tab === 'pending' ? fetchingPending : fetchingAll;
+  const doRefetch   = tab === 'pending' ? refetchPending : refetchAll;
+
+  const isActionable = (req: VacationRequestDto) =>
+    req.status === 'PENDING_DEPT_MANAGER' || req.status === 'PENDING_MAIN_MANAGER';
 
   const renderCard = (req: VacationRequestDto) => {
-    const isPending = req.status === 'PENDING';
+    const meta = STATUS_META[req.status] ?? { bg: '#F3F4F6', text: GRAY, label: req.status };
+    const actionable = isActionable(req);
+
     return (
       <View key={req.id} style={styles.card}>
         <View style={styles.cardHeader}>
@@ -100,10 +131,8 @@ export default function AdminVacationsScreen() {
               <Text style={styles.deptName}>{req.departmentNameAr}</Text>
             )}
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: isPending ? '#FEF3C7' : '#F3F4F6' }]}>
-            <Text style={[styles.statusText, { color: isPending ? '#92400E' : GRAY }]}>
-              {req.status}
-            </Text>
+          <View style={[styles.statusBadge, { backgroundColor: meta.bg }]}>
+            <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
           </View>
         </View>
 
@@ -114,7 +143,15 @@ export default function AdminVacationsScreen() {
 
         {req.reason && <Text style={styles.reason}>"{req.reason}"</Text>}
 
-        {isPending && (
+        {/* Stage 1 review trail */}
+        {req.deptReviewedAt && (
+          <Text style={styles.reviewMeta}>
+            🏢 Dept. Manager: {req.deptReviewerNameAr ?? '—'}
+            {req.deptReviewNotes ? ` · "${req.deptReviewNotes}"` : ''}
+          </Text>
+        )}
+
+        {actionable && (
           <>
             <TextInput
               style={styles.noteInput}
@@ -133,19 +170,20 @@ export default function AdminVacationsScreen() {
                 <Text style={styles.rejectBtnText}>✕ Reject</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.approveBtn}
+                style={[styles.approveBtn,
+                  req.status === 'PENDING_MAIN_MANAGER' && { backgroundColor: GREEN }]}
                 onPress={() => confirmApprove(req)}
                 disabled={approveMutation.isPending}
               >
-                <Text style={styles.approveBtnText}>✓ Approve</Text>
+                <Text style={styles.approveBtnText}>{approveLabel(req.status)}</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
 
-        {!isPending && req.reviewedAt && (
+        {!actionable && req.reviewedAt && (
           <Text style={styles.reviewMeta}>
-            Reviewed by {req.reviewerNameAr ?? 'admin'} · {new Date(req.reviewedAt).toLocaleDateString()}
+            ✅ Final: {req.reviewerNameAr ?? 'manager'} · {new Date(req.reviewedAt).toLocaleDateString()}
             {req.reviewNotes ? `\n"${req.reviewNotes}"` : ''}
           </Text>
         )}
@@ -160,7 +198,7 @@ export default function AdminVacationsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.title}>Vacation Requests</Text>
           <Text style={styles.titleAr}>طلبات الإجازة</Text>
         </View>
@@ -218,7 +256,7 @@ const styles = StyleSheet.create({
   title:        { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY },
   titleAr:      { fontSize: 13, color: GRAY },
   badge:        { backgroundColor: RED, borderRadius: 12, paddingHorizontal: 8,
-                  paddingVertical: 3, marginLeft: 'auto' },
+                  paddingVertical: 3 },
   badgeText:    { color: '#FFF', fontFamily: 'Inter_700Bold', fontSize: 13 },
 
   tabs:         { flexDirection: 'row', backgroundColor: CARD,
@@ -248,7 +286,7 @@ const styles = StyleSheet.create({
   rejectBtn:    { flex: 1, borderWidth: 1, borderColor: RED, borderRadius: 10,
                   padding: 12, alignItems: 'center' },
   rejectBtnText:{ color: RED, fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  approveBtn:   { flex: 1, backgroundColor: GREEN, borderRadius: 10, padding: 12, alignItems: 'center' },
+  approveBtn:   { flex: 1, backgroundColor: BLUE, borderRadius: 10, padding: 12, alignItems: 'center' },
   approveBtnText:{ color: '#FFF', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   reviewMeta:   { fontSize: 12, color: GRAY, marginTop: 8, lineHeight: 18 },
 

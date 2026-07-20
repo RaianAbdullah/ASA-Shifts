@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, Alert, ActivityIndicator, RefreshControl, Platform,
+  TextInput, Alert, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -20,11 +20,12 @@ const GREEN  = '#10B981';
 const RED    = '#EF4444';
 const BORDER = '#E5E7EB';
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  PENDING:   { bg: '#FEF3C7', text: '#92400E', label: 'Pending Review' },
-  APPROVED:  { bg: '#D1FAE5', text: '#065F46', label: 'Approved' },
-  REJECTED:  { bg: '#FEE2E2', text: '#991B1B', label: 'Rejected' },
-  CANCELLED: { bg: '#F3F4F6', text: '#6B7280', label: 'Cancelled' },
+const STATUS_META: Record<string, { bg: string; text: string; label: string }> = {
+  PENDING_DEPT_MANAGER:  { bg: '#FEF3C7', text: '#92400E', label: 'Awaiting Dept. Manager' },
+  PENDING_MAIN_MANAGER:  { bg: '#DBEAFE', text: '#1E40AF', label: 'Awaiting Manager Approval' },
+  APPROVED:              { bg: '#D1FAE5', text: '#065F46', label: 'Approved' },
+  REJECTED:              { bg: '#FEE2E2', text: '#991B1B', label: 'Rejected' },
+  CANCELLED:             { bg: '#F3F4F6', text: '#6B7280', label: 'Cancelled' },
 };
 
 function RequestCard({
@@ -34,28 +35,42 @@ function RequestCard({
   req: VacationRequestDto;
   onCancel: (id: string) => void;
 }) {
-  const { bg, text, label } = STATUS_COLORS[req.status] ?? STATUS_COLORS.PENDING;
+  const meta = STATUS_META[req.status] ?? STATUS_META.PENDING_DEPT_MANAGER;
+  const canCancel = req.status === 'PENDING_DEPT_MANAGER';
+
   return (
     <View style={styles.requestCard}>
       <View style={styles.requestHeader}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.requestDates}>
             {req.startDate} → {req.endDate}
           </Text>
           <Text style={styles.requestDays}>{req.totalDays} day{req.totalDays !== 1 ? 's' : ''}</Text>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: bg }]}>
-          <Text style={[styles.statusText, { color: text }]}>{label}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: meta.bg }]}>
+          <Text style={[styles.statusText, { color: meta.text }]}>{meta.label}</Text>
         </View>
       </View>
+
       {req.reason ? <Text style={styles.requestReason}>{req.reason}</Text> : null}
+
+      {/* Stage 1 notes */}
+      {req.deptReviewNotes ? (
+        <Text style={styles.reviewNotes}>
+          🏢 {req.deptReviewNotes}
+          {req.deptReviewerNameAr ? ` — ${req.deptReviewerNameAr}` : ''}
+        </Text>
+      ) : null}
+
+      {/* Stage 2 notes */}
       {req.reviewNotes ? (
         <Text style={styles.reviewNotes}>
           💬 {req.reviewNotes}
           {req.reviewerNameAr ? ` — ${req.reviewerNameAr}` : ''}
         </Text>
       ) : null}
-      {req.status === 'PENDING' && (
+
+      {canCancel && (
         <TouchableOpacity
           style={styles.cancelBtn}
           onPress={() => onCancel(req.id)}
@@ -91,7 +106,7 @@ export default function VacationsScreen() {
       qc.invalidateQueries({ queryKey: ['my-vacations'] });
       setShowForm(false);
       setStartDate(''); setEndDate(''); setReason(''); setFormError('');
-      Alert.alert('Submitted', 'Your vacation request has been submitted for review.');
+      Alert.alert('Submitted', 'Your vacation request has been sent to your department manager for review.');
     },
     onError: (err) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -128,7 +143,8 @@ export default function VacationsScreen() {
     submitMutation.mutate();
   };
 
-  const pending  = requests.filter(r => r.status === 'PENDING');
+  const pending  = requests.filter(r =>
+    r.status === 'PENDING_DEPT_MANAGER' || r.status === 'PENDING_MAIN_MANAGER');
   const approved = requests.filter(r => r.status === 'APPROVED');
   const past     = requests.filter(r => r.status === 'REJECTED' || r.status === 'CANCELLED');
 
@@ -199,10 +215,8 @@ export default function VacationsScreen() {
           </View>
         )}
 
-        {/* Loading */}
         {isLoading && <ActivityIndicator color={NAVY} style={{ marginTop: 40 }} />}
 
-        {/* Pending */}
         {pending.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Pending ({pending.length})</Text>
@@ -212,7 +226,6 @@ export default function VacationsScreen() {
           </>
         )}
 
-        {/* Approved */}
         {approved.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Approved</Text>
@@ -222,7 +235,6 @@ export default function VacationsScreen() {
           </>
         )}
 
-        {/* Past */}
         {past.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Past Requests</Text>
@@ -274,8 +286,8 @@ const styles = StyleSheet.create({
   requestHeader:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
   requestDates: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: NAVY },
   requestDays:  { fontSize: 13, color: GRAY, marginTop: 2 },
-  statusBadge:  { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  statusText:   { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  statusBadge:  { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 160 },
+  statusText:   { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
   requestReason:{ fontSize: 14, color: GRAY, lineHeight: 20, marginBottom: 8 },
   reviewNotes:  { fontSize: 13, color: GRAY, backgroundColor: '#F9FAFB', borderRadius: 8,
                   padding: 10, marginBottom: 8 },

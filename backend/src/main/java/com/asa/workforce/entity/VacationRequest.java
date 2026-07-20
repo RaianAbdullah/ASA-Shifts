@@ -36,9 +36,23 @@ public class VacationRequest {
     private String reason;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30)
     @Builder.Default
-    private VacationStatus status = VacationStatus.PENDING;
+    private VacationStatus status = VacationStatus.PENDING_DEPT_MANAGER;
+
+    // ── Department-manager review (stage 1) ──────────────────────────────────
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dept_reviewed_by")
+    private Employee deptReviewedBy;
+
+    @Column(name = "dept_reviewed_at")
+    private OffsetDateTime deptReviewedAt;
+
+    @Column(name = "dept_review_notes", columnDefinition = "TEXT")
+    private String deptReviewNotes;
+
+    // ── Main-manager / final review (stage 2) ────────────────────────────────
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by")
@@ -59,6 +73,15 @@ public class VacationRequest {
     private OffsetDateTime updatedAt;
 
     public enum VacationStatus {
-        PENDING, APPROVED, REJECTED, CANCELLED
+        /** Waiting for the employee's department manager to review */
+        PENDING_DEPT_MANAGER,
+        /** Department manager approved — waiting for main manager/admin */
+        PENDING_MAIN_MANAGER,
+        /** Final approval granted */
+        APPROVED,
+        /** Rejected at any stage */
+        REJECTED,
+        /** Cancelled by the employee */
+        CANCELLED
     }
 }

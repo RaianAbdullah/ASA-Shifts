@@ -375,7 +375,12 @@ export interface VacationRequestDto {
   endDate:          string;
   totalDays:        number;
   reason?:          string;
-  status:           'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  status:           'PENDING_DEPT_MANAGER' | 'PENDING_MAIN_MANAGER' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  // Stage 1 — department manager review
+  deptReviewerNameAr?: string;
+  deptReviewedAt?:     string;
+  deptReviewNotes?:    string;
+  // Stage 2 — main manager final review
   reviewerNameAr?:  string;
   reviewedAt?:      string;
   reviewNotes?:     string;
@@ -398,6 +403,9 @@ export const vacationApi = {
   // Admin/Manager
   getPending: () =>
     request<VacationRequestDto[]>('/v1/vacations/pending', {}, true),
+
+  getAll: () =>
+    request<VacationRequestDto[]>('/v1/vacations/all', {}, true),
 
   approve: (id: string, notes?: string) =>
     request<VacationRequestDto>(`/v1/vacations/${id}/approve`, {
