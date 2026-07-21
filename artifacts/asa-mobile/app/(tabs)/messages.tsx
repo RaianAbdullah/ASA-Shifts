@@ -311,9 +311,9 @@ const styles = StyleSheet.create({
 
   // Header
   header:     { paddingHorizontal: 20, paddingBottom: 16,
-                flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  headerTitle:{ fontSize: 20, fontFamily: 'Inter_700Bold', color: '#fff' },
-  headerSub:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+                flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-end' },
+  headerTitle:{ fontSize: 20, fontFamily: 'Inter_700Bold', color: '#fff', textAlign: 'right' },
+  headerSub:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)', marginTop: 2, textAlign: 'right' },
   refreshBtn: { padding: 6 },
 
   // List
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
 
   // Input bar
   inputBar: { backgroundColor: WHITE, borderTopWidth: 1, borderTopColor: BORDER },
-  inputWrap: { flexDirection: 'row', alignItems: 'flex-end', gap: 8,
+  inputWrap: { flexDirection: 'row-reverse', alignItems: 'flex-end', gap: 8,
                paddingHorizontal: 12, paddingVertical: 10 },
   input:     { flex: 1, backgroundColor: CREAM, borderRadius: 22,
                borderWidth: 1, borderColor: BORDER,

@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
 
   // Header
   screenHeader:   { paddingHorizontal: 20, paddingBottom: 20,
-                    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+                    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-end' },
   screenTitle:    { fontSize: 26, fontFamily: 'Inter_700Bold', color: '#FFFFFF', textAlign: 'right' },
   screenSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: 2, textAlign: 'right' },
 

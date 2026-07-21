@@ -28,6 +28,13 @@ const MUTED       = light.mutedForeground; // "#6B7A72"
 const BORDER      = light.border;        // "#E4EBE7"
 
 const MANAGEMENT_ROLES = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER', 'WEEKEND_MANAGER'];
+const ROLE_LABELS: Record<string, string> = {
+  SYSTEM_ADMIN:        'مدير النظام',
+  MAIN_MANAGER:        'المدير العام',
+  DEPARTMENT_MANAGER:  'مدير القسم',
+  WEEKEND_MANAGER:     'مدير عطلة نهاية الأسبوع',
+  EMPLOYEE:            'موظف',
+};
 
 export default function ProfileScreen() {
   const qc           = useQueryClient();
@@ -117,14 +124,14 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.root} edges={['bottom']}>
       <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
 
-      {/* Header — navyDark bg, large gold avatar, white name */}
+      {/* Header — navyDark bg, large gold avatar, white name — RTL: avatar RIGHT */}
       <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+          <Text style={styles.userName} numberOfLines={2}>{userName ?? '—'}</Text>
+          <Text style={styles.userRole}>{ROLE_LABELS[userRole ?? ''] ?? userRole ?? ''}</Text>
+        </View>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{userName?.[0] ?? '?'}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.userName} numberOfLines={2}>{userName ?? '—'}</Text>
-          <Text style={styles.userRole}>{userRole ?? ''}</Text>
         </View>
       </View>
 
@@ -146,7 +153,7 @@ export default function ProfileScreen() {
                 <Text style={styles.adminTitle}>{t('adminPanel')}</Text>
                 <Text style={styles.adminSub}>{t('adminPanelDesc')}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={GOLD} />
+              <Ionicons name="chevron-back" size={18} color={GOLD} />
             </TouchableOpacity>
           </View>
         )}
@@ -246,7 +253,7 @@ function RowItem({
         <Text style={styles.rowTitle}>{title}</Text>
         <Text style={styles.rowSub}>{subtitle}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={MUTED} />
+      <Ionicons name="chevron-back" size={18} color={MUTED} />
     </TouchableOpacity>
   );
 }
@@ -257,7 +264,7 @@ const styles = StyleSheet.create({
   scroll:     { padding: 16, paddingBottom: 60 },
 
   // Header — navyDark bg, large gold avatar, white name
-  header:     { flexDirection: 'row', alignItems: 'center', gap: 16,
+  header:     { flexDirection: 'row-reverse', alignItems: 'center', gap: 16,
                 backgroundColor: GREEN_DARK, paddingHorizontal: 20,
                 paddingBottom: 24 },
   avatar:     { width: 64, height: 64, borderRadius: 99, backgroundColor: GOLD,
@@ -273,9 +280,9 @@ const styles = StyleSheet.create({
                 shadowOpacity: 0.10, shadowRadius: 16, elevation: 4 },
   sectionTitle: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: MUTED,
                   letterSpacing: 0.8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8,
-                  textTransform: 'uppercase' },
+                  textTransform: 'uppercase', textAlign: 'right' },
 
-  adminRow:   { flexDirection: 'row', alignItems: 'center', padding: 16,
+  adminRow:   { flexDirection: 'row-reverse', alignItems: 'center', padding: 16,
                 backgroundColor: GREEN_MID + '10', gap: 12,
                 borderTopWidth: 1, borderTopColor: BORDER },
   adminIcon:  { width: 42, height: 42, borderRadius: 12, backgroundColor: GREEN_MID + '18',
@@ -283,13 +290,13 @@ const styles = StyleSheet.create({
   adminTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: TEXT },
   adminSub:   { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 2 },
 
-  row:        { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
+  row:        { flexDirection: 'row-reverse', alignItems: 'center', padding: 16, gap: 12,
                 borderTopWidth: 1, borderTopColor: BORDER },
-  rowIconLeft: { marginRight: 2 },
-  rowTitle:   { fontSize: 15, fontFamily: 'Inter_500Medium', color: TEXT },
-  rowSub:     { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 2 },
+  rowIconLeft: { marginLeft: 2 },
+  rowTitle:   { fontSize: 15, fontFamily: 'Inter_500Medium', color: TEXT, textAlign: 'right' },
+  rowSub:     { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 2, textAlign: 'right' },
 
-  langRow:    { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
+  langRow:    { flexDirection: 'row-reverse', alignItems: 'center', padding: 16, gap: 12,
                 borderTopWidth: 1, borderTopColor: BORDER },
   // Language toggle: green active pill
   langBadge:  { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
@@ -301,7 +308,7 @@ const styles = StyleSheet.create({
 
   emptyText:  { textAlign: 'center', color: MUTED, padding: 16, fontSize: 14 },
 
-  sessionCard: { flexDirection: 'row', alignItems: 'center', padding: 14,
+  sessionCard: { flexDirection: 'row-reverse', alignItems: 'center', padding: 14,
                  borderTopWidth: 1, borderTopColor: BORDER },
   sessionDevice: { fontSize: 14, color: TEXT, fontFamily: 'Inter_500Medium', marginBottom: 3 },
   sessionDate:   { fontSize: 12, color: MUTED },

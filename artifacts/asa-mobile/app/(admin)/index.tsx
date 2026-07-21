@@ -205,29 +205,31 @@ export default function AdminPendingScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
 
-      {/* ── Header ── */}
+      {/* ── Header — RTL: icons LEFT, name+avatar RIGHT ── */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.headerLeft}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{session?.nameAr?.[0] ?? '?'}</Text>
-          </View>
-          <View>
-            <Text style={styles.headerRole}>لوحة الإدارة</Text>
-            <Text style={styles.headerName}>{session?.nameAr ?? '...'}</Text>
-          </View>
-        </View>
+        {/* Actions on LEFT */}
         <View style={styles.headerRight}>
+          <TouchableOpacity testID="btn-sign-out" onPress={handleSignOut} style={styles.iconBtn}>
+            <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.75)" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.iconBtn}>
+            <Ionicons name="person-outline" size={22} color={GOLD} />
+          </TouchableOpacity>
           {pending.length > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{pending.length}</Text>
             </View>
           )}
-          <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.iconBtn}>
-            <Ionicons name="person-outline" size={22} color={GOLD} />
-          </TouchableOpacity>
-          <TouchableOpacity testID="btn-sign-out" onPress={handleSignOut} style={styles.iconBtn}>
-            <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.75)" />
-          </TouchableOpacity>
+        </View>
+        {/* Name + avatar on RIGHT */}
+        <View style={styles.headerLeft}>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.headerRole}>لوحة الإدارة</Text>
+            <Text style={styles.headerName}>{session?.nameAr ?? '...'}</Text>
+          </View>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{session?.nameAr?.[0] ?? '?'}</Text>
+          </View>
         </View>
       </View>
 
