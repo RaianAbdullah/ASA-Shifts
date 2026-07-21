@@ -142,7 +142,7 @@ export default function HomeScreen() {
   // Dates
   const now = new Date();
   const hijriDate = now.toLocaleDateString('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' });
-  const miladiDate = now.toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', year: 'numeric' });
+  const miladiDate = now.toLocaleDateString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' });
 
   // Role label
   const roleLabel: Record<string, string> = {
@@ -418,9 +418,9 @@ const styles = StyleSheet.create({
   avatar:     { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
                 shadowColor: GOLD, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 14, elevation: 6 },
   avatarText: { fontSize: 22, fontFamily: 'Inter_700Bold', color: GREEN_DARK },
-  greeting:   { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)', marginBottom: 3, letterSpacing: 0.3 },
-  name:       { fontSize: 18, fontFamily: 'Inter_700Bold', color: WHITE, letterSpacing: -0.3 },
-  roleBadge:  { fontSize: 11, fontFamily: 'Inter_500Medium', color: GOLD, marginTop: 3 },
+  greeting:   { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)', marginBottom: 3, letterSpacing: 0.3, textAlign: 'right' },
+  name:       { fontSize: 18, fontFamily: 'Inter_700Bold', color: WHITE, letterSpacing: -0.3, textAlign: 'right' },
+  roleBadge:  { fontSize: 11, fontFamily: 'Inter_500Medium', color: GOLD, marginTop: 3, textAlign: 'right' },
 
   // Date strip
   dateStrip:  { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.10)',

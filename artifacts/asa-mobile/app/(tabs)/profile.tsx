@@ -6,7 +6,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   Alert, ActivityIndicator, StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -31,6 +31,7 @@ const MANAGEMENT_ROLES = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER', 
 
 export default function ProfileScreen() {
   const qc           = useQueryClient();
+  const insets       = useSafeAreaInsets();
   const { t, locale, setLocale } = useLanguage();
   const [userRole, setUserRole] = React.useState<string | null>(null);
   const [userName, setUserName] = React.useState<string | null>(null);
@@ -117,12 +118,12 @@ export default function ProfileScreen() {
       <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
 
       {/* Header — navyDark bg, large gold avatar, white name */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{userName?.[0] ?? '?'}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.userName}>{userName ?? '—'}</Text>
+          <Text style={styles.userName} numberOfLines={2}>{userName ?? '—'}</Text>
           <Text style={styles.userRole}>{userRole ?? ''}</Text>
         </View>
       </View>
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
   // Header — navyDark bg, large gold avatar, white name
   header:     { flexDirection: 'row', alignItems: 'center', gap: 16,
                 backgroundColor: GREEN_DARK, paddingHorizontal: 20,
-                paddingTop: 16, paddingBottom: 24 },
+                paddingBottom: 24 },
   avatar:     { width: 64, height: 64, borderRadius: 99, backgroundColor: GOLD,
                 alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 26, fontFamily: 'Inter_700Bold', color: '#fff' },
