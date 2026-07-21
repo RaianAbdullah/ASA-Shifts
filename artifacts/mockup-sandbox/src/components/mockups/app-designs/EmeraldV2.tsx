@@ -247,7 +247,7 @@ export function EmeraldV2() {
         <div style={{ display:"flex", gap:10 }}>
           {[
             { icon:"📊", label:"سجل الحضور", bg:"#F0FDF7", border:"#A7F3D0", color:GREEN_MID },
-            { icon:"🌴", label:"إجازاتي",    bg:"#FFFBEB", border:"#FDE68A", color:"#92400E" },
+            { icon:"✈️", label:"إجازاتي",    bg:"#FFFBEB", border:"#FDE68A", color:"#92400E" },
             { icon:"📢", label:"الإعلانات",  bg:"#EFF6FF", border:"#BFDBFE", color:"#1E40AF" },
           ].map(item => (
             <div key={item.label} style={{
@@ -263,33 +263,6 @@ export function EmeraldV2() {
               <div style={{ fontSize:11, color:item.color, fontWeight:600 }}>{item.label}</div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* ── Monthly summary strip ───────────────────────── */}
-      <div style={{ padding:"12px 16px 0", flexShrink:0 }}>
-        <div style={{
-          background:WHITE,
-          borderRadius:16,
-          padding:"14px 18px",
-          border:`1px solid ${BORDER}`,
-          display:"flex",
-          justifyContent:"space-between",
-          alignItems:"center",
-        }}>
-          <span style={{ fontSize:12, color:MUTED, fontWeight:600 }}>ملخص يوليو</span>
-          <div style={{ display:"flex", gap:20 }}>
-            {[
-              { label:"حضور", value:"18", color:GREEN_MID },
-              { label:"غياب", value:"1",  color:"#EF4444" },
-              { label:"إجازة", value:"2", color:GOLD },
-            ].map(s => (
-              <div key={s.label} style={{ textAlign:"center" }}>
-                <div style={{ fontSize:16, fontWeight:800, color:s.color }}>{s.value}</div>
-                <div style={{ fontSize:10, color:MUTED, marginTop:2 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
