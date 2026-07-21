@@ -62,6 +62,22 @@ public class AttendanceService {
             throw new IllegalStateException("You have already checked in today.");
         }
 
+        // Fetch schedule once — used for both the shift-window guard and LATE/PRESENT calculation
+        Optional<WeeklySchedule> scheduleOpt = scheduleRepository
+                .findCurrentForEmployee(emp.getId(), today, today.minusDays(7));
+
+        // Enforce shift-start window: check-in opens 30 minutes before shift
+        if (scheduleOpt.isPresent()) {
+            LocalTime nowUtc   = LocalTime.now(ZoneOffset.UTC);
+            LocalTime earliest = scheduleOpt.get().getShiftStart().minusMinutes(30);
+            if (nowUtc.isBefore(earliest)) {
+                String starts = scheduleOpt.get().getShiftStart().toString().substring(0, 5);
+                throw new IllegalStateException(
+                    "Check-in is not available yet. Your shift starts at " + starts +
+                    ". Check-in opens 30 minutes before your shift.");
+            }
+        }
+
         // Geofence validation (bypassable in dev profile only)
         boolean bypassed = false;
         boolean devProfile = activeProfile.contains("development");
@@ -82,8 +98,6 @@ public class AttendanceService {
 
         // Determine PRESENT vs LATE from schedule
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        Optional<WeeklySchedule> scheduleOpt = scheduleRepository
-                .findCurrentForEmployee(emp.getId(), today, today.minusDays(7));
 
         Status status = Status.PRESENT;
         short minutesLate = 0;

@@ -245,6 +245,19 @@ export default function HomeScreen() {
       )}
 
 
+      {/* Shift hasn't started yet — check-in window not open */}
+      {!today?.canCheckIn && !today?.checkInTime && today?.shiftStart && (
+        <View style={[styles.clockBtn, styles.clockBtnDone, { borderColor: AMBER + '44' }]}>
+          <Ionicons name="time-outline" size={28} color={AMBER} />
+          <Text style={[styles.clockBtnText, { color: AMBER }]}>
+            Shift Starts at {today.shiftStart.slice(0, 5)}
+          </Text>
+          <Text style={[styles.clockBtnTextAr, { color: AMBER }]}>
+            Check-in opens 30 min before — تفتح قبل الوردية بـ30 دقيقة
+          </Text>
+        </View>
+      )}
+
       {today?.checkInTime && !today?.canCheckIn && (
         <View style={[styles.clockBtn, styles.clockBtnDone]}>
           <Ionicons name="checkmark-circle-outline" size={28} color={GREEN} />
