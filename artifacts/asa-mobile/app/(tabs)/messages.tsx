@@ -272,8 +272,8 @@ export default function MessagesScreen() {
           showsVerticalScrollIndicator={false}
         />
 
-        {/* Input bar */}
-        <SafeAreaView edges={['bottom']} style={styles.inputBar}>
+        {/* Input bar — sits above the tab bar */}
+        <View style={[styles.inputBar, { paddingBottom: insets.bottom + 4 }]}>
           <View style={styles.inputWrap}>
             <TextInput
               style={styles.input}
@@ -297,7 +297,7 @@ export default function MessagesScreen() {
                 : <Ionicons name="send" size={18} color="#fff" />}
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
@@ -306,7 +306,7 @@ export default function MessagesScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: CREAM },
+  root:    { flex: 1, backgroundColor: CREAM, paddingBottom: 70 },
   centered:{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: CREAM },
 
   // Header

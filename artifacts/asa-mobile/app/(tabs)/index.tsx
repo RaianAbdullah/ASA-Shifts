@@ -176,19 +176,23 @@ export default function HomeScreen() {
           <View style={styles.deco2} />
           <View style={styles.deco3} />
 
-          {/* Top row — avatar + name + actions */}
+          {/* Top row — RTL: actions on LEFT, avatar+name on RIGHT */}
           <View style={styles.headerRow}>
-            <View style={styles.headerLeft}>
-              {/* Gold gradient avatar */}
-              <LinearGradient
-                colors={[GOLD, GOLD_LIGHT]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={styles.avatar}
-              >
-                <Text style={styles.avatarText}>{session.nameAr?.[0] ?? '?'}</Text>
-              </LinearGradient>
+            {/* Actions — left side in Arabic layout */}
+            <View style={styles.headerActions}>
+              <TouchableOpacity onPress={handleSignOut} style={styles.iconBtn}>
+                <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.70)" />
+              </TouchableOpacity>
+              {isAdmin && (
+                <TouchableOpacity onPress={() => router.replace('/(admin)')} style={styles.iconBtn}>
+                  <Ionicons name="shield-outline" size={22} color={GOLD} />
+                </TouchableOpacity>
+              )}
+            </View>
 
-              <View>
+            {/* Name + avatar — right side in Arabic layout */}
+            <View style={styles.headerLeft}>
+              <View style={{ alignItems: 'flex-end' }}>
                 <Text style={styles.greeting}>أهلاً بك 👋</Text>
                 <Text style={styles.name}>{session.nameAr}</Text>
                 {(session.role in roleLabel) && (
@@ -197,18 +201,14 @@ export default function HomeScreen() {
                   </Text>
                 )}
               </View>
-            </View>
-
-            {/* Actions */}
-            <View style={styles.headerActions}>
-              {isAdmin && (
-                <TouchableOpacity onPress={() => router.replace('/(admin)')} style={styles.iconBtn}>
-                  <Ionicons name="shield-outline" size={22} color={GOLD} />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity onPress={handleSignOut} style={styles.iconBtn}>
-                <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.70)" />
-              </TouchableOpacity>
+              {/* Gold gradient avatar — rightmost */}
+              <LinearGradient
+                colors={[GOLD, GOLD_LIGHT]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={styles.avatar}
+              >
+                <Text style={styles.avatarText}>{session.nameAr?.[0] ?? '?'}</Text>
+              </LinearGradient>
             </View>
           </View>
 
