@@ -76,6 +76,8 @@ describe('VerifyOtpScreen', () => {
   });
 
   afterEach(async () => {
+    // Always restore real timers so leaked fake timers don't bleed into other tests
+    jest.useRealTimers();
     await cleanup();
   });
 
@@ -152,6 +154,93 @@ describe('VerifyOtpScreen', () => {
       expect(mockVerifyOtp).not.toHaveBeenCalled();
       expect(mockReplace).toHaveBeenCalledWith('/(auth)/register');
     });
+  });
+
+  // ── Resend: double-tap guard ───────────────────────────────────────────────
+
+  it('fires only one getStatus call when Resend is tapped twice before the first response arrives', async () => {
+    setupParams({ nationalId: '1234567890' });
+    jest.useFakeTimers();
+
+    // Resolves on demand so we control when the in-flight request completes
+    let resolveFirst!: () => void;
+    mockGetStatus.mockImplementationOnce(
+      () => new Promise<void>((res) => { resolveFirst = res; })
+    );
+
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const { getByTestId } = await render(<VerifyOtpScreen />);
+
+    // First tap — starts the in-flight request
+    await act(async () => {
+      fireEvent.press(getByTestId('btn-resend'));
+    });
+
+    // Second tap while first is still in-flight — should be a no-op
+    await act(async () => {
+      fireEvent.press(getByTestId('btn-resend'));
+    });
+
+    // Resolve the pending request; this triggers startResendCooldown
+    await act(async () => { resolveFirst(); });
+    // Let the resolved promise settle
+    await act(async () => { await Promise.resolve(); });
+
+    expect(mockGetStatus).toHaveBeenCalledTimes(1);
+
+    // Advance fake timers past the full 60 s cooldown so the interval self-clears
+    await act(async () => { jest.advanceTimersByTime(61000); });
+    alertSpy.mockRestore();
+  });
+
+  // ── Resend: cooldown display ───────────────────────────────────────────────
+
+  it('shows the countdown text and disables the button after a successful resend', async () => {
+    setupParams({ nationalId: '1234567890' });
+    jest.useFakeTimers();
+    mockGetStatus.mockResolvedValueOnce({});
+
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const { getByTestId, getByText } = await render(<VerifyOtpScreen />);
+
+    await act(async () => {
+      fireEvent.press(getByTestId('btn-resend'));
+    });
+
+    // Let the resolved promise settle
+    await act(async () => { await Promise.resolve(); });
+
+    // Button should now show the countdown and be disabled
+    expect(getByText('Resend in 60s')).toBeTruthy();
+    expect(getByTestId('btn-resend').props.accessibilityState?.disabled).toBe(true);
+
+    // Advance fake timers past the full 60 s cooldown so the interval self-clears
+    await act(async () => { jest.advanceTimersByTime(61000); });
+    alertSpy.mockRestore();
+  });
+
+  // ── Resend: API error re-enables button ────────────────────────────────────
+
+  it('shows an alert and re-enables the Resend button when the resend API call fails', async () => {
+    setupParams({ nationalId: '1234567890' });
+    mockGetStatus.mockRejectedValueOnce(new Error('Network error'));
+
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const { getByTestId, getByText } = await render(<VerifyOtpScreen />);
+
+    await act(async () => {
+      fireEvent.press(getByTestId('btn-resend'));
+    });
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Resend Failed', 'Could not resend the code. Please try again.');
+    });
+
+    // Button should be re-enabled (no cooldown, no in-flight)
+    expect(getByTestId('btn-resend').props.accessibilityState?.disabled).toBe(false);
+    expect(getByText('Resend')).toBeTruthy();
+
+    alertSpy.mockRestore();
   });
 
   // ── API error ─────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -31,7 +31,18 @@ export default function VerifyOtpScreen() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clear the cooldown interval when the screen unmounts
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current !== null) {
+        clearInterval(cooldownRef.current);
+      }
+    };
+  }, []);
 
   const handleVerify = async () => {
     if (otp.length !== OTP_LENGTH) {
@@ -60,17 +71,26 @@ export default function VerifyOtpScreen() {
   };
 
   const startResendCooldown = () => {
+    // Clear any existing cooldown interval before starting a fresh one
+    if (cooldownRef.current !== null) {
+      clearInterval(cooldownRef.current);
+    }
     setResendCooldown(60);
-    const interval = setInterval(() => {
+    cooldownRef.current = setInterval(() => {
       setResendCooldown((c) => {
-        if (c <= 1) { clearInterval(interval); return 0; }
+        if (c <= 1) {
+          clearInterval(cooldownRef.current!);
+          cooldownRef.current = null;
+          return 0;
+        }
         return c - 1;
       });
     }, 1000);
   };
 
   const handleResend = async () => {
-    if (resendCooldown > 0 || !nationalId) return;
+    if (resendCooldown > 0 || resendLoading || !nationalId) return;
+    setResendLoading(true);
     try {
       // Re-register triggers a fresh OTP (same endpoint is idempotent for re-sends in dev)
       await authApi.getStatus(nationalId);
@@ -78,6 +98,8 @@ export default function VerifyOtpScreen() {
       Alert.alert('Code Sent', 'A new OTP has been requested. Check the server console.');
     } catch {
       Alert.alert('Resend Failed', 'Could not resend the code. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -154,9 +176,13 @@ export default function VerifyOtpScreen() {
       {/* Resend */}
       <View style={styles.resendRow}>
         <Text style={styles.resendLabel}>Didn't receive the code? </Text>
-        <TouchableOpacity onPress={handleResend} disabled={resendCooldown > 0}>
-          <Text style={[styles.resendBtn, resendCooldown > 0 && styles.resendBtnDisabled]}>
-            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend'}
+        <TouchableOpacity
+          onPress={handleResend}
+          disabled={resendCooldown > 0 || resendLoading}
+          testID="btn-resend"
+        >
+          <Text style={[styles.resendBtn, (resendCooldown > 0 || resendLoading) && styles.resendBtnDisabled]}>
+            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : resendLoading ? 'Sending...' : 'Resend'}
           </Text>
         </TouchableOpacity>
       </View>
