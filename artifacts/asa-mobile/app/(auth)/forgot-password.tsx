@@ -50,6 +50,7 @@ export default function ForgotPasswordScreen() {
           <TouchableOpacity
             style={styles.primaryBtn}
             onPress={() => router.push('/(auth)/reset-password')}
+            testID="btn-enter-reset-code"
           >
             <Text style={styles.primaryBtnText}>Enter Reset Code</Text>
           </TouchableOpacity>
@@ -85,6 +86,7 @@ export default function ForgotPasswordScreen() {
               maxLength={10}
               returnKeyType="done"
               onSubmitEditing={handleSubmit}
+              testID="input-nationalId"
             />
           </View>
 
@@ -92,6 +94,7 @@ export default function ForgotPasswordScreen() {
             style={[styles.primaryBtn, (!valid || loading) && styles.disabledBtn]}
             onPress={handleSubmit}
             disabled={!valid || loading}
+            testID="btn-submit"
           >
             <Text style={styles.primaryBtnText}>
               {loading ? 'Sending…' : 'Request Reset Code'}

@@ -72,6 +72,7 @@ export default function ResetPasswordScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
+              testID="input-resetToken"
             />
           </View>
 
@@ -85,6 +86,7 @@ export default function ResetPasswordScreen() {
                 secureTextEntry={!showPass}
                 placeholder="At least 8 characters"
                 returnKeyType="next"
+                testID="input-newPassword"
               />
               <TouchableOpacity onPress={() => setShowPass(v => !v)} style={styles.eyeBtn}>
                 <Text style={styles.eyeIcon}>{showPass ? '🙈' : '👁️'}</Text>
@@ -104,6 +106,7 @@ export default function ResetPasswordScreen() {
               placeholder="Repeat new password"
               returnKeyType="done"
               onSubmitEditing={handleReset}
+              testID="input-confirmPassword"
             />
             {confirmPass.length > 0 && !passwordMatch &&
               <Text style={styles.hintError}>Passwords do not match</Text>}
@@ -113,6 +116,7 @@ export default function ResetPasswordScreen() {
             style={[styles.primaryBtn, (!canSubmit || loading) && styles.disabledBtn]}
             onPress={handleReset}
             disabled={!canSubmit || loading}
+            testID="btn-reset"
           >
             <Text style={styles.primaryBtnText}>{loading ? 'Resetting…' : 'Set New Password'}</Text>
           </TouchableOpacity>
