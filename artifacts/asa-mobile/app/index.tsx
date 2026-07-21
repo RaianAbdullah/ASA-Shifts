@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   line1: {
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: 'Inter_700Bold',
     color: WHITE,
     textAlign: 'center',
@@ -118,15 +118,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   line2: {
-    fontSize: 13,
-    fontFamily: 'Inter_700Bold',
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
     color: 'rgba(255,255,255,0.90)',
     textAlign: 'center',
     marginBottom: 3,
   },
   line3: {
-    fontSize: 12,
-    fontFamily: 'Inter_700Bold',
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
     color: 'rgba(255,255,255,0.75)',
     textAlign: 'center',
   },
