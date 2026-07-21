@@ -65,7 +65,7 @@ export default function WelcomeScreen() {
             onPress={() => router.push('/(auth)/register')}
             activeOpacity={0.82}
           >
-            <Text style={styles.secondaryBtnText}>موظف جديد — تسجيل</Text>
+            <Text style={styles.secondaryBtnText}>تسجيل جديد</Text>
           </TouchableOpacity>
         </View>
 
