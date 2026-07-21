@@ -607,6 +607,53 @@ export const vacationApi = {
     }, true),
 };
 
+// ── Announcement endpoints ────────────────────────────────────────────────────
+
+export interface ReplyDto {
+  id:           string;
+  authorId:     string;
+  authorNameAr: string;
+  authorRole:   string;
+  body:         string;
+  createdAt:    string;
+}
+
+export interface AnnouncementDto {
+  id:           string;
+  title:        string;
+  body:         string;
+  pinned:       boolean;
+  authorId:     string;
+  authorNameAr: string;
+  authorRole:   string;
+  createdAt:    string;
+  replyCount:   number;
+  replies:      ReplyDto[] | null;
+}
+
+export const announcementApi = {
+  list: () =>
+    request<AnnouncementDto[]>('/v1/announcements', {}, true),
+
+  getThread: (id: string) =>
+    request<AnnouncementDto>(`/v1/announcements/${id}`, {}, true),
+
+  create: (title: string, body: string, pinned = false) =>
+    request<AnnouncementDto>('/v1/announcements', {
+      method: 'POST',
+      body: JSON.stringify({ title, body, pinned }),
+    }, true),
+
+  reply: (id: string, body: string) =>
+    request<ReplyDto>(`/v1/announcements/${id}/replies`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    }, true),
+
+  delete: (id: string) =>
+    request<void>(`/v1/announcements/${id}`, { method: 'DELETE' }, true),
+};
+
 // ── Notification endpoints ────────────────────────────────────────────────────
 
 export const notificationApi = {

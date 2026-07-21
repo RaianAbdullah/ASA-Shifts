@@ -27,6 +27,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'sun.max', selected: 'sun.max.fill' }} />
         <Label>Vacations</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="announcements">
+        <Icon sf={{ default: 'megaphone', selected: 'megaphone.fill' }} />
+        <Label>News</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: 'person.circle', selected: 'person.circle.fill' }} />
         <Label>Profile</Label>
@@ -106,6 +110,18 @@ function ClassicTabLayout() {
               <SymbolView name="sun.max" tintColor={color} size={24} />
             ) : (
               <Feather name="sun" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="announcements"
+        options={{
+          title: 'Announcements',
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="megaphone" tintColor={color} size={24} />
+            ) : (
+              <Feather name="message-square" size={22} color={color} />
             ),
         }}
       />
