@@ -95,13 +95,7 @@ export default function HomeScreen() {
     });
   }, []);
 
-  // Route management roles to admin panel
-  useEffect(() => {
-    if (!session) return;
-    if (['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'].includes(session.role)) {
-      router.replace('/(admin)');
-    }
-  }, [session]);
+  const isAdmin = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'].includes(session?.role ?? '');
 
   // Today's attendance
   const { data: todayRes, isLoading, refetch, isRefetching } = useQuery({
@@ -185,9 +179,16 @@ export default function HomeScreen() {
               <Text style={styles.name}>{session.nameAr}</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
-            <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.75)" />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            {isAdmin && (
+              <TouchableOpacity onPress={() => router.replace('/(admin)')} style={styles.switchBtn}>
+                <Ionicons name="shield-outline" size={20} color={GOLD} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
+              <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.75)" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Date strip */}
@@ -322,6 +323,8 @@ const styles = StyleSheet.create({
   greeting:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)' },
   name:       { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
   signOutBtn: { padding: 6 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  switchBtn: { padding: 6 },
 
   // Date strip
   dateStrip:  { flexDirection: 'row', alignItems: 'center', gap: 6,

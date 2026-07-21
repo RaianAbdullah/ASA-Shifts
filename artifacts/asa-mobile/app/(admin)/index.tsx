@@ -71,14 +71,16 @@ export default function AdminPendingScreen() {
   const qc     = useQueryClient();
   const { t }  = useLanguage();
 
+  const [session, setSession] = useState<Awaited<ReturnType<typeof loadSession>>>(null);
   const [rejectModal, setRejectModal] = useState<{ visible: boolean; employee: PendingEmployee | null }>({
     visible: false, employee: null,
   });
   const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
-    loadSession().then(session => {
-      if (!session) router.replace('/');
+    loadSession().then(s => {
+      if (!s) { router.replace('/'); return; }
+      setSession(s);
     });
   }, []);
 
@@ -204,10 +206,15 @@ export default function AdminPendingScreen() {
       <StatusBar barStyle="light-content" />
 
       {/* ── Header ── */}
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>{t('adminTitle')}</Text>
-          <Text style={styles.headerSubtitle}>لوحة الإدارة</Text>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerLeft}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{session?.nameAr?.[0] ?? '?'}</Text>
+          </View>
+          <View>
+            <Text style={styles.headerRole}>لوحة الإدارة</Text>
+            <Text style={styles.headerName}>{session?.nameAr ?? '...'}</Text>
+          </View>
         </View>
         <View style={styles.headerRight}>
           {pending.length > 0 && (
@@ -215,8 +222,11 @@ export default function AdminPendingScreen() {
               <Text style={styles.badgeText}>{pending.length}</Text>
             </View>
           )}
+          <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.iconBtn}>
+            <Ionicons name="person-outline" size={22} color={GOLD} />
+          </TouchableOpacity>
           <TouchableOpacity testID="btn-sign-out" onPress={handleSignOut} style={styles.iconBtn}>
-            <Ionicons name="log-out-outline" size={24} color="#fff" />
+            <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.75)" />
           </TouchableOpacity>
         </View>
       </View>
@@ -331,13 +341,17 @@ export default function AdminPendingScreen() {
 const styles = StyleSheet.create({
   container:    { flex: 1, backgroundColor: CREAM },
 
-  // Header — navyDark background, white text
+  // Header — matches employee home style
   header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-                  paddingHorizontal: 20, paddingVertical: 18,
+                  paddingHorizontal: 20, paddingBottom: 20,
                   backgroundColor: GREEN_DARK },
-  headerTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#fff' },
-  headerSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  headerRight:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerLeft:   { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar:       { width: 46, height: 46, borderRadius: 99, backgroundColor: GOLD,
+                  alignItems: 'center', justifyContent: 'center' },
+  avatarText:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
+  headerRole:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)' },
+  headerName:   { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#fff' },
+  headerRight:  { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconBtn:      { padding: 6 },
   badge:        { backgroundColor: light.destructive, borderRadius: 12, minWidth: 22,
                   height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
