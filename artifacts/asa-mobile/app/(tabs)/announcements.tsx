@@ -16,12 +16,12 @@ import { announcementApi, AnnouncementDto, ReplyDto, ApiError } from '@/services
 import { loadSession } from '@/services/auth';
 import colors from '@/constants/colors';
 
-const { government } = colors;
+const { light, government } = colors;
 const NAVY  = government.navy;
 const GOLD  = government.gold;
-const BG    = '#F8F9FA';
+const BG    = light.background;
 const CARD  = '#FFFFFF';
-const GRAY  = '#6B7280';
+const GRAY  = light.mutedForeground;
 const AMBER = '#D97706';
 
 const POSTER_ROLES = ['SYSTEM_ADMIN', 'MAIN_MANAGER'];

@@ -16,12 +16,13 @@ import { loadSession, clearSession, Session } from '@/services/auth';
 import { attendanceApi, authApi, AttendanceResponse, ApiError } from '@/services/api';
 import { getCurrentLocation } from '@/services/location';
 import colors from '@/constants/colors';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const { light, government } = colors;
-const NAVY = government.navy as string;
-const GREEN = '#1A7A3E';
-const AMBER = '#B07800';
-const RED   = '#C0392B';
+const NAVY  = government.navy as string;
+const GREEN = '#22C55E';
+const AMBER = '#F59E0B';
+const RED   = '#EF4444';
 
 // ── Live timer ────────────────────────────────────────────────────────────────
 function useWorkTimer(checkInTime: string | undefined, checkOutTime: string | undefined) {
@@ -54,18 +55,18 @@ function useWorkTimer(checkInTime: string | undefined, checkOutTime: string | un
 
 // ── Status pill ───────────────────────────────────────────────────────────────
 function StatusPill({ status }: { status: string }) {
-  const config: Record<string, { label: string; labelAr: string; color: string; bg: string }> = {
-    PRESENT: { label: 'Present',  labelAr: 'حاضر',   color: GREEN, bg: 'rgba(26,122,62,0.12)' },
-    LATE:    { label: 'Late',     labelAr: 'متأخر',   color: AMBER, bg: 'rgba(176,120,0,0.12)' },
-    ABSENT:  { label: 'Absent',   labelAr: 'غائب',   color: RED,   bg: 'rgba(192,57,43,0.12)' },
-    EXCUSED: { label: 'Excused',  labelAr: 'معذور',  color: NAVY,  bg: 'rgba(27,58,107,0.12)' },
-    HOLIDAY: { label: 'Holiday',  labelAr: 'إجازة',  color: '#555', bg: 'rgba(0,0,0,0.07)' },
+  const { t } = useLanguage();
+  const config: Record<string, { label: string; color: string; bg: string }> = {
+    PRESENT: { label: t('present'), color: GREEN, bg: GREEN + '22' },
+    LATE:    { label: t('late'),    color: AMBER, bg: AMBER + '22' },
+    ABSENT:  { label: t('absent'),  color: RED,   bg: RED   + '22' },
+    EXCUSED: { label: t('excused'), color: NAVY,  bg: NAVY  + '22' },
+    HOLIDAY: { label: t('holiday'), color: light.mutedForeground, bg: light.muted },
   };
   const c = config[status] ?? config.ABSENT;
   return (
     <View style={[styles.statusPill, { backgroundColor: c.bg }]}>
       <Text style={[styles.statusPillText, { color: c.color }]}>{c.label}</Text>
-      <Text style={[styles.statusPillAr,   { color: c.color }]}>{c.labelAr}</Text>
     </View>
   );
 }
@@ -74,6 +75,7 @@ function StatusPill({ status }: { status: string }) {
 export default function HomeScreen() {
   const insets  = useSafeAreaInsets();
   const qc      = useQueryClient();
+  const { t }   = useLanguage();
   const [session, setSession] = useState<Session | null>(null);
   const [locating, setLocating] = useState(false);
 
@@ -116,8 +118,8 @@ export default function HomeScreen() {
     onError: (err) => {
       const msg = err instanceof ApiError ? err.message
                 : typeof err === 'string' ? err
-                : 'Check-in failed. Please try again.';
-      Alert.alert('Check-in Failed', msg);
+                : t('checkInFailed');
+      Alert.alert(t('error'), msg);
     },
   });
 
@@ -125,11 +127,11 @@ export default function HomeScreen() {
   const handleCheckIn = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
-      'Confirm Check-in',
-      'Your GPS location will be recorded.\n\nتأكيد تسجيل الحضور',
+      t('confirmCheckIn'),
+      t('gpsWillBeRecorded'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Check In', onPress: () => checkInMutation.mutate() },
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('checkIn'), onPress: () => checkInMutation.mutate() },
       ]
     );
   }, [checkInMutation]);
@@ -168,7 +170,7 @@ export default function HomeScreen() {
             <Text style={styles.avatarText}>{session.nameAr?.[0] ?? '?'}</Text>
           </View>
           <View>
-            <Text style={styles.greeting}>صباح الخير — Good morning</Text>
+            <Text style={styles.greeting}>{t('goodMorning')}</Text>
             <Text style={styles.name}>{session.nameAr}</Text>
           </View>
         </View>
@@ -186,7 +188,7 @@ export default function HomeScreen() {
       {/* Status card */}
       <View style={styles.statusCard}>
         <View style={styles.statusCardTop}>
-          <Text style={styles.statusCardLabel}>Today's Status — حالة اليوم</Text>
+          <Text style={styles.statusCardLabel}>{t('todaysStatus')}</Text>
           {today && <StatusPill status={today.status} />}
         </View>
 
@@ -195,10 +197,10 @@ export default function HomeScreen() {
           <View style={styles.shiftRow}>
             <Ionicons name="time-outline" size={14} color={light.mutedForeground} />
             <Text style={styles.shiftText}>
-              Shift: {today.shiftStart} – {today.shiftEnd}
+              {t('shift')}: {today.shiftStart} – {today.shiftEnd}
             </Text>
             {today.minutesLate > 0 && (
-              <Text style={styles.lateChip}>{today.minutesLate}min late</Text>
+              <Text style={styles.lateChip}>{today.minutesLate} {t('minLate')}</Text>
             )}
           </View>
         )}
@@ -206,7 +208,7 @@ export default function HomeScreen() {
         {/* Times row */}
         <View style={styles.timesRow}>
           <View style={styles.timeBlock}>
-            <Text style={styles.timeBlockLabel}>Check-in</Text>
+            <Text style={styles.timeBlockLabel}>{t('checkInTime')}</Text>
             <Text style={styles.timeBlockValue}>
               {today?.checkInTime
                 ? new Date(today.checkInTime).toLocaleTimeString('en-SA', { hour: '2-digit', minute: '2-digit' })
@@ -215,7 +217,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.timeDivider} />
           <View style={styles.timeBlock}>
-            <Text style={styles.timeBlockLabel}>Duration</Text>
+            <Text style={styles.timeBlockLabel}>{t('duration')}</Text>
             <Text style={[styles.timeBlockValue, styles.timerText]}>
               {today?.checkInTime ? timer : '—'}
             </Text>
@@ -237,8 +239,7 @@ export default function HomeScreen() {
           ) : (
             <>
               <Ionicons name="finger-print-outline" size={28} color="#fff" />
-              <Text style={styles.clockBtnText}>Check In</Text>
-              <Text style={styles.clockBtnTextAr}>تسجيل الحضور</Text>
+              <Text style={styles.clockBtnText}>{t('checkIn')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -250,10 +251,10 @@ export default function HomeScreen() {
         <View style={[styles.clockBtn, styles.clockBtnDone, { borderColor: AMBER + '44' }]}>
           <Ionicons name="time-outline" size={28} color={AMBER} />
           <Text style={[styles.clockBtnText, { color: AMBER }]}>
-            Shift Starts at {today.shiftStart.slice(0, 5)}
+            {t('shiftStartsAt')} {today.shiftStart.slice(0, 5)}
           </Text>
           <Text style={[styles.clockBtnTextAr, { color: AMBER }]}>
-            Check-in opens 30 min before — تفتح قبل الوردية بـ30 دقيقة
+            {t('checkInOpens')}
           </Text>
         </View>
       )}
@@ -261,15 +262,14 @@ export default function HomeScreen() {
       {today?.checkInTime && !today?.canCheckIn && (
         <View style={[styles.clockBtn, styles.clockBtnDone]}>
           <Ionicons name="checkmark-circle-outline" size={28} color={GREEN} />
-          <Text style={[styles.clockBtnText, { color: GREEN }]}>Attendance Recorded</Text>
-          <Text style={[styles.clockBtnTextAr, { color: GREEN }]}>تم تسجيل الحضور</Text>
+          <Text style={[styles.clockBtnText, { color: GREEN }]}>{t('attendanceRecorded')}</Text>
         </View>
       )}
 
       {locating && (
         <View style={styles.locatingRow}>
           <ActivityIndicator size="small" color={NAVY} />
-          <Text style={styles.locatingText}>Getting your location…</Text>
+          <Text style={styles.locatingText}>{t('gettingLocation')}</Text>
         </View>
       )}
 
@@ -287,7 +287,7 @@ export default function HomeScreen() {
         onPress={() => router.push('/(tabs)/attendance-history')}
       >
         <Ionicons name="time-outline" size={16} color={NAVY} />
-        <Text style={styles.historyLinkText}>View Attendance History</Text>
+        <Text style={styles.historyLinkText}>{t('viewAttendanceHistory')}</Text>
         <Ionicons name="chevron-forward" size={16} color={NAVY} />
       </TouchableOpacity>
     </ScrollView>
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
 
   shiftRow:   { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 },
   shiftText:  { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground },
-  lateChip:   { backgroundColor: 'rgba(176,120,0,0.12)', borderRadius: 8,
+  lateChip:   { backgroundColor: AMBER + '22', borderRadius: 8,
                 paddingHorizontal: 8, paddingVertical: 2, marginLeft: 4,
                 fontSize: 11, fontFamily: 'Inter_600SemiBold', color: AMBER } as any,
 
@@ -344,8 +344,8 @@ const styles = StyleSheet.create({
                 alignItems: 'center', gap: 6, marginBottom: 12 },
   clockBtnIn: { backgroundColor: NAVY },
   clockBtnOut:{ backgroundColor: RED },
-  clockBtnDone: { backgroundColor: 'rgba(26,122,62,0.08)',
-                  borderWidth: 2, borderColor: GREEN },
+  clockBtnDone: { backgroundColor: GREEN + '14',
+                  borderWidth: 2, borderColor: GREEN + '60' },
   clockBtnDisabled: { opacity: 0.55 },
   clockBtnText:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
   clockBtnTextAr: { fontSize: 13, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.75)' },

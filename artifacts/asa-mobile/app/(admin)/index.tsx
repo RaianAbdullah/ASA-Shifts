@@ -9,38 +9,84 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, authApi, vacationApi, PendingEmployee, ApiError } from '@/services/api';
+import { adminApi, authApi, PendingEmployee, ApiError } from '@/services/api';
 import { loadSession, clearSession } from '@/services/auth';
 import colors from '@/constants/colors';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const { light, government } = colors;
+const NAVY  = government.navy;
+const GOLD  = government.gold;
+
+// ── Nav tile definitions ──────────────────────────────────────────────────────
+
+type NavTile = {
+  icon: keyof typeof Ionicons.glyphMap;
+  labelKey: 'employees' | 'departments' | 'schedules' | 'onDuty' | 'attendance' | 'vacations' | 'notifications' | 'announcementsTitle';
+  route: string;
+  color: string;
+};
+
+const NAV_TILES: NavTile[] = [
+  { icon: 'people',          labelKey: 'employees',        route: '/(admin)/employees',         color: '#4A7FD4' },
+  { icon: 'business',        labelKey: 'departments',      route: '/(admin)/departments',        color: '#7C5AC7' },
+  { icon: 'calendar',        labelKey: 'schedules',        route: '/(admin)/schedules',          color: '#22A39F' },
+  { icon: 'radio',           labelKey: 'onDuty',           route: '/(admin)/on-duty',            color: '#22C55E' },
+  { icon: 'bar-chart',       labelKey: 'attendance',       route: '/(admin)/attendance-history', color: '#F59E0B' },
+  { icon: 'sunny',           labelKey: 'vacations',        route: '/(admin)/vacations',          color: '#EF7C40' },
+  { icon: 'notifications',   labelKey: 'notifications',    route: '/(admin)/notifications',      color: '#EF4444' },
+  { icon: 'megaphone',       labelKey: 'announcementsTitle', route: '/(tabs)/announcements',     color: '#A855F7' },
+];
+
+// ── Nav Tile Component ────────────────────────────────────────────────────────
+
+function NavTileBtn({ tile, label }: { tile: NavTile; label: string }) {
+  return (
+    <TouchableOpacity
+      style={styles.tile}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push(tile.route as any);
+      }}
+      activeOpacity={0.75}
+    >
+      <View style={[styles.tileIcon, { backgroundColor: tile.color + '22' }]}>
+        <Ionicons name={tile.icon} size={26} color={tile.color} />
+      </View>
+      <Text style={styles.tileLabel} numberOfLines={1}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+// ── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function AdminPendingScreen() {
-  const insets       = useSafeAreaInsets();
-  const qc           = useQueryClient();
+  const insets = useSafeAreaInsets();
+  const qc     = useQueryClient();
+  const { t }  = useLanguage();
+
   const [rejectModal, setRejectModal] = useState<{ visible: boolean; employee: PendingEmployee | null }>({
     visible: false, employee: null,
   });
   const [rejectReason, setRejectReason] = useState('');
 
-  // Guard: redirect to root if session was cleared (e.g. token expired while admin was on-screen)
   useEffect(() => {
     loadSession().then(session => {
       if (!session) router.replace('/');
     });
   }, []);
 
-  // ── Data ──────────────────────────────────────────────────────────────────
+  // ── Data ────────────────────────────────────────────────────────────────────
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['admin', 'pending'],
     queryFn:  () => adminApi.listPending(0, 50),
-    refetchInterval: 30_000, // auto-refresh every 30s
+    refetchInterval: 30_000,
   });
 
   const pending: PendingEmployee[] = data?.data?.content ?? [];
 
-  // ── Mutations ─────────────────────────────────────────────────────────────
+  // ── Mutations ───────────────────────────────────────────────────────────────
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => adminApi.approve(id),
@@ -49,14 +95,12 @@ export default function AdminPendingScreen() {
       qc.invalidateQueries({ queryKey: ['admin', 'pending'] });
     },
     onError: (err) => {
-      const msg = err instanceof ApiError ? err.message : 'Approval failed';
-      Alert.alert('Error', msg);
+      Alert.alert(t('error'), err instanceof ApiError ? err.message : t('approvalFailed'));
     },
   });
 
   const rejectMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      adminApi.reject(id, reason),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => adminApi.reject(id, reason),
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setRejectModal({ visible: false, employee: null });
@@ -64,35 +108,23 @@ export default function AdminPendingScreen() {
       qc.invalidateQueries({ queryKey: ['admin', 'pending'] });
     },
     onError: (err) => {
-      const msg = err instanceof ApiError ? err.message : 'Rejection failed';
-      Alert.alert('Error', msg);
+      Alert.alert(t('error'), err instanceof ApiError ? err.message : t('rejectionFailed'));
     },
   });
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────
 
   const handleApprove = useCallback((emp: PendingEmployee) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
-      'Confirm Approval',
-      `Approve ${emp.firstNameAr} ${emp.lastNameAr}?\n\nThis will activate their account immediately.`,
+      t('confirmApproval'),
+      `${t('approve')} ${emp.firstNameAr} ${emp.lastNameAr}?`,
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Approve', style: 'default',
-          onPress: () => approveMutation.mutate(emp.id) },
-      ]
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('approve'), onPress: () => approveMutation.mutate(emp.id) },
+      ],
     );
-  }, [approveMutation]);
-
-  const handleRejectOpen = useCallback((emp: PendingEmployee) => {
-    setRejectReason('');
-    setRejectModal({ visible: true, employee: emp });
-  }, []);
-
-  const handleRejectConfirm = useCallback(() => {
-    if (!rejectModal.employee) return;
-    rejectMutation.mutate({ id: rejectModal.employee.id, reason: rejectReason });
-  }, [rejectModal.employee, rejectReason, rejectMutation]);
+  }, [approveMutation, t]);
 
   const handleSignOut = useCallback(async () => {
     const current = await loadSession();
@@ -101,22 +133,19 @@ export default function AdminPendingScreen() {
     router.replace('/');
   }, []);
 
-  // ── Render helpers ────────────────────────────────────────────────────────
+  // ── Pending item card ─────────────────────────────────────────────────────
 
   const renderItem = ({ item }: { item: PendingEmployee }) => {
-    const isBusy = approveMutation.isPending && approveMutation.variables === item.id;
+    const isBusy  = approveMutation.isPending && approveMutation.variables === item.id;
     const regDate = item.registeredAt
       ? new Date(item.registeredAt).toLocaleDateString('ar-SA')
       : '—';
 
     return (
       <View style={styles.card}>
-        {/* Header row */}
         <View style={styles.cardHeader}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {item.firstNameAr?.[0] ?? '?'}
-            </Text>
+            <Text style={styles.avatarText}>{item.firstNameAr?.[0] ?? '?'}</Text>
           </View>
           <View style={styles.cardInfo}>
             <Text style={styles.cardName}>{item.firstNameAr} {item.lastNameAr}</Text>
@@ -124,20 +153,19 @@ export default function AdminPendingScreen() {
             <Text style={styles.cardMeta}>{item.maskedPhone} · {regDate}</Text>
           </View>
           <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>Pending</Text>
+            <Text style={styles.statusText}>{t('pendingBadge')}</Text>
           </View>
         </View>
 
-        {/* Action row */}
         <View style={styles.cardActions}>
           <TouchableOpacity
             style={[styles.rejectBtn, isBusy && styles.btnDisabled]}
-            onPress={() => handleRejectOpen(item)}
+            onPress={() => { setRejectReason(''); setRejectModal({ visible: true, employee: item }); }}
             disabled={isBusy}
             activeOpacity={0.8}
           >
             <Ionicons name="close-circle-outline" size={16} color={light.destructive} />
-            <Text style={styles.rejectBtnText}>Reject</Text>
+            <Text style={styles.rejectBtnText}>{t('reject')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -151,7 +179,7 @@ export default function AdminPendingScreen() {
             ) : (
               <>
                 <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
-                <Text style={styles.approveBtnText}>Approve</Text>
+                <Text style={styles.approveBtnText}>{t('approve')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -165,21 +193,10 @@ export default function AdminPendingScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
 
-      {/* Header */}
+      {/* ── Header ── */}
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          {router.canGoBack() && (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}
-            >
-              <Ionicons name="chevron-back" size={14} color={government.navy} />
-              <Text style={{ fontSize: 12, color: government.navy, fontFamily: 'Inter_500Medium' }}>
-                Employee View
-              </Text>
-            </TouchableOpacity>
-          )}
-          <Text style={styles.headerTitle}>Admin Panel</Text>
+          <Text style={styles.headerTitle}>{t('adminTitle')}</Text>
           <Text style={styles.headerSubtitle}>لوحة الإدارة</Text>
         </View>
         <View style={styles.headerRight}>
@@ -188,58 +205,38 @@ export default function AdminPendingScreen() {
               <Text style={styles.badgeText}>{pending.length}</Text>
             </View>
           )}
-          <TouchableOpacity
-            onPress={() => router.push('/(admin)/vacations')}
-            style={styles.vacationBtn}
-          >
-            <Ionicons name="sunny-outline" size={22} color={government.navy} />
-          </TouchableOpacity>
-          <TouchableOpacity testID="btn-sign-out" onPress={handleSignOut} style={styles.signOutBtn}>
-            <Ionicons name="log-out-outline" size={22} color={government.navy} />
+          <TouchableOpacity testID="btn-sign-out" onPress={handleSignOut} style={styles.iconBtn}>
+            <Ionicons name="log-out-outline" size={24} color={NAVY} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Quick nav row */}
-      <View style={styles.quickNav}>
-        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/employees')}>
-          <Ionicons name="people-outline" size={20} color={government.navy} />
-          <Text style={styles.quickNavText}>Employees</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/departments')}>
-          <Ionicons name="business-outline" size={20} color={government.navy} />
-          <Text style={styles.quickNavText}>Departments</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/schedules')}>
-          <Ionicons name="calendar-outline" size={20} color={government.navy} />
-          <Text style={styles.quickNavText}>Schedules</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/notifications')}>
-          <Ionicons name="notifications-outline" size={20} color={government.navy} />
-          <Text style={styles.quickNavText}>Notifications</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/attendance-history' as any)}>
-          <Ionicons name="bar-chart-outline" size={20} color={government.navy} />
-          <Text style={styles.quickNavText}>Attendance</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/on-duty' as any)}>
-          <Ionicons name="radio-outline" size={20} color={government.navy} />
-          <Text style={styles.quickNavText}>On Duty</Text>
-        </TouchableOpacity>
+      {/* ── Icon grid nav ── */}
+      <View style={styles.grid}>
+        {NAV_TILES.map((tile) => (
+          <NavTileBtn key={tile.route} tile={tile} label={t(tile.labelKey as any)} />
+        ))}
       </View>
 
-      {/* List */}
+      {/* ── Pending registrations ── */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{t('pendingRegistrations')}</Text>
+        {pending.length > 0 && (
+          <View style={styles.sectionBadge}>
+            <Text style={styles.sectionBadgeText}>{pending.length}</Text>
+          </View>
+        )}
+      </View>
+
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={government.navy} />
-          <Text style={styles.loadingText}>Loading registrations…</Text>
+          <ActivityIndicator size="large" color={NAVY} />
         </View>
       ) : isError ? (
         <View style={styles.centered}>
           <Ionicons name="warning-outline" size={48} color={light.destructive} />
-          <Text style={styles.errorText}>Failed to load registrations</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()}>
-            <Text style={styles.retryBtnText}>Retry</Text>
+            <Text style={styles.retryBtnText}>{t('retry')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -253,24 +250,19 @@ export default function AdminPendingScreen() {
             { paddingBottom: insets.bottom + 24 },
           ]}
           refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              tintColor={government.navy}
-            />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={NAVY} />
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="checkmark-done-circle-outline" size={64} color={government.navy} style={{ opacity: 0.3 }} />
-              <Text style={styles.emptyTitle}>All caught up!</Text>
-              <Text style={styles.emptySubtitle}>No pending registrations at this time.</Text>
-              <Text style={styles.emptySubtitleAr}>لا توجد طلبات تسجيل معلّقة حالياً</Text>
+              <Ionicons name="checkmark-done-circle-outline" size={56} color={NAVY} style={{ opacity: 0.25 }} />
+              <Text style={styles.emptyTitle}>{t('allCaughtUp')}</Text>
+              <Text style={styles.emptySubtitle}>{t('noPendingRegistrations')}</Text>
             </View>
           }
         />
       )}
 
-      {/* Reject modal */}
+      {/* ── Reject modal ── */}
       <Modal
         visible={rejectModal.visible}
         transparent
@@ -279,15 +271,15 @@ export default function AdminPendingScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Reject Registration</Text>
+            <Text style={styles.modalTitle}>{t('rejectRegistration')}</Text>
             <Text style={styles.modalSubtitle}>
               {rejectModal.employee?.firstNameAr} {rejectModal.employee?.lastNameAr}
             </Text>
 
-            <Text style={styles.modalLabel}>Reason (optional)</Text>
+            <Text style={styles.modalLabel}>{t('rejectionReason')}</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Enter rejection reason / سبب الرفض"
+              placeholder={t('rejectionReasonPlaceholder')}
               placeholderTextColor={light.mutedForeground}
               value={rejectReason}
               onChangeText={setRejectReason}
@@ -301,16 +293,19 @@ export default function AdminPendingScreen() {
                 style={styles.modalCancelBtn}
                 onPress={() => setRejectModal({ visible: false, employee: null })}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalRejectBtn, rejectMutation.isPending && styles.btnDisabled]}
-                onPress={handleRejectConfirm}
+                onPress={() => {
+                  if (!rejectModal.employee) return;
+                  rejectMutation.mutate({ id: rejectModal.employee.id, reason: rejectReason });
+                }}
                 disabled={rejectMutation.isPending}
               >
                 {rejectMutation.isPending
                   ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text style={styles.modalRejectText}>Confirm Reject</Text>
+                  : <Text style={styles.modalRejectText}>{t('confirmReject')}</Text>
                 }
               </TouchableOpacity>
             </View>
@@ -321,70 +316,89 @@ export default function AdminPendingScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: light.background },
-  header:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-                paddingHorizontal: 20, paddingVertical: 16,
-                borderBottomWidth: 1, borderBottomColor: light.border,
-                backgroundColor: light.card },
-  headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: government.navy },
-  headerSubtitle: { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  badge:       { backgroundColor: light.destructive, borderRadius: 12, minWidth: 24,
-                 height: 24, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  badgeText:   { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#fff' },
-  vacationBtn: { padding: 4, marginRight: 4 },
- signOutBtn:  { padding: 4 },
-  list:        { paddingHorizontal: 16, paddingTop: 16, gap: 12 },
-  emptyList:   { flex: 1 },
-  card:        { backgroundColor: light.card, borderRadius: 14, padding: 16,
-                 borderWidth: 1, borderColor: light.border,
-                 shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-                 shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  cardHeader:  { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
-  avatar:      { width: 44, height: 44, borderRadius: 22, backgroundColor: government.navy,
-                 alignItems: 'center', justifyContent: 'center' },
-  avatarText:  { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
-  cardInfo:    { flex: 1 },
-  cardName:    { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: light.text },
-  cardId:      { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
-  cardMeta:    { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
-  statusBadge: { backgroundColor: 'rgba(234,170,0,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  statusText:  { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#B07800' },
-  cardActions: { flexDirection: 'row', gap: 10 },
-  rejectBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                 gap: 6, borderWidth: 1.5, borderColor: light.destructive,
-                 borderRadius: 10, paddingVertical: 11 },
-  rejectBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: light.destructive },
-  approveBtn:  { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                 gap: 6, backgroundColor: '#1A7A3E', borderRadius: 10, paddingVertical: 11 },
-  approveBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
-  btnDisabled: { opacity: 0.5 },
-  centered:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: light.mutedForeground },
-  errorText:   { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: light.destructive },
-  retryBtn:    { backgroundColor: government.navy, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
-  retryBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
-  emptyState:  { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 40 },
-  emptyTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: light.text, marginTop: 12 },
-  emptySubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: light.mutedForeground, textAlign: 'center' },
-  emptySubtitleAr: { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground, textAlign: 'center' },
-  quickNav:     { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12,
+  container:    { flex: 1, backgroundColor: light.background },
+
+  // Header
+  header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                  paddingHorizontal: 20, paddingVertical: 16,
+                  borderBottomWidth: 1, borderBottomColor: light.border,
+                  backgroundColor: light.card },
+  headerTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY },
+  headerSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
+  headerRight:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  iconBtn:      { padding: 6 },
+  badge:        { backgroundColor: light.destructive, borderRadius: 12, minWidth: 22,
+                  height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  badgeText:    { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#fff' },
+
+  // Icon grid
+  grid:         { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 10,
                   backgroundColor: light.card, borderBottomWidth: 1, borderBottomColor: light.border },
-  quickNavBtn:  { flex: 1, alignItems: 'center', gap: 4, backgroundColor: light.background,
-                  borderRadius: 12, paddingVertical: 10, borderWidth: 1, borderColor: light.border },
-  quickNavText: { fontSize: 11, fontFamily: 'Inter_500Medium', color: government.navy },
+  tile:         { width: '30.5%', alignItems: 'center', paddingVertical: 14,
+                  backgroundColor: light.background, borderRadius: 14,
+                  borderWidth: 1, borderColor: light.border, gap: 8 },
+  tileIcon:     { width: 52, height: 52, borderRadius: 16,
+                  alignItems: 'center', justifyContent: 'center' },
+  tileLabel:    { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: light.text, textAlign: 'center' },
+
+  // Section header
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8,
+                   paddingHorizontal: 20, paddingTop: 18, paddingBottom: 10 },
+  sectionTitle:  { fontSize: 14, fontFamily: 'Inter_700Bold', color: light.mutedForeground,
+                   textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionBadge:  { backgroundColor: GOLD + '30', borderRadius: 10,
+                   paddingHorizontal: 8, paddingVertical: 2 },
+  sectionBadgeText: { fontSize: 12, fontFamily: 'Inter_700Bold', color: GOLD },
+
+  // Pending list
+  list:         { paddingHorizontal: 16, gap: 12 },
+  emptyList:    { flex: 1 },
+  card:         { backgroundColor: light.card, borderRadius: 14, padding: 16,
+                  borderWidth: 1, borderColor: light.border },
+  cardHeader:   { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
+  avatar:       { width: 44, height: 44, borderRadius: 22, backgroundColor: NAVY,
+                  alignItems: 'center', justifyContent: 'center' },
+  avatarText:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
+  cardInfo:     { flex: 1 },
+  cardName:     { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: light.text },
+  cardId:       { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
+  cardMeta:     { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
+  statusBadge:  { backgroundColor: GOLD + '22', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  statusText:   { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: GOLD },
+  cardActions:  { flexDirection: 'row', gap: 10 },
+  rejectBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                  gap: 6, borderWidth: 1.5, borderColor: light.destructive,
+                  borderRadius: 10, paddingVertical: 11 },
+  rejectBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: light.destructive },
+  approveBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                  gap: 6, backgroundColor: '#1A7A3E', borderRadius: 10, paddingVertical: 11 },
+  approveBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
+  btnDisabled:  { opacity: 0.5 },
+
+  // States
+  centered:     { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 40 },
+  retryBtn:     { backgroundColor: NAVY, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
+  retryBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
+  emptyState:   { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8,
+                  paddingHorizontal: 40, paddingTop: 40 },
+  emptyTitle:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: light.text, marginTop: 12 },
+  emptySubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: light.mutedForeground, textAlign: 'center' },
+
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalCard:   { backgroundColor: light.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-                 padding: 24, gap: 14 },
-  modalTitle:  { fontSize: 18, fontFamily: 'Inter_700Bold', color: light.text },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  modalCard:    { backgroundColor: light.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+                  padding: 24, gap: 14 },
+  modalTitle:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: light.text },
   modalSubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: -8 },
-  modalLabel:  { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: light.text },
-  modalInput:  { borderWidth: 1.5, borderColor: light.border, borderRadius: 10,
-                 paddingHorizontal: 14, paddingVertical: 12, fontSize: 14,
-                 fontFamily: 'Inter_400Regular', color: light.text, minHeight: 80,
-                 textAlignVertical: 'top', ...Platform.select({ web: { outlineWidth: 0 } as any }) },
+  modalLabel:   { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: light.text },
+  modalInput:   { borderWidth: 1.5, borderColor: light.border, borderRadius: 10,
+                  paddingHorizontal: 14, paddingVertical: 12, fontSize: 14,
+                  fontFamily: 'Inter_400Regular', color: light.text, minHeight: 80,
+                  textAlignVertical: 'top', backgroundColor: light.background,
+                  ...Platform.select({ web: { outlineWidth: 0 } as any }) },
   modalActions: { flexDirection: 'row', gap: 12, marginTop: 4 },
   modalCancelBtn: { flex: 1, borderWidth: 1.5, borderColor: light.border, borderRadius: 10,
                     paddingVertical: 14, alignItems: 'center' },

@@ -12,8 +12,8 @@ import colors from '@/constants/colors';
 
 const { light, government } = colors;
 const NAVY  = government.navy;
-const GREEN = '#1A7A3E';
-const AMBER = '#B07800';
+const GREEN = '#22C55E';
+const AMBER = '#F59E0B';
 
 type Row = AdminAttendanceSummary['records'][number];
 

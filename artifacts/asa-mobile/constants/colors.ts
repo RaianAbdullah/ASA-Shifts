@@ -1,74 +1,67 @@
 /**
- * ASA Workforce — Design Tokens
+ * ASA Workforce — Design Tokens (Dark Theme)
  *
- * Government-grade color palette:
- * - Primary: Navy blue — authority, trust, official
- * - Accent: Gold — official seals, importance, hierarchy
- * - Surfaces: Clean whites and light grays — clarity, professionalism
- *
- * These tokens are consumed via useColors() in hooks/useColors.ts.
- * The structure mirrors the monorepo web artifact conventions.
+ * Deep navy/slate dark palette — professional, easy on the eyes,
+ * government-grade authority without the brightness fatigue.
  */
 
 const colors = {
   light: {
-    // Legacy aliases (required by useColors hook)
-    text: '#1A2332',
-    tint: '#1B3A6B',
+    // Legacy aliases
+    text: '#E4E8F2',
+    tint: '#4A7FD4',
 
     // Core surfaces
-    background: '#F5F7FA',
-    foreground: '#1A2332',
+    background: '#0D0F18',
+    foreground: '#E4E8F2',
 
     // Cards / elevated surfaces
-    card: '#FFFFFF',
-    cardForeground: '#1A2332',
+    card: '#161923',
+    cardForeground: '#E4E8F2',
 
-    // Primary action — Navy blue
-    primary: '#1B3A6B',
+    // Primary action — brighter navy for dark bg
+    primary: '#4A7FD4',
     primaryForeground: '#FFFFFF',
 
     // Secondary
-    secondary: '#EEF2F7',
-    secondaryForeground: '#1A2332',
+    secondary: '#1C2035',
+    secondaryForeground: '#E4E8F2',
 
     // Muted / subdued
-    muted: '#EEF2F7',
-    mutedForeground: '#5B6B7E',
+    muted: '#1C2035',
+    mutedForeground: '#8892A4',
 
     // Accent — Gold
-    accent: '#C8A84B',
-    accentForeground: '#1B3A6B',
+    accent: '#D4A832',
+    accentForeground: '#0D0F18',
 
     // Destructive / error
-    destructive: '#CC2936',
+    destructive: '#EF4444',
     destructiveForeground: '#FFFFFF',
 
     // Borders and inputs
-    border: '#D0D9E4',
-    input: '#D0D9E4',
+    border: '#252838',
+    input: '#252838',
 
-    // Success / warning — attendance classifications
-    success: '#1A7A3E',
+    // Success / warning
+    success: '#22C55E',
     successForeground: '#FFFFFF',
-    warning: '#B5760D',
+    warning: '#F59E0B',
     warningForeground: '#FFFFFF',
   },
 
-  // Extra government-specific tokens (used directly, not via useColors)
   government: {
-    navyDark: '#0F2547',
-    navy: '#1B3A6B',
-    navyLight: '#2D5A9E',
-    navyMuted: '#A8C4E0',
-    gold: '#C8A84B',
-    goldDark: '#9A7A2E',
-    surfaceOverlay: 'rgba(255, 255, 255, 0.08)',
+    navyDark: '#1A2E6B',
+    navy: '#4A7FD4',
+    navyLight: '#6A9FE4',
+    navyMuted: '#2A4070',
+    gold: '#D4A832',
+    goldDark: '#A8831E',
+    surfaceOverlay: 'rgba(255, 255, 255, 0.06)',
     textOnNavy: '#FFFFFF',
     subtextOnNavy: '#A8C4E0',
   },
 
-  // Border radius — slightly more authoritative/square than consumer apps
   radius: 10,
 };
 

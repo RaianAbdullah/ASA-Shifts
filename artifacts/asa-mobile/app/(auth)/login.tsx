@@ -11,11 +11,13 @@ import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollV
 import colors from '@/constants/colors';
 import { authApi, ApiError } from '@/services/api';
 import { saveSession, Session } from '@/services/auth';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const { light, government } = colors;
 
 export default function LoginScreen() {
   const insets    = useSafeAreaInsets();
+  const { t }     = useLanguage();
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [employeeNumber, setEmployeeNumber] = useState('');
@@ -26,8 +28,8 @@ export default function LoginScreen() {
 
   const validate = () => {
     const next: typeof errors = {};
-    if (!/^\d{10}$/.test(employeeNumber)) next.employeeNumber = 'Enter your 10-digit national ID';
-    if (!password)                         next.password       = 'Password is required';
+    if (!/^\d{10}$/.test(employeeNumber)) next.employeeNumber = t('idRequired');
+    if (!password)                         next.password       = t('passwordRequired');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -62,8 +64,8 @@ export default function LoginScreen() {
       router.replace('/(tabs)');
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      const msg = err instanceof ApiError ? err.message : 'Login failed. Please try again.';
-      Alert.alert('Sign In Failed', msg);
+      const msg = err instanceof ApiError ? err.message : t('loginFailed');
+      Alert.alert(t('signInFailed'), msg);
     } finally {
       setLoading(false);
     }
@@ -82,20 +84,19 @@ export default function LoginScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.heading}>Welcome Back</Text>
-        <Text style={styles.headingAr}>أهلاً بعودتك</Text>
+        <Text style={styles.heading}>{t('welcomeBack')}</Text>
       </View>
 
       {/* Form */}
       <View style={styles.form}>
         {/* Employee Number */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>ID Number <Text style={styles.labelAr}>رقم الهوية</Text></Text>
+          <Text style={styles.label}>{t('nationalId')}</Text>
           <View style={[styles.inputRow, errors.employeeNumber ? styles.inputError : null]}>
             <Ionicons name="card-outline" size={18} color={light.mutedForeground} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="10-digit national ID"
+              placeholder={t('nationalIdPlaceholder')}
               placeholderTextColor={light.mutedForeground}
               value={employeeNumber}
               onChangeText={(t) => {
@@ -114,12 +115,12 @@ export default function LoginScreen() {
 
         {/* Password */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Password <Text style={styles.labelAr}>كلمة المرور</Text></Text>
+          <Text style={styles.label}>{t('password')}</Text>
           <View style={[styles.inputRow, errors.password ? styles.inputError : null]}>
             <Ionicons name="lock-closed-outline" size={18} color={light.mutedForeground} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Enter your password"
+              placeholder={t('passwordPlaceholder')}
               placeholderTextColor={light.mutedForeground}
               value={password}
               onChangeText={(t) => {
@@ -147,7 +148,7 @@ export default function LoginScreen() {
           style={styles.forgotBtn}
           onPress={() => router.push('/(auth)/forgot-password')}
         >
-          <Text style={styles.forgotText}>Forgot password? / نسيت كلمة المرور؟</Text>
+          <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
         </TouchableOpacity>
 
         {/* Login button */}
@@ -158,14 +159,7 @@ export default function LoginScreen() {
           activeOpacity={0.82}
           testID="btn-login"
         >
-          {loading ? (
-            <Text style={styles.loginBtnText}>Signing in…</Text>
-          ) : (
-            <>
-              <Text style={styles.loginBtnText}>Sign In</Text>
-              <Text style={styles.loginBtnTextAr}>دخول</Text>
-            </>
-          )}
+          <Text style={styles.loginBtnText}>{loading ? t('signingIn') : t('signIn')}</Text>
         </TouchableOpacity>
 
         {/* Divider */}
@@ -182,7 +176,7 @@ export default function LoginScreen() {
           activeOpacity={0.82}
           testID="btn-go-register"
         >
-          <Text style={styles.registerBtnText}>New Employee? Register — موظف جديد؟ سجّل</Text>
+          <Text style={styles.registerBtnText}>{t('noAccount')}</Text>
         </TouchableOpacity>
       </View>
 
