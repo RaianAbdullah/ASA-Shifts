@@ -34,15 +34,18 @@ export default function WelcomeScreen() {
       <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
 
       {/* ── Green header area ── */}
-      <View style={[styles.header, { paddingTop: topPad + 32 }]}>
+      <View style={[styles.header, { paddingTop: topPad + 16 }]}>
+        <Text style={styles.basmala}>بسم الله الرحمن الرحيم</Text>
+
         <Image
           source={require('../assets/images/asa-logo.png')}
           style={styles.logo}
           resizeMode="contain"
         />
         <Text style={styles.appName}>Agency of Security Affairs</Text>
-        <Text style={styles.subtitleAr}>وكالة وزارة الداخلية للشون الأمنية</Text>
-        <Text style={styles.subtitleEn}>إدارة العمليات الأمنية</Text>
+        <Text style={styles.line1}>المملكة العربية السعودية</Text>
+        <Text style={styles.line2}>وكالة وزارة الداخلية للشؤون الأمنية،</Text>
+        <Text style={styles.line3}>إدارة العمليات الأمنية</Text>
       </View>
 
       {/* ── Cream lower area ── */}
@@ -103,17 +106,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
-  subtitleAr: {
-    fontSize: 16,
+  basmala: {
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.75)',
-    marginBottom: 4,
+    color: GOLD,
     textAlign: 'center',
+    marginBottom: 20,
+    letterSpacing: 0.5,
   },
-  subtitleEn: {
+  line1: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: WHITE,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  line2: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.80)',
+    textAlign: 'center',
+    marginBottom: 3,
+  },
+  line3: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.60)',
     textAlign: 'center',
   },
   lower: {
