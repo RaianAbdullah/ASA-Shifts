@@ -40,9 +40,11 @@ export default function WelcomeScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.line1}>المملكة العربية السعودية</Text>
-        <Text style={styles.line2}>وكالة وزارة الداخلية للشؤون الأمنية،</Text>
-        <Text style={styles.line3}>إدارة العمليات الأمنية</Text>
+        <View style={styles.textBlock}>
+          <Text style={styles.line1}>المملكة العربية السعودية</Text>
+          <Text style={styles.line2}>وكالة وزارة الداخلية للشؤون الأمنية،</Text>
+          <Text style={styles.line3}>إدارة العمليات الأمنية</Text>
+        </View>
       </View>
 
       {/* ── Cream lower area ── */}
@@ -108,6 +110,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
     letterSpacing: 0.5,
+  },
+  textBlock: {
+    width: '100%',
+    alignItems: 'center',
   },
   line1: {
     fontSize: 22,
