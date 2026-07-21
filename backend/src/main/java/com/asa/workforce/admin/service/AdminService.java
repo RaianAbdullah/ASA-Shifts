@@ -83,12 +83,17 @@ public class AdminService {
 
         log.info("[ADMIN] {} approved employee {}", adminNationalId, employeeId);
 
-        // Notify the employee
-        List<String> tokens = pushTokenRepository.findTokensByEmployeeId(emp.getId());
-        pushService.sendToTokens(tokens,
-                "تمت الموافقة على حسابك — Account Approved",
-                "Your account has been approved. You can now sign in to ASA Workforce.",
-                Map.of("type", "ACCOUNT_APPROVED"));
+        // Notify the employee — non-fatal: a push failure must never roll back the approval
+        try {
+            List<String> tokens = pushTokenRepository.findTokensByEmployeeId(emp.getId());
+            pushService.sendToTokens(tokens,
+                    "تمت الموافقة على حسابك — Account Approved",
+                    "Your account has been approved. You can now sign in to ASA Workforce.",
+                    Map.of("type", "ACCOUNT_APPROVED"));
+        } catch (Exception ex) {
+            log.warn("[ADMIN] Push notification failed for approved employee {} — approval is still saved",
+                    employeeId, ex);
+        }
 
         return Map.of("employeeId", employeeId.toString(),
                 "newStatus", "ACTIVE",
@@ -126,12 +131,17 @@ public class AdminService {
 
         log.info("[ADMIN] {} rejected employee {} — reason: {}", adminNationalId, employeeId, reason);
 
-        // Notify the employee
-        List<String> tokens = pushTokenRepository.findTokensByEmployeeId(emp.getId());
-        pushService.sendToTokens(tokens,
-                "تم رفض طلبك — Registration Rejected",
-                "Your registration request was not approved. Please contact HR for details.",
-                Map.of("type", "ACCOUNT_REJECTED"));
+        // Notify the employee — non-fatal: a push failure must never roll back the rejection
+        try {
+            List<String> tokens = pushTokenRepository.findTokensByEmployeeId(emp.getId());
+            pushService.sendToTokens(tokens,
+                    "تم رفض طلبك — Registration Rejected",
+                    "Your registration request was not approved. Please contact HR for details.",
+                    Map.of("type", "ACCOUNT_REJECTED"));
+        } catch (Exception ex) {
+            log.warn("[ADMIN] Push notification failed for rejected employee {} — rejection is still saved",
+                    employeeId, ex);
+        }
 
         return Map.of("employeeId", employeeId.toString(),
                 "newStatus", "REJECTED",

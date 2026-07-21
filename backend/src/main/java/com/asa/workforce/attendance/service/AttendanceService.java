@@ -254,6 +254,15 @@ public class AttendanceService {
     }
 
     private AttendanceResponse emptyTodayResponse(LocalDate today, WeeklySchedule schedule) {
+        // Only allow check-in once the shift is within 30 minutes of starting.
+        // If there is no schedule the button remains available (edge case: no shift assigned).
+        boolean canCheckIn = true;
+        if (schedule != null) {
+            LocalTime nowUtc   = LocalTime.now(ZoneOffset.UTC);
+            LocalTime earliest = schedule.getShiftStart().minusMinutes(30);
+            canCheckIn = !nowUtc.isBefore(earliest);
+        }
+
         return AttendanceResponse.builder()
                 .attendanceDate(today)
                 .status(Status.ABSENT.name())
@@ -261,7 +270,7 @@ public class AttendanceService {
                 .geofenceOverride(false)
                 .shiftStart(schedule != null ? schedule.getShiftStart().toString() : null)
                 .shiftEnd(schedule != null ? schedule.getShiftEnd().toString() : null)
-                .canCheckIn(true)
+                .canCheckIn(canCheckIn)
                 .canCheckOut(false)
                 .build();
     }
