@@ -6,24 +6,28 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Alert, RefreshControl,
+  Alert, RefreshControl, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
+import colors from '@/constants/colors';
+
+const { light, government } = colors;
+const GREEN_DARK = government.navyDark;  // "#0A4D2E"
+const GREEN_MID  = government.navy;      // "#0D6B3F"
+const GOLD       = government.gold;      // "#C9963F"
+const CREAM      = light.background;    // "#F9FAF7"
+const WHITE      = light.card;          // "#FFFFFF"
+const TEXT       = light.text;          // "#1A1F1C"
+const MUTED      = light.mutedForeground; // "#6B7A72"
+const BORDER     = light.border;        // "#E4EBE7"
+const RED        = light.destructive;
 
 const STORAGE_KEY = '@asa_notification_log';
 const MAX_STORED  = 100;
-
-const NAVY   = '#1A2332';
-const GOLD   = '#C9A84C';
-const GRAY   = '#6B7280';
-const BG     = '#F8F9FA';
-const CARD   = '#FFFFFF';
-const RED    = '#EF4444';
-const BORDER = '#E5E7EB';
 
 interface StoredNotification {
   id:        string;
@@ -109,28 +113,36 @@ export default function NotificationsScreen() {
     ]);
   };
 
-  const renderItem = ({ item }: { item: StoredNotification }) => (
-    <View style={styles.card}>
-      <View style={styles.cardTop}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{item.title}</Text>
-          <Text style={styles.cardBody}>{item.body}</Text>
+  const renderItem = ({ item, index }: { item: StoredNotification; index: number }) => {
+    // First item treated as "unread" with green dot
+    const isUnread = index === 0;
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardTop}>
+          {/* Green dot for unread */}
+          {isUnread && <View style={styles.unreadDot} />}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardBody}>{item.body}</Text>
+          </View>
+          <Text style={styles.timeAgo}>{timeAgo(item.receivedAt)}</Text>
         </View>
-        <Text style={styles.timeAgo}>{timeAgo(item.receivedAt)}</Text>
+        {item.data && Object.keys(item.data).length > 0 && (
+          <Text style={styles.cardData}>
+            {Object.entries(item.data)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join('  ·  ')}
+          </Text>
+        )}
       </View>
-      {item.data && Object.keys(item.data).length > 0 && (
-        <Text style={styles.cardData}>
-          {Object.entries(item.data)
-            .map(([k, v]) => `${k}: ${v}`)
-            .join('  ·  ')}
-        </Text>
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" />
+
+      {/* Header — navyDark bg */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
@@ -146,12 +158,13 @@ export default function NotificationsScreen() {
         )}
       </View>
 
+      {/* Cream bg list */}
       <FlatList
         data={items}
         keyExtractor={item => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={GREEN_MID} />}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🔔</Text>
@@ -167,32 +180,41 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:       { flex: 1, backgroundColor: BG },
+  root:       { flex: 1, backgroundColor: CREAM },
+
+  // Header — navyDark
   header:     { flexDirection: 'row', alignItems: 'center', gap: 12,
-                padding: 16, paddingBottom: 12, backgroundColor: CARD,
-                borderBottomWidth: 1, borderBottomColor: BORDER },
+                padding: 16, paddingBottom: 14, backgroundColor: GREEN_DARK },
   backBtn:    { padding: 4 },
-  backText:   { color: GOLD, fontSize: 15, fontFamily: 'Inter_500Medium' },
-  title:      { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY },
-  titleAr:    { fontSize: 13, color: GRAY },
-  clearBtn:   { borderWidth: 1, borderColor: RED, borderRadius: 8,
+  backText:   { color: 'rgba(255,255,255,0.8)', fontSize: 15, fontFamily: 'Inter_500Medium' },
+  title:      { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#fff' },
+  titleAr:    { fontSize: 13, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)' },
+  clearBtn:   { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 10,
                 paddingHorizontal: 10, paddingVertical: 6 },
-  clearBtnText: { color: RED, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  clearBtnText: { color: '#fff', fontSize: 13, fontFamily: 'Inter_600SemiBold' },
 
-  list:       { padding: 16, paddingBottom: 60 },
+  list:       { padding: 16, paddingBottom: 60, gap: 10 },
 
-  card:       { backgroundColor: CARD, borderRadius: 14, padding: 16, marginBottom: 10,
-                shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6,
-                shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  cardTop:    { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  cardTitle:  { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: NAVY, marginBottom: 4 },
-  cardBody:   { fontSize: 14, color: GRAY, lineHeight: 20 },
-  timeAgo:    { fontSize: 11, color: GRAY, minWidth: 60, textAlign: 'right', marginTop: 2 },
-  cardData:   { fontSize: 11, color: GRAY, backgroundColor: BG, borderRadius: 6,
+  // White cards per notification with green unread dot
+  card:       { backgroundColor: WHITE, borderRadius: 16, padding: 16,
+                borderWidth: 1, borderColor: BORDER,
+                shadowColor: GREEN_DARK, shadowOpacity: 0.10, shadowRadius: 16,
+                shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  cardTop:    { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+
+  // Green dot for unread
+  unreadDot:  { width: 8, height: 8, borderRadius: 4, backgroundColor: GREEN_MID,
+                marginTop: 4, flexShrink: 0 },
+
+  cardTitle:  { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: TEXT, marginBottom: 4 },
+  cardBody:   { fontSize: 14, fontFamily: 'Inter_400Regular', color: MUTED, lineHeight: 20 },
+  timeAgo:    { fontSize: 11, fontFamily: 'Inter_400Regular', color: MUTED, minWidth: 60, textAlign: 'right', marginTop: 2 },
+  cardData:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: MUTED,
+                backgroundColor: CREAM, borderRadius: 8,
                 padding: 8, marginTop: 10 },
 
   empty:      { alignItems: 'center', paddingTop: 80 },
   emptyIcon:  { fontSize: 56, marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: GRAY, marginBottom: 8 },
-  emptyBody:  { fontSize: 14, color: GRAY, textAlign: 'center', lineHeight: 22, paddingHorizontal: 32 },
+  emptyTitle: { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: MUTED, marginBottom: 8 },
+  emptyBody:  { fontSize: 14, fontFamily: 'Inter_400Regular', color: MUTED, textAlign: 'center', lineHeight: 22, paddingHorizontal: 32 },
 });

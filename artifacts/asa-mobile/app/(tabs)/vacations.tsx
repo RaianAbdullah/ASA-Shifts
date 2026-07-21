@@ -4,28 +4,34 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, Alert, ActivityIndicator, RefreshControl,
+  TextInput, Alert, ActivityIndicator, RefreshControl, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vacationApi, VacationRequestDto, ApiError } from '@/services/api';
+import colors from '@/constants/colors';
 
-const NAVY   = '#1A2332';
-const GOLD   = '#C9A84C';
-const GRAY   = '#6B7280';
-const BG     = '#F8F9FA';
-const CARD   = '#FFFFFF';
-const GREEN  = '#10B981';
-const RED    = '#EF4444';
-const BORDER = '#E5E7EB';
+const { light, government } = colors;
+
+const GREEN_DARK  = government.navyDark;  // "#0A4D2E"
+const GREEN_MID   = government.navy;      // "#0D6B3F"
+const GOLD        = government.gold;      // "#C9963F"
+const CREAM       = light.background;    // "#F9FAF7"
+const WHITE       = light.card;          // "#FFFFFF"
+const TEXT        = light.text;          // "#1A1F1C"
+const MUTED       = light.mutedForeground; // "#6B7A72"
+const BORDER      = light.border;        // "#E4EBE7"
+const GREEN       = '#22C55E';
+const RED         = '#EF4444';
+const AMBER       = '#F59E0B';
 
 const STATUS_META: Record<string, { bg: string; text: string; label: string }> = {
-  PENDING_DEPT_MANAGER:  { bg: '#FEF3C7', text: '#92400E', label: 'Awaiting Dept. Manager' },
-  PENDING_MAIN_MANAGER:  { bg: '#DBEAFE', text: '#1E40AF', label: 'Awaiting Manager Approval' },
-  APPROVED:              { bg: '#D1FAE5', text: '#065F46', label: 'Approved' },
-  REJECTED:              { bg: '#FEE2E2', text: '#991B1B', label: 'Rejected' },
-  CANCELLED:             { bg: '#F3F4F6', text: '#6B7280', label: 'Cancelled' },
+  PENDING_DEPT_MANAGER:  { bg: AMBER + '22', text: '#92400E', label: 'Awaiting Dept. Manager' },
+  PENDING_MAIN_MANAGER:  { bg: GREEN_MID + '22', text: GREEN_DARK, label: 'Awaiting Manager Approval' },
+  APPROVED:              { bg: GREEN + '22', text: '#065F46', label: 'Approved' },
+  REJECTED:              { bg: RED + '22', text: '#991B1B', label: 'Rejected' },
+  CANCELLED:             { bg: BORDER, text: MUTED, label: 'Cancelled' },
 };
 
 function RequestCard({
@@ -157,36 +163,38 @@ export default function VacationsScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['bottom']}>
+      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+
+      {/* Green page header */}
+      <View style={styles.screenHeader}>
+        <View>
+          <Text style={styles.screenTitle}>Vacations</Text>
+          <Text style={styles.screenTitleAr}>طلبات الإجازة</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.newBtn}
+          onPress={() => setShowForm(v => !v)}
+        >
+          <Text style={styles.newBtnText}>{showForm ? '✕ Close' : '+ New Request'}</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
+        refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={GREEN_MID} />}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Vacations</Text>
-            <Text style={styles.titleAr}>طلبات الإجازة</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.newBtn}
-            onPress={() => setShowForm(v => !v)}
-          >
-            <Text style={styles.newBtnText}>{showForm ? '✕ Close' : '+ New Request'}</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Balance card */}
         {balance && (
           <View style={styles.balanceCard}>
             <Text style={styles.balanceTitle}>Vacation Balance {balance.year} — رصيد الإجازة</Text>
             <View style={styles.balanceRow}>
               <View style={styles.balanceStat}>
-                <Text style={[styles.balanceNum, { color: NAVY }]}>{balance.daysAllowed}</Text>
+                <Text style={[styles.balanceNum, { color: GREEN_DARK }]}>{balance.daysAllowed}</Text>
                 <Text style={styles.balanceLabel}>Allowed</Text>
               </View>
               <View style={styles.balanceDivider} />
               <View style={styles.balanceStat}>
-                <Text style={[styles.balanceNum, { color: '#f59e0b' }]}>{balance.daysUsed}</Text>
+                <Text style={[styles.balanceNum, { color: AMBER }]}>{balance.daysUsed}</Text>
                 <Text style={styles.balanceLabel}>Used</Text>
               </View>
               <View style={styles.balanceDivider} />
@@ -198,7 +206,7 @@ export default function VacationsScreen() {
           </View>
         )}
 
-        {/* Submit form */}
+        {/* Submit form — white form card */}
         {showForm && (
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>New Vacation Request</Text>
@@ -211,6 +219,7 @@ export default function VacationsScreen() {
               value={startDate}
               onChangeText={setStartDate}
               placeholder="e.g. 2026-08-01"
+              placeholderTextColor={MUTED}
               keyboardType="numbers-and-punctuation"
               maxLength={10}
             />
@@ -220,6 +229,7 @@ export default function VacationsScreen() {
               value={endDate}
               onChangeText={setEndDate}
               placeholder="e.g. 2026-08-07"
+              placeholderTextColor={MUTED}
               keyboardType="numbers-and-punctuation"
               maxLength={10}
             />
@@ -229,10 +239,12 @@ export default function VacationsScreen() {
               value={reason}
               onChangeText={setReason}
               placeholder="Brief explanation"
+              placeholderTextColor={MUTED}
               multiline
               numberOfLines={3}
               maxLength={500}
             />
+            {/* Green submit button */}
             <TouchableOpacity
               style={[styles.submitBtn, submitMutation.isPending && styles.disabledBtn]}
               onPress={handleSubmit}
@@ -245,7 +257,7 @@ export default function VacationsScreen() {
           </View>
         )}
 
-        {isLoading && <ActivityIndicator color={NAVY} style={{ marginTop: 40 }} />}
+        {isLoading && <ActivityIndicator color={GREEN_MID} style={{ marginTop: 40 }} />}
 
         {pending.length > 0 && (
           <>
@@ -287,55 +299,77 @@ export default function VacationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:         { flex: 1, backgroundColor: BG },
+  root:         { flex: 1, backgroundColor: CREAM },
   scroll:       { padding: 20, paddingBottom: 80 },
-  header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-  title:        { fontSize: 26, fontFamily: 'Inter_700Bold', color: NAVY },
-  titleAr:      { fontSize: 16, color: GRAY, marginTop: 2 },
-  newBtn:       { backgroundColor: NAVY, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, marginTop: 4 },
-  newBtnText:   { color: '#FFF', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
-  balanceCard:    { backgroundColor: CARD, borderRadius: 16, padding: 16, marginBottom: 20,
-                    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  balanceTitle:   { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: GRAY, marginBottom: 12, textAlign: 'center' },
+  // Green page header
+  screenHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+                  backgroundColor: GREEN_DARK, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 },
+  screenTitle:  { fontSize: 24, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  screenTitleAr:{ fontSize: 14, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+
+  // New Request button — secondary style on header
+  newBtn:       { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12,
+                  paddingHorizontal: 16, paddingVertical: 10, marginTop: 4,
+                  borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+  newBtnText:   { color: '#FFFFFF', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+
+  // Balance card — white floating
+  balanceCard:    { backgroundColor: WHITE, borderRadius: 16, padding: 16, marginBottom: 20,
+                    borderWidth: 1, borderColor: BORDER,
+                    shadowColor: '#0A4D2E', shadowOpacity: 0.10, shadowRadius: 16,
+                    shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  balanceTitle:   { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: MUTED, marginBottom: 12, textAlign: 'center' },
   balanceRow:     { flexDirection: 'row', alignItems: 'center' },
   balanceStat:    { flex: 1, alignItems: 'center' },
   balanceNum:     { fontSize: 28, fontFamily: 'Inter_700Bold' },
-  balanceLabel:   { fontSize: 12, color: GRAY, marginTop: 2 },
+  balanceLabel:   { fontSize: 12, color: MUTED, marginTop: 2 },
   balanceDivider: { width: 1, height: 40, backgroundColor: BORDER },
 
-  formCard:     { backgroundColor: CARD, borderRadius: 16, padding: 20, marginBottom: 20,
-                  shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
-  formTitle:    { fontSize: 18, fontFamily: 'Inter_700Bold', color: NAVY, marginBottom: 14 },
-  errorBox:     { backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, marginBottom: 12 },
+  // Form card — white
+  formCard:     { backgroundColor: WHITE, borderRadius: 16, padding: 20, marginBottom: 20,
+                  borderWidth: 1, borderColor: BORDER,
+                  shadowColor: '#0A4D2E', shadowOpacity: 0.10, shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  formTitle:    { fontSize: 18, fontFamily: 'Inter_700Bold', color: TEXT, marginBottom: 14 },
+  errorBox:     { backgroundColor: RED + '18', borderRadius: 8, padding: 10, marginBottom: 12,
+                  borderWidth: 1, borderColor: RED + '40' },
   errorText:    { color: RED, fontSize: 13 },
-  fieldLabel:   { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: NAVY, marginBottom: 6 },
-  input:        { borderWidth: 1, borderColor: BORDER, borderRadius: 10, padding: 12, fontSize: 15,
-                  color: NAVY, backgroundColor: BG, marginBottom: 14 },
-  textArea:     { height: 80, textAlignVertical: 'top' },
-  submitBtn:    { backgroundColor: NAVY, borderRadius: 12, padding: 14, alignItems: 'center' },
-  submitBtnText:{ color: '#FFF', fontSize: 16, fontFamily: 'Inter_600SemiBold' },
+  fieldLabel:   { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: GREEN_DARK, marginBottom: 6 },
+  input:        { borderWidth: 1.5, borderColor: BORDER, borderRadius: 12, padding: 14, fontSize: 15,
+                  color: TEXT, backgroundColor: WHITE, marginBottom: 14, height: 54 },
+  textArea:     { height: 90, textAlignVertical: 'top' },
+  // Green submit button
+  submitBtn:    { backgroundColor: GREEN_MID, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  submitBtnText:{ color: '#FFFFFF', fontSize: 16, fontFamily: 'Inter_600SemiBold' },
   disabledBtn:  { opacity: 0.5 },
 
-  sectionTitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: GRAY,
-                  letterSpacing: 0.6, marginBottom: 10, marginTop: 8 },
+  sectionTitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: MUTED,
+                  letterSpacing: 0.6, marginBottom: 10, marginTop: 8, textTransform: 'uppercase' },
 
-  requestCard:  { backgroundColor: CARD, borderRadius: 14, padding: 16, marginBottom: 12,
-                  shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  // Request cards — white with status chips
+  requestCard:  { backgroundColor: WHITE, borderRadius: 16, padding: 16, marginBottom: 12,
+                  borderWidth: 1, borderColor: BORDER,
+                  shadowColor: '#0A4D2E', shadowOpacity: 0.10, shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   requestHeader:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
-  requestDates: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: NAVY },
-  requestDays:  { fontSize: 13, color: GRAY, marginTop: 2 },
+  requestDates: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: TEXT },
+  requestDays:  { fontSize: 13, color: MUTED, marginTop: 2 },
+  // Status chips — green/amber/red
   statusBadge:  { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 160 },
   statusText:   { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
-  requestReason:{ fontSize: 14, color: GRAY, lineHeight: 20, marginBottom: 8 },
-  reviewNotes:  { fontSize: 13, color: GRAY, backgroundColor: '#F9FAFB', borderRadius: 8,
-                  padding: 10, marginBottom: 8 },
-  cancelBtn:    { borderWidth: 1, borderColor: RED, borderRadius: 8, padding: 10, alignItems: 'center', marginTop: 4 },
+  requestReason:{ fontSize: 14, color: MUTED, lineHeight: 20, marginBottom: 8 },
+  reviewNotes:  { fontSize: 13, color: MUTED, backgroundColor: CREAM, borderRadius: 8,
+                  padding: 10, marginBottom: 8, borderWidth: 1, borderColor: BORDER },
+  cancelBtn:    { borderWidth: 1.5, borderColor: RED, borderRadius: 10, padding: 10,
+                  alignItems: 'center', marginTop: 4 },
   cancelBtnText:{ color: RED, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
 
-  emptyCard:    { backgroundColor: CARD, borderRadius: 18, padding: 32, alignItems: 'center', marginTop: 12,
-                  shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  emptyCard:    { backgroundColor: WHITE, borderRadius: 18, padding: 32, alignItems: 'center', marginTop: 12,
+                  borderWidth: 1, borderColor: BORDER,
+                  shadowColor: '#0A4D2E', shadowOpacity: 0.10, shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   emptyIcon:    { fontSize: 56, marginBottom: 16 },
-  emptyTitle:   { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY, marginBottom: 10 },
-  emptyBody:    { fontSize: 15, color: GRAY, textAlign: 'center', lineHeight: 22 },
+  emptyTitle:   { fontSize: 20, fontFamily: 'Inter_700Bold', color: TEXT, marginBottom: 10 },
+  emptyBody:    { fontSize: 15, color: MUTED, textAlign: 'center', lineHeight: 22 },
 });

@@ -8,6 +8,9 @@ import { Tabs } from 'expo-router';
 import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
 import { useLanguage } from '@/contexts/LanguageContext';
+import colors from '@/constants/colors';
+
+const { government, light } = colors;
 
 // iOS 26 native tab layout (liquid glass — system-controlled appearance)
 function NativeTabLayout() {
@@ -40,24 +43,23 @@ function NativeTabLayout() {
 
 // Android / older iOS / web tab layout — icon only, no labels
 function ClassicTabLayout() {
-  const colors = useColors();
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarActiveTintColor: government.navy,
+        tabBarInactiveTintColor: light.mutedForeground,
         tabBarShowLabel: false,
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: isIOS ? 'transparent' : colors.card,
+          backgroundColor: isIOS ? 'transparent' : '#FFFFFF',
           borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopColor: light.border,
           elevation: 0,
-          height: isWeb ? 64 : 60,
+          height: isWeb ? 70 : 70,
           paddingBottom: isWeb ? 8 : 6,
           paddingTop: 6,
         },
@@ -65,11 +67,11 @@ function ClassicTabLayout() {
           isIOS ? (
             <BlurView
               intensity={80}
-              tint="dark"
+              tint="light"
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: '#FFFFFF' }]} />
           ) : null,
       }}
     >

@@ -1,68 +1,77 @@
 /**
- * ASA Workforce — Design Tokens (Dark Theme)
+ * ASA Workforce — Design Tokens (Emerald Authority Theme)
  *
- * Deep navy/slate dark palette — professional, easy on the eyes,
- * government-grade authority without the brightness fatigue.
+ * Deep Saudi green + gold. Light cream background, white floating cards.
+ * Matches the approved EmeraldV2 mockup exactly.
  */
 
 const colors = {
   light: {
-    // Legacy aliases
-    text: '#E4E8F2',
-    tint: '#4A7FD4',
+    // Legacy aliases kept for compatibility
+    text:              '#1A1F1C',
+    tint:              '#0D6B3F',
 
     // Core surfaces
-    background: '#0D0F18',
-    foreground: '#E4E8F2',
+    background:        '#F9FAF7',
+    foreground:        '#1A1F1C',
 
     // Cards / elevated surfaces
-    card: '#161923',
-    cardForeground: '#E4E8F2',
+    card:              '#FFFFFF',
+    cardForeground:    '#1A1F1C',
 
-    // Primary action — brighter navy for dark bg
-    primary: '#4A7FD4',
+    // Primary action — Saudi green
+    primary:           '#0D6B3F',
     primaryForeground: '#FFFFFF',
 
     // Secondary
-    secondary: '#1C2035',
-    secondaryForeground: '#E4E8F2',
+    secondary:         '#E8F5EE',
+    secondaryForeground: '#0A4D2E',
 
     // Muted / subdued
-    muted: '#1C2035',
-    mutedForeground: '#8892A4',
+    muted:             '#E8F5EE',
+    mutedForeground:   '#6B7A72',
 
     // Accent — Gold
-    accent: '#D4A832',
-    accentForeground: '#0D0F18',
+    accent:            '#C9963F',
+    accentForeground:  '#FFFFFF',
 
     // Destructive / error
-    destructive: '#EF4444',
+    destructive:       '#EF4444',
     destructiveForeground: '#FFFFFF',
 
     // Borders and inputs
-    border: '#252838',
-    input: '#252838',
+    border:            '#E4EBE7',
+    input:             '#E4EBE7',
 
     // Success / warning
-    success: '#22C55E',
+    success:           '#22C55E',
     successForeground: '#FFFFFF',
-    warning: '#F59E0B',
+    warning:           '#F59E0B',
     warningForeground: '#FFFFFF',
   },
 
   government: {
-    navyDark: '#1A2E6B',
-    navy: '#4A7FD4',
-    navyLight: '#6A9FE4',
-    navyMuted: '#2A4070',
-    gold: '#D4A832',
-    goldDark: '#A8831E',
-    surfaceOverlay: 'rgba(255, 255, 255, 0.06)',
-    textOnNavy: '#FFFFFF',
-    subtextOnNavy: '#A8C4E0',
+    // Greens
+    navyDark:        '#0A4D2E',
+    navy:            '#0D6B3F',
+    navyLight:       '#128A50',
+    navyMuted:       '#0D6B3F',
+
+    // Golds
+    gold:            '#C9963F',
+    goldLight:       '#E8B86D',
+    goldDark:        '#A8771E',
+
+    // Surfaces
+    surfaceOverlay:  'rgba(255, 255, 255, 0.08)',
+    textOnNavy:      '#FFFFFF',
+    subtextOnNavy:   'rgba(255,255,255,0.65)',
+
+    // Background
+    cream:           '#F9FAF7',
   },
 
-  radius: 10,
+  radius: 14,
 };
 
 export default colors;

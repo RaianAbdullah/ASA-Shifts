@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   Alert, ActivityIndicator, RefreshControl, TextInput,
-  Platform, Modal,
+  Platform, Modal, StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,8 +15,14 @@ import colors from '@/constants/colors';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const { light, government } = colors;
-const NAVY  = government.navy;
-const GOLD  = government.gold;
+const GREEN_DARK = government.navyDark;  // "#0A4D2E"
+const GREEN_MID  = government.navy;      // "#0D6B3F"
+const GOLD       = government.gold;      // "#C9963F"
+const CREAM      = light.background;    // "#F9FAF7"
+const WHITE      = light.card;          // "#FFFFFF"
+const TEXT       = light.text;          // "#1A1F1C"
+const MUTED      = light.mutedForeground; // "#6B7A72"
+const BORDER     = light.border;        // "#E4EBE7"
 
 // ── Nav tile definitions ──────────────────────────────────────────────────────
 
@@ -143,46 +149,49 @@ export default function AdminPendingScreen() {
 
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{item.firstNameAr?.[0] ?? '?'}</Text>
+        <View style={styles.cardAccent} />
+        <View style={styles.cardInner}>
+          <View style={styles.cardHeader}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{item.firstNameAr?.[0] ?? '?'}</Text>
+            </View>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardName}>{item.firstNameAr} {item.lastNameAr}</Text>
+              <Text style={styles.cardId}>{item.nationalId}</Text>
+              <Text style={styles.cardMeta}>{item.maskedPhone} · {regDate}</Text>
+            </View>
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText}>{t('pendingBadge')}</Text>
+            </View>
           </View>
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>{item.firstNameAr} {item.lastNameAr}</Text>
-            <Text style={styles.cardId}>{item.nationalId}</Text>
-            <Text style={styles.cardMeta}>{item.maskedPhone} · {regDate}</Text>
-          </View>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{t('pendingBadge')}</Text>
-          </View>
-        </View>
 
-        <View style={styles.cardActions}>
-          <TouchableOpacity
-            style={[styles.rejectBtn, isBusy && styles.btnDisabled]}
-            onPress={() => { setRejectReason(''); setRejectModal({ visible: true, employee: item }); }}
-            disabled={isBusy}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="close-circle-outline" size={16} color={light.destructive} />
-            <Text style={styles.rejectBtnText}>{t('reject')}</Text>
-          </TouchableOpacity>
+          <View style={styles.cardActions}>
+            <TouchableOpacity
+              style={[styles.rejectBtn, isBusy && styles.btnDisabled]}
+              onPress={() => { setRejectReason(''); setRejectModal({ visible: true, employee: item }); }}
+              disabled={isBusy}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="close-circle-outline" size={16} color={light.destructive} />
+              <Text style={styles.rejectBtnText}>{t('reject')}</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.approveBtn, isBusy && styles.btnDisabled]}
-            onPress={() => handleApprove(item)}
-            disabled={isBusy}
-            activeOpacity={0.8}
-          >
-            {isBusy ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
-                <Text style={styles.approveBtnText}>{t('approve')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.approveBtn, isBusy && styles.btnDisabled]}
+              onPress={() => handleApprove(item)}
+              disabled={isBusy}
+              activeOpacity={0.8}
+            >
+              {isBusy ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+                  <Text style={styles.approveBtnText}>{t('approve')}</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -192,6 +201,7 @@ export default function AdminPendingScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" />
 
       {/* ── Header ── */}
       <View style={styles.header}>
@@ -206,7 +216,7 @@ export default function AdminPendingScreen() {
             </View>
           )}
           <TouchableOpacity testID="btn-sign-out" onPress={handleSignOut} style={styles.iconBtn}>
-            <Ionicons name="log-out-outline" size={24} color={NAVY} />
+            <Ionicons name="log-out-outline" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -230,7 +240,7 @@ export default function AdminPendingScreen() {
 
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={NAVY} />
+          <ActivityIndicator size="large" color={GREEN_MID} />
         </View>
       ) : isError ? (
         <View style={styles.centered}>
@@ -250,11 +260,11 @@ export default function AdminPendingScreen() {
             { paddingBottom: insets.bottom + 24 },
           ]}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={NAVY} />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={GREEN_MID} />
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="checkmark-done-circle-outline" size={56} color={NAVY} style={{ opacity: 0.25 }} />
+              <Ionicons name="checkmark-done-circle-outline" size={56} color={GREEN_MID} style={{ opacity: 0.25 }} />
               <Text style={styles.emptyTitle}>{t('allCaughtUp')}</Text>
               <Text style={styles.emptySubtitle}>{t('noPendingRegistrations')}</Text>
             </View>
@@ -280,7 +290,7 @@ export default function AdminPendingScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder={t('rejectionReasonPlaceholder')}
-              placeholderTextColor={light.mutedForeground}
+              placeholderTextColor={MUTED}
               value={rejectReason}
               onChangeText={setRejectReason}
               multiline
@@ -319,35 +329,36 @@ export default function AdminPendingScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: light.background },
+  container:    { flex: 1, backgroundColor: CREAM },
 
-  // Header
+  // Header — navyDark background, white text
   header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-                  paddingHorizontal: 20, paddingVertical: 16,
-                  borderBottomWidth: 1, borderBottomColor: light.border,
-                  backgroundColor: light.card },
-  headerTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY },
-  headerSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
+                  paddingHorizontal: 20, paddingVertical: 18,
+                  backgroundColor: GREEN_DARK },
+  headerTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#fff' },
+  headerSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   headerRight:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
   iconBtn:      { padding: 6 },
   badge:        { backgroundColor: light.destructive, borderRadius: 12, minWidth: 22,
                   height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   badgeText:    { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#fff' },
 
-  // Icon grid
+  // Icon grid — white cards on cream bg
   grid:         { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 10,
-                  backgroundColor: light.card, borderBottomWidth: 1, borderBottomColor: light.border },
+                  backgroundColor: CREAM },
   tile:         { width: '30.5%', alignItems: 'center', paddingVertical: 14,
-                  backgroundColor: light.background, borderRadius: 14,
-                  borderWidth: 1, borderColor: light.border, gap: 8 },
+                  backgroundColor: WHITE, borderRadius: 16,
+                  borderWidth: 1, borderColor: BORDER, gap: 8,
+                  shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.10, shadowRadius: 16, elevation: 4 },
   tileIcon:     { width: 52, height: 52, borderRadius: 16,
                   alignItems: 'center', justifyContent: 'center' },
-  tileLabel:    { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: light.text, textAlign: 'center' },
+  tileLabel:    { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: TEXT, textAlign: 'center' },
 
   // Section header
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8,
                    paddingHorizontal: 20, paddingTop: 18, paddingBottom: 10 },
-  sectionTitle:  { fontSize: 14, fontFamily: 'Inter_700Bold', color: light.mutedForeground,
+  sectionTitle:  { fontSize: 14, fontFamily: 'Inter_700Bold', color: MUTED,
                    textTransform: 'uppercase', letterSpacing: 0.5 },
   sectionBadge:  { backgroundColor: GOLD + '30', borderRadius: 10,
                    paddingHorizontal: 8, paddingVertical: 2 },
@@ -356,54 +367,66 @@ const styles = StyleSheet.create({
   // Pending list
   list:         { paddingHorizontal: 16, gap: 12 },
   emptyList:    { flex: 1 },
-  card:         { backgroundColor: light.card, borderRadius: 14, padding: 16,
-                  borderWidth: 1, borderColor: light.border },
+
+  // Card with gold left border accent
+  card:         { flexDirection: 'row', backgroundColor: WHITE, borderRadius: 16,
+                  borderWidth: 1, borderColor: BORDER,
+                  shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.10, shadowRadius: 16, elevation: 4,
+                  overflow: 'hidden' },
+  cardAccent:   { width: 4, backgroundColor: GOLD },
+  cardInner:    { flex: 1, padding: 16 },
+
   cardHeader:   { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
-  avatar:       { width: 44, height: 44, borderRadius: 22, backgroundColor: NAVY,
+  avatar:       { width: 44, height: 44, borderRadius: 99, backgroundColor: GOLD,
                   alignItems: 'center', justifyContent: 'center' },
   avatarText:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
   cardInfo:     { flex: 1 },
-  cardName:     { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: light.text },
-  cardId:       { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
-  cardMeta:     { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 2 },
+  cardName:     { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: TEXT },
+  cardId:       { fontSize: 13, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 2 },
+  cardMeta:     { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 2 },
   statusBadge:  { backgroundColor: GOLD + '22', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   statusText:   { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: GOLD },
   cardActions:  { flexDirection: 'row', gap: 10 },
+
+  // Reject: red-outlined
   rejectBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                   gap: 6, borderWidth: 1.5, borderColor: light.destructive,
-                  borderRadius: 10, paddingVertical: 11 },
+                  borderRadius: 14, paddingVertical: 11 },
   rejectBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: light.destructive },
+
+  // Approve: green filled
   approveBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                  gap: 6, backgroundColor: '#1A7A3E', borderRadius: 10, paddingVertical: 11 },
+                  gap: 6, backgroundColor: GREEN_MID, borderRadius: 14, paddingVertical: 11 },
   approveBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
   btnDisabled:  { opacity: 0.5 },
 
   // States
   centered:     { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 40 },
-  retryBtn:     { backgroundColor: NAVY, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
+  retryBtn:     { backgroundColor: GREEN_MID, borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 },
   retryBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
   emptyState:   { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8,
                   paddingHorizontal: 40, paddingTop: 40 },
-  emptyTitle:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: light.text, marginTop: 12 },
-  emptySubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: light.mutedForeground, textAlign: 'center' },
+  emptyTitle:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: TEXT, marginTop: 12 },
+  emptySubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: MUTED, textAlign: 'center' },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalCard:    { backgroundColor: light.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+  modalCard:    { backgroundColor: WHITE, borderTopLeftRadius: 24, borderTopRightRadius: 24,
                   padding: 24, gap: 14 },
-  modalTitle:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: light.text },
-  modalSubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: -8 },
-  modalLabel:   { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: light.text },
-  modalInput:   { borderWidth: 1.5, borderColor: light.border, borderRadius: 10,
+  modalTitle:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: TEXT },
+  modalSubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: -8 },
+  modalLabel:   { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: TEXT },
+  modalInput:   { borderWidth: 1.5, borderColor: BORDER, borderRadius: 12,
                   paddingHorizontal: 14, paddingVertical: 12, fontSize: 14,
-                  fontFamily: 'Inter_400Regular', color: light.text, minHeight: 80,
-                  textAlignVertical: 'top', backgroundColor: light.background,
+                  fontFamily: 'Inter_400Regular', color: TEXT, minHeight: 80,
+                  textAlignVertical: 'top', backgroundColor: WHITE,
                   ...Platform.select({ web: { outlineWidth: 0 } as any }) },
   modalActions: { flexDirection: 'row', gap: 12, marginTop: 4 },
-  modalCancelBtn: { flex: 1, borderWidth: 1.5, borderColor: light.border, borderRadius: 10,
-                    paddingVertical: 14, alignItems: 'center' },
-  modalCancelText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: light.text },
-  modalRejectBtn: { flex: 1, backgroundColor: light.destructive, borderRadius: 10,
+  modalCancelBtn: { flex: 1, borderWidth: 1.5, borderColor: BORDER, borderRadius: 14,
+                    paddingVertical: 14, alignItems: 'center', backgroundColor: WHITE },
+  modalCancelText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: TEXT },
+  modalRejectBtn: { flex: 1, backgroundColor: light.destructive, borderRadius: 14,
                     paddingVertical: 14, alignItems: 'center' },
   modalRejectText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
 });

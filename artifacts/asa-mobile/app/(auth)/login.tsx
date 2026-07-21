@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput,
-  TouchableOpacity, Alert, Platform, Image,
+  TouchableOpacity, Alert, Platform, Image, StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,9 +15,19 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 const { light, government } = colors;
 
+const GREEN_DARK = government.navyDark;
+const GREEN_MID  = government.navy;
+const GOLD       = government.gold;
+const CREAM      = light.background;
+const WHITE      = light.card;
+const TEXT       = light.text;
+const MUTED      = light.mutedForeground;
+const BORDER     = light.border;
+
 export default function LoginScreen() {
   const insets    = useSafeAreaInsets();
   const { t }     = useLanguage();
+  const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [employeeNumber, setEmployeeNumber] = useState('');
@@ -74,11 +84,13 @@ export default function LoginScreen() {
   return (
     <KeyboardAwareScrollViewCompat
       style={styles.scroll}
-      contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
+      contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Logo */}
-      <View style={styles.logoSection}>
+      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+
+      {/* ── Green top section ── */}
+      <View style={[styles.topSection, { paddingTop: topPad + 28 }]}>
         <Image
           source={require('../../assets/images/asa-logo.png')}
           style={styles.logo}
@@ -87,17 +99,17 @@ export default function LoginScreen() {
         <Text style={styles.heading}>{t('welcomeBack')}</Text>
       </View>
 
-      {/* Form */}
-      <View style={styles.form}>
+      {/* ── White form card ── */}
+      <View style={[styles.formCard, { paddingBottom: bottomPad + 24 }]}>
         {/* Employee Number */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>{t('nationalId')}</Text>
           <View style={[styles.inputRow, errors.employeeNumber ? styles.inputError : null]}>
-            <Ionicons name="card-outline" size={18} color={light.mutedForeground} style={styles.inputIcon} />
+            <Ionicons name="card-outline" size={18} color={MUTED} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder={t('nationalIdPlaceholder')}
-              placeholderTextColor={light.mutedForeground}
+              placeholderTextColor={MUTED}
               value={employeeNumber}
               onChangeText={(t) => {
                 setEmployeeNumber(t.replace(/\D/g, '').slice(0, 10));
@@ -117,11 +129,11 @@ export default function LoginScreen() {
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>{t('password')}</Text>
           <View style={[styles.inputRow, errors.password ? styles.inputError : null]}>
-            <Ionicons name="lock-closed-outline" size={18} color={light.mutedForeground} style={styles.inputIcon} />
+            <Ionicons name="lock-closed-outline" size={18} color={MUTED} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder={t('passwordPlaceholder')}
-              placeholderTextColor={light.mutedForeground}
+              placeholderTextColor={MUTED}
               value={password}
               onChangeText={(t) => {
                 setPassword(t);
@@ -136,7 +148,7 @@ export default function LoginScreen() {
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                 size={18}
-                color={light.mutedForeground}
+                color={MUTED}
               />
             </TouchableOpacity>
           </View>
@@ -178,49 +190,157 @@ export default function LoginScreen() {
         >
           <Text style={styles.registerBtnText}>{t('noAccount')}</Text>
         </TouchableOpacity>
-      </View>
 
-      {/* Security note */}
-      <View style={styles.securityNote}>
-        <Ionicons name="lock-closed" size={11} color={light.mutedForeground} />
-        <Text style={styles.securityNoteText}>  HS512 JWT · BCrypt · Rate-limited</Text>
+        {/* Security note */}
+        <View style={styles.securityNote}>
+          <Ionicons name="lock-closed" size={11} color={MUTED} />
+          <Text style={styles.securityNoteText}>  HS512 JWT · BCrypt · Rate-limited</Text>
+        </View>
       </View>
     </KeyboardAwareScrollViewCompat>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll:       { flex: 1, backgroundColor: light.background },
-  content:      { flexGrow: 1, paddingHorizontal: 24, paddingTop: 32 },
-  logoSection:  { alignItems: 'center', marginBottom: 36 },
-  logo:         { width: 80, height: 80, borderRadius: 40, marginBottom: 16, overflow: 'hidden' },
-  heading:      { fontSize: 22, fontFamily: 'Inter_700Bold', color: light.text },
-  headingAr:    { fontSize: 15, fontFamily: 'Inter_400Regular', color: light.mutedForeground, marginTop: 4 },
-  form:         { flex: 1, gap: 18 },
-  fieldGroup:   { gap: 6 },
-  label:        { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: light.text },
-  labelAr:      { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.mutedForeground },
-  inputRow:     { flexDirection: 'row', alignItems: 'center', backgroundColor: light.card,
-                  borderWidth: 1.5, borderColor: light.border, borderRadius: 10,
-                  paddingHorizontal: 14, height: 52 },
-  inputError:   { borderColor: light.destructive },
-  inputIcon:    { marginRight: 10 },
-  input:        { flex: 1, fontSize: 15, fontFamily: 'Inter_400Regular', color: light.text,
-                  ...Platform.select({ web: { outlineWidth: 0 } as any }) },
-  eyeBtn:       { padding: 6 },
-  errorText:    { fontSize: 12, fontFamily: 'Inter_400Regular', color: light.destructive, marginTop: 2 },
-  forgotBtn:    { alignSelf: 'flex-end', marginTop: -4 },
-  forgotText:   { fontSize: 13, fontFamily: 'Inter_400Regular', color: government.navyLight },
-  loginBtn:     { backgroundColor: government.navy, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
-  loginBtnDisabled: { opacity: 0.6 },
-  loginBtnText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
-  loginBtnTextAr: { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  divider:      { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  dividerLine:  { flex: 1, height: 1, backgroundColor: light.border },
-  dividerText:  { fontSize: 13, fontFamily: 'Inter_400Regular', color: light.mutedForeground },
-  registerBtn:  { borderWidth: 1.5, borderColor: light.border, borderRadius: 12,
-                  paddingVertical: 16, alignItems: 'center' },
-  registerBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: light.text },
-  securityNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 28 },
-  securityNoteText: { fontSize: 11, fontFamily: 'Inter_400Regular', color: light.mutedForeground },
+  scroll: {
+    flex: 1,
+    backgroundColor: GREEN_DARK,
+  },
+  content: {
+    flexGrow: 1,
+  },
+  topSection: {
+    backgroundColor: GREEN_DARK,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 36,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  heading: {
+    fontSize: 22,
+    fontFamily: 'Inter_700Bold',
+    color: WHITE,
+  },
+  formCard: {
+    flex: 1,
+    backgroundColor: CREAM,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    gap: 18,
+  },
+  fieldGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: TEXT,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: WHITE,
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 54,
+  },
+  inputError: {
+    borderColor: light.destructive,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: TEXT,
+    ...Platform.select({ web: { outlineWidth: 0 } as any }),
+  },
+  eyeBtn: {
+    padding: 6,
+  },
+  errorText: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: light.destructive,
+    marginTop: 2,
+  },
+  forgotBtn: {
+    alignSelf: 'flex-end',
+    marginTop: -4,
+  },
+  forgotText: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: GOLD,
+  },
+  loginBtn: {
+    backgroundColor: GREEN_MID,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  loginBtnDisabled: {
+    opacity: 0.6,
+  },
+  loginBtnText: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+    color: WHITE,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: BORDER,
+  },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: MUTED,
+  },
+  registerBtn: {
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    backgroundColor: WHITE,
+  },
+  registerBtnText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: TEXT,
+  },
+  securityNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  securityNoteText: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+    color: MUTED,
+  },
 });

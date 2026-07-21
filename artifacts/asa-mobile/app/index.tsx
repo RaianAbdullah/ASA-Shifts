@@ -12,20 +12,29 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colors from '@/constants/colors';
 
-const { government } = colors;
+const { light, government } = colors;
+
+const GREEN_DARK = government.navyDark;  // "#0A4D2E"
+const GREEN_MID  = government.navy;      // "#0D6B3F"
+const GOLD       = government.gold;      // "#C9963F"
+const CREAM      = light.background;     // "#F9FAF7"
+const WHITE      = light.card;           // "#FFFFFF"
+const TEXT       = light.text;           // "#1A1F1C"
+const MUTED      = light.mutedForeground; // "#6B7A72"
+const BORDER     = light.border;          // "#E4EBE7"
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
 
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   return (
-    <View style={[styles.container, { paddingTop: topPad, paddingBottom: bottomPad + 16 }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FB" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
 
-      {/* Branding */}
-      <View style={styles.brand}>
+      {/* ── Green header area ── */}
+      <View style={[styles.header, { paddingTop: topPad + 32 }]}>
         <Image
           source={require('../assets/images/asa-logo.png')}
           style={styles.logo}
@@ -36,34 +45,34 @@ export default function WelcomeScreen() {
         <Text style={styles.subtitleEn}>إدارة العمليات الأمنية</Text>
       </View>
 
-      {/* Push buttons to vertical center */}
-      <View style={{ flex: 1 }} />
+      {/* ── Cream lower area ── */}
+      <View style={[styles.lower, { paddingBottom: bottomPad + 24 }]}>
+        <View style={{ flex: 1 }} />
 
-      {/* Actions */}
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          onPress={() => router.push('/(auth)/login')}
-          activeOpacity={0.82}
-        >
-          <Text style={styles.primaryBtnText}>Sign In</Text>
-          <Text style={styles.primaryBtnTextAr}>تسجيل الدخول</Text>
-        </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => router.push('/(auth)/login')}
+            activeOpacity={0.82}
+          >
+            <Text style={styles.primaryBtnText}>Sign In</Text>
+            <Text style={styles.primaryBtnTextAr}>تسجيل الدخول</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryBtn}
-          onPress={() => router.push('/(auth)/register')}
-          activeOpacity={0.82}
-        >
-          <Text style={styles.secondaryBtnText}>New Employee — Register</Text>
-          <Text style={styles.secondaryBtnTextAr}>موظف جديد — تسجيل</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.secondaryBtn}
+            onPress={() => router.push('/(auth)/register')}
+            activeOpacity={0.82}
+          >
+            <Text style={styles.secondaryBtnText}>New Employee — Register</Text>
+            <Text style={styles.secondaryBtnTextAr}>موظف جديد — تسجيل</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ flex: 1 }} />
+
+        <Text style={styles.footer}>Government Internal System · للاستخدام الداخلي فقط</Text>
       </View>
-
-      {/* Equal spacer below buttons, footer pinned at bottom */}
-      <View style={{ flex: 1 }} />
-
-      <Text style={styles.footer}>Government Internal System · للاستخدام الداخلي فقط</Text>
     </View>
   );
 }
@@ -71,13 +80,13 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FB',
-    paddingHorizontal: 28,
-    justifyContent: 'space-between',
+    backgroundColor: GREEN_DARK,
   },
-  brand: {
+  header: {
+    backgroundColor: GREEN_DARK,
     alignItems: 'center',
-    paddingTop: 64,
+    paddingHorizontal: 28,
+    paddingBottom: 48,
   },
   logo: {
     width: 190,
@@ -89,7 +98,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 18,
     fontFamily: 'Inter_700Bold',
-    color: '#1A2332',
+    color: WHITE,
     letterSpacing: 0.3,
     textAlign: 'center',
     marginBottom: 10,
@@ -97,60 +106,72 @@ const styles = StyleSheet.create({
   subtitleAr: {
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
-    color: '#5B6B7E',
+    color: 'rgba(255,255,255,0.75)',
     marginBottom: 4,
     textAlign: 'center',
   },
   subtitleEn: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: '#8A9BB0',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
+  },
+  lower: {
+    flex: 1,
+    backgroundColor: CREAM,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 28,
   },
   actions: {
     gap: 12,
   },
   primaryBtn: {
-    backgroundColor: '#4A5568',
-    borderRadius: 12,
+    backgroundColor: GREEN_MID,
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 4,
   },
   primaryBtnText: {
     fontSize: 15,
     fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
+    color: WHITE,
   },
   primaryBtnTextAr: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.65)',
+    color: 'rgba(255,255,255,0.70)',
     marginTop: 2,
   },
   secondaryBtn: {
     borderWidth: 1.5,
-    borderColor: '#D0D9E4',
-    borderRadius: 12,
+    borderColor: BORDER,
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: WHITE,
   },
   secondaryBtnText: {
     fontSize: 15,
     fontFamily: 'Inter_500Medium',
-    color: '#1A2332',
+    color: TEXT,
   },
   secondaryBtnTextAr: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: '#5B6B7E',
+    color: MUTED,
     marginTop: 2,
   },
   footer: {
     textAlign: 'center',
     fontSize: 11,
     fontFamily: 'Inter_400Regular',
-    color: '#B0BEC5',
+    color: MUTED,
     paddingTop: 16,
   },
 });

@@ -1,19 +1,25 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, KeyboardAvoidingView, Platform, ScrollView,
+  Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { authApi, ApiError } from '@/services/api';
+import colors from '@/constants/colors';
 
-const NAVY   = '#1A2332';
-const GOLD   = '#C9A84C';
-const GRAY   = '#6B7280';
-const BG     = '#F8F9FA';
-const CARD   = '#FFFFFF';
-const BORDER = '#E5E7EB';
-const RED    = '#EF4444';
+const { light, government } = colors;
+
+const GREEN_DARK = government.navyDark;
+const GREEN_MID  = government.navy;
+const GOLD       = government.gold;
+const CREAM      = light.background;
+const WHITE      = light.card;
+const TEXT       = light.text;
+const MUTED      = light.mutedForeground;
+const BORDER     = light.border;
+const RED        = light.destructive;
 
 export default function ResetPasswordScreen() {
   const [resetToken,    setResetToken]    = useState('');
@@ -52,15 +58,22 @@ export default function ResetPasswordScreen() {
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <StatusBar barStyle="dark-content" backgroundColor={CREAM} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
-          <Text style={styles.icon}>🔒</Text>
+          <View style={styles.iconCircle}>
+            <Text style={styles.iconEmoji}>🔒</Text>
+          </View>
           <Text style={styles.cardTitle}>Reset Password</Text>
           <Text style={styles.cardBody}>
             Enter the reset code provided by your IT administrator and your new password.
           </Text>
 
-          {!!error && <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text></View>}
+          {!!error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
 
           <View style={styles.field}>
             <Text style={styles.label}>Reset Code</Text>
@@ -69,6 +82,7 @@ export default function ResetPasswordScreen() {
               value={resetToken}
               onChangeText={setResetToken}
               placeholder="Paste your reset code"
+              placeholderTextColor={MUTED}
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
@@ -85,11 +99,16 @@ export default function ResetPasswordScreen() {
                 onChangeText={setNewPassword}
                 secureTextEntry={!showPass}
                 placeholder="At least 8 characters"
+                placeholderTextColor={MUTED}
                 returnKeyType="next"
                 testID="input-newPassword"
               />
               <TouchableOpacity onPress={() => setShowPass(v => !v)} style={styles.eyeBtn}>
-                <Text style={styles.eyeIcon}>{showPass ? '🙈' : '👁️'}</Text>
+                <Ionicons
+                  name={showPass ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={MUTED}
+                />
               </TouchableOpacity>
             </View>
             {newPassword.length > 0 && !passwordLong &&
@@ -104,6 +123,7 @@ export default function ResetPasswordScreen() {
               onChangeText={setConfirmPass}
               secureTextEntry={!showPass}
               placeholder="Repeat new password"
+              placeholderTextColor={MUTED}
               returnKeyType="done"
               onSubmitEditing={handleReset}
               testID="input-confirmPassword"
@@ -131,26 +151,66 @@ export default function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:       { flex: 1, backgroundColor: '#F8F9FA' },
+  root:       { flex: 1, backgroundColor: CREAM },
   scroll:     { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  card:       { backgroundColor: CARD, borderRadius: 16, padding: 28, alignItems: 'center',
-                shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
-  icon:       { fontSize: 48, marginBottom: 16 },
-  cardTitle:  { fontSize: 22, fontFamily: 'Inter_700Bold', color: NAVY, marginBottom: 10, textAlign: 'center' },
-  cardBody:   { fontSize: 15, color: GRAY, lineHeight: 22, textAlign: 'center', marginBottom: 24 },
-  errorBox:   { backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12, width: '100%', marginBottom: 16 },
+  card:       {
+    backgroundColor: WHITE,
+    borderRadius: 18,
+    padding: 28,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: BORDER,
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 99,
+    backgroundColor: GREEN_MID,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  iconEmoji:  { fontSize: 32 },
+  cardTitle:  { fontSize: 22, fontFamily: 'Inter_700Bold', color: TEXT, marginBottom: 10, textAlign: 'center' },
+  cardBody:   { fontSize: 15, color: MUTED, lineHeight: 22, textAlign: 'center', marginBottom: 24 },
+  errorBox:   { backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12, width: '100%', marginBottom: 16,
+                borderWidth: 1, borderColor: '#FECACA' },
   errorText:  { color: RED, fontSize: 14 },
   field:      { width: '100%', marginBottom: 16 },
-  label:      { fontSize: 13, color: NAVY, fontFamily: 'Inter_600SemiBold', marginBottom: 6 },
-  input:      { borderWidth: 1, borderColor: BORDER, borderRadius: 10, padding: 14, fontSize: 16,
-                color: NAVY, backgroundColor: BG },
+  label:      { fontSize: 13, color: TEXT, fontFamily: 'Inter_600SemiBold', marginBottom: 6 },
+  input:      {
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 54,
+    fontSize: 16,
+    color: TEXT,
+    backgroundColor: WHITE,
+  },
   passRow:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   eyeBtn:     { padding: 10 },
-  eyeIcon:    { fontSize: 20 },
   hintError:  { color: RED, fontSize: 12, marginTop: 4 },
-  primaryBtn: { width: '100%', backgroundColor: NAVY, borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
-  primaryBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Inter_600SemiBold' },
-  disabledBtn:{ opacity: 0.5 },
-  linkBtn:    { marginTop: 16, padding: 8 },
-  linkText:   { color: GOLD, fontSize: 14, fontFamily: 'Inter_500Medium' },
+  primaryBtn: {
+    width: '100%',
+    backgroundColor: GREEN_MID,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  primaryBtnText: { color: WHITE, fontSize: 16, fontFamily: 'Inter_600SemiBold' },
+  disabledBtn:    { opacity: 0.5 },
+  linkBtn:        { marginTop: 16, padding: 8 },
+  linkText:       { color: GOLD, fontSize: 14, fontFamily: 'Inter_500Medium' },
 });

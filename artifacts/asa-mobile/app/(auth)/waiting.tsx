@@ -20,6 +20,15 @@ import { authApi, notificationApi, ApiError } from '@/services/api';
 
 const { light, government } = colors;
 
+const GREEN_DARK = government.navyDark;
+const GREEN_MID  = government.navy;
+const GOLD       = government.gold;
+const CREAM      = light.background;
+const WHITE      = light.card;
+const TEXT       = light.text;
+const MUTED      = light.mutedForeground;
+const BORDER     = light.border;
+
 const STEP_DEFINITIONS = [
   { label: 'Registration submitted', labelAr: 'تم تقديم الطلب' },
   { label: 'OTP verified',           labelAr: 'تم التحقق من الرمز' },
@@ -56,7 +65,7 @@ function navigateToLogin() {
 
 export default function WaitingScreen() {
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const { nationalId } = useLocalSearchParams<{ nationalId?: string }>();
@@ -182,19 +191,19 @@ export default function WaitingScreen() {
   }, [handleApproval]);
 
   // Step state derivation
-  const doneCount = completedSteps(status);
+  const doneCount  = completedSteps(status);
   // The "current" step is the first incomplete one; -1 when all are done.
   const currentIdx = doneCount < STEP_DEFINITIONS.length ? doneCount : -1;
 
   return (
     <View style={[styles.container, { paddingTop: topPad, paddingBottom: bottomPad }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={light.background} />
+      <StatusBar barStyle="dark-content" backgroundColor={CREAM} />
 
       {/* Status illustration */}
       <View style={styles.illustrationArea}>
         <View style={styles.outerRing}>
           <View style={styles.innerCircle}>
-            <Ionicons name="hourglass-outline" size={48} color={government.gold} />
+            <Ionicons name="hourglass-outline" size={48} color={GOLD} />
           </View>
         </View>
       </View>
@@ -210,7 +219,7 @@ export default function WaitingScreen() {
         ستتلقى إشعاراً عند الموافقة على حسابك.
       </Text>
 
-      {/* Progress steps */}
+      {/* Progress steps — white card */}
       <View style={styles.stepsCard}>
         <Text style={styles.stepsTitle}>Registration Progress — تقدم التسجيل</Text>
         <View style={styles.steps}>
@@ -226,7 +235,7 @@ export default function WaitingScreen() {
                     :              'ellipse-outline'
                   }
                   size={20}
-                  color={isCompleted ? '#1A7A3E' : isCurrent ? government.gold : light.mutedForeground}
+                  color={isCompleted ? light.success : isCurrent ? GOLD : MUTED}
                 />
                 <View style={styles.stepLabels}>
                   <Text style={[styles.stepLabel, !isCompleted && styles.stepLabelPending]}>
@@ -246,12 +255,12 @@ export default function WaitingScreen() {
       {/* Inline error */}
       {error ? (
         <View style={styles.errorRow}>
-          <Ionicons name="alert-circle-outline" size={14} color="#B91C1C" />
+          <Ionicons name="alert-circle-outline" size={14} color={light.destructive} />
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : (
         <View style={styles.pollNotice}>
-          <Ionicons name="sync-outline" size={13} color={light.mutedForeground} />
+          <Ionicons name="sync-outline" size={13} color={MUTED} />
           <Text style={styles.pollNoticeText}>
             {'  '}Checking for updates every 30 seconds · يتحقق كل 30 ثانية
           </Text>
@@ -267,9 +276,9 @@ export default function WaitingScreen() {
           activeOpacity={0.82}
         >
           {loading ? (
-            <ActivityIndicator size="small" color={government.navy} />
+            <ActivityIndicator size="small" color={GREEN_MID} />
           ) : (
-            <Ionicons name="refresh-outline" size={18} color={government.navy} />
+            <Ionicons name="refresh-outline" size={18} color={GREEN_MID} />
           )}
           <Text style={styles.checkStatusText}>
             {loading ? 'Checking…' : 'Check Status — تحقق من الحالة'}
@@ -297,7 +306,7 @@ export default function WaitingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: light.background,
+    backgroundColor: CREAM,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -309,7 +318,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(27,58,107,0.06)',
+    backgroundColor: 'rgba(13,107,63,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -317,43 +326,53 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: government.navy,
+    backgroundColor: GREEN_MID,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
   },
   title: {
     fontSize: 22,
     fontFamily: 'Inter_700Bold',
-    color: light.text,
+    color: TEXT,
     textAlign: 'center',
   },
   titleAr: {
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
     textAlign: 'center',
     marginTop: 4,
   },
   description: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 8,
   },
   stepsCard: {
-    backgroundColor: light.card,
-    borderRadius: 14,
+    backgroundColor: WHITE,
+    borderRadius: 18,
     padding: 18,
     width: '100%',
     borderWidth: 1,
-    borderColor: light.border,
+    borderColor: BORDER,
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
   },
   stepsTitle: {
     fontSize: 12,
     fontFamily: 'Inter_600SemiBold',
-    color: government.navy,
+    color: GREEN_MID,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 14,
@@ -372,16 +391,16 @@ const styles = StyleSheet.create({
   stepLabel: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
-    color: light.text,
+    color: TEXT,
   },
   stepLabelPending: {
-    color: light.mutedForeground,
+    color: MUTED,
     fontFamily: 'Inter_400Regular',
   },
   stepLabelAr: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
   },
   connector: {
     position: 'absolute',
@@ -389,10 +408,10 @@ const styles = StyleSheet.create({
     top: 22,
     width: 2,
     height: 14,
-    backgroundColor: light.border,
+    backgroundColor: BORDER,
   },
   connectorDone: {
-    backgroundColor: '#1A7A3E',
+    backgroundColor: light.success,
   },
   pollNotice: {
     flexDirection: 'row',
@@ -401,7 +420,7 @@ const styles = StyleSheet.create({
   pollNoticeText: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
   },
   errorRow: {
     flexDirection: 'row',
@@ -411,7 +430,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: '#B91C1C',
+    color: light.destructive,
   },
   actions: {
     width: '100%',
@@ -423,9 +442,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderWidth: 1.5,
-    borderColor: government.navy,
-    borderRadius: 12,
+    borderColor: BORDER,
+    borderRadius: 14,
     paddingVertical: 14,
+    backgroundColor: WHITE,
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
   },
   btnDisabled: {
     opacity: 0.5,
@@ -433,7 +458,7 @@ const styles = StyleSheet.create({
   checkStatusText: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
-    color: government.navy,
+    color: GREEN_MID,
   },
   backBtn: {
     alignItems: 'center',
@@ -442,12 +467,12 @@ const styles = StyleSheet.create({
   backBtnText: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
   },
   supportNote: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
     textAlign: 'center',
     lineHeight: 18,
   },

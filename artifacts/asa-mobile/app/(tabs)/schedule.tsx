@@ -3,19 +3,26 @@
  */
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl,
+  View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { scheduleApi, ScheduleDto } from '@/services/api';
+import colors from '@/constants/colors';
 
-const NAVY   = '#1A2332';
-const GOLD   = '#C9A84C';
-const GRAY   = '#6B7280';
-const BG     = '#F8F9FA';
-const CARD   = '#FFFFFF';
-const GREEN  = '#10B981';
-const RED    = '#EF4444';
+const { light, government } = colors;
+
+const GREEN_DARK  = government.navyDark;  // "#0A4D2E"
+const GREEN_MID   = government.navy;      // "#0D6B3F"
+const GOLD        = government.gold;      // "#C9963F"
+const CREAM       = light.background;    // "#F9FAF7"
+const WHITE       = light.card;          // "#FFFFFF"
+const TEXT        = light.text;          // "#1A1F1C"
+const MUTED       = light.mutedForeground; // "#6B7A72"
+const BORDER      = light.border;        // "#E4EBE7"
+const GREEN       = '#22C55E';
+const RED         = '#EF4444';
+const AMBER       = '#F59E0B';
 
 const ALL_DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const DAY_LABELS: Record<string, string> = {
@@ -26,6 +33,9 @@ const DAY_LABELS_AR: Record<string, string> = {
   SUN: 'الأحد', MON: 'الإثنين', TUE: 'الثلاثاء', WED: 'الأربعاء',
   THU: 'الخميس', FRI: 'الجمعة', SAT: 'السبت',
 };
+
+// Get today's day abbreviation
+const TODAY_DAY = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date().getDay()];
 
 function formatTime(t: string): string {
   // "07:30:00" → "07:30 AM"
@@ -53,20 +63,33 @@ function ScheduleCard({ schedule }: { schedule: ScheduleDto }) {
         </View>
       </View>
 
-      {/* Work-day grid */}
+      {/* Work-day grid — green for active day */}
       <Text style={styles.sectionLabel}>Work Days</Text>
       <View style={styles.dayGrid}>
         {ALL_DAYS.map(day => {
-          const isWork = workSet.has(day);
+          const isWork    = workSet.has(day);
+          const isToday   = day === TODAY_DAY;
           return (
             <View
               key={day}
-              style={[styles.dayChip, isWork ? styles.dayChipWork : styles.dayChipOff]}
+              style={[
+                styles.dayChip,
+                isWork  ? styles.dayChipWork : styles.dayChipOff,
+                isToday ? styles.dayChipToday : undefined,
+              ]}
             >
-              <Text style={[styles.dayChipText, isWork ? styles.dayChipTextWork : styles.dayChipTextOff]}>
+              <Text style={[
+                styles.dayChipText,
+                isWork  ? styles.dayChipTextWork : styles.dayChipTextOff,
+                isToday ? styles.dayChipTextToday : undefined,
+              ]}>
                 {DAY_LABELS[day]}
               </Text>
-              <Text style={[styles.dayChipAr, isWork ? styles.dayChipTextWork : styles.dayChipTextOff]}>
+              <Text style={[
+                styles.dayChipAr,
+                isWork  ? styles.dayChipTextWork : styles.dayChipTextOff,
+                isToday ? styles.dayChipTextToday : undefined,
+              ]}>
                 {DAY_LABELS_AR[day]}
               </Text>
             </View>
@@ -77,17 +100,17 @@ function ScheduleCard({ schedule }: { schedule: ScheduleDto }) {
       {/* Status badges */}
       <View style={styles.badgeRow}>
         {schedule.todayIsWorkDay && (
-          <View style={[styles.badge, { backgroundColor: '#D1FAE5' }]}>
-            <Text style={[styles.badgeText, { color: GREEN }]}>✓ Today is a work day</Text>
+          <View style={[styles.badge, { backgroundColor: GREEN + '22', borderWidth: 1, borderColor: GREEN + '44' }]}>
+            <Text style={[styles.badgeText, { color: '#065F46' }]}>✓ Today is a work day</Text>
           </View>
         )}
         {!schedule.todayIsWorkDay && (
-          <View style={[styles.badge, { backgroundColor: '#F3F4F6' }]}>
-            <Text style={[styles.badgeText, { color: GRAY }]}>Today is off</Text>
+          <View style={[styles.badge, { backgroundColor: BORDER }]}>
+            <Text style={[styles.badgeText, { color: MUTED }]}>Today is off</Text>
           </View>
         )}
         {schedule.isWeekendDuty && (
-          <View style={[styles.badge, { backgroundColor: '#FEF3C7' }]}>
+          <View style={[styles.badge, { backgroundColor: GOLD + '22', borderWidth: 1, borderColor: GOLD + '44' }]}>
             <Text style={[styles.badgeText, { color: '#92400E' }]}>Weekend Duty</Text>
           </View>
         )}
@@ -116,17 +139,20 @@ export default function ScheduleScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['bottom']}>
+      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+
+      {/* navyDark header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>My Schedule</Text>
+        <Text style={styles.titleAr}>جدول العمل</Text>
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
+        refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={GREEN_MID} />}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>My Schedule</Text>
-          <Text style={styles.titleAr}>جدول العمل</Text>
-        </View>
-
         {isLoading && (
-          <ActivityIndicator color={NAVY} style={{ marginTop: 60 }} />
+          <ActivityIndicator color={GREEN_MID} style={{ marginTop: 60 }} />
         )}
 
         {!isLoading && !schedule && (
@@ -152,48 +178,56 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:        { flex: 1, backgroundColor: BG },
+  root:        { flex: 1, backgroundColor: CREAM },
   scroll:      { padding: 20, paddingBottom: 60 },
-  header:      { marginBottom: 20 },
-  title:       { fontSize: 26, fontFamily: 'Inter_700Bold', color: NAVY },
-  titleAr:     { fontSize: 18, color: GRAY, marginTop: 2 },
 
-  card:        { backgroundColor: CARD, borderRadius: 18, padding: 24,
-                 shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 14,
-                 shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  // navyDark header
+  header:      { backgroundColor: GREEN_DARK, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 },
+  title:       { fontSize: 24, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  titleAr:     { fontSize: 15, color: 'rgba(255,255,255,0.65)', marginTop: 3 },
+
+  // White weekly grid card
+  card:        { backgroundColor: WHITE, borderRadius: 18, padding: 24,
+                 borderWidth: 1, borderColor: BORDER,
+                 shadowColor: '#0A4D2E', shadowOpacity: 0.10, shadowRadius: 16,
+                 shadowOffset: { width: 0, height: 6 }, elevation: 4 },
 
   timeRow:     { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
   timeBlock:   { flex: 1, alignItems: 'center' },
-  timeLabel:   { fontSize: 12, color: GRAY, fontFamily: 'Inter_500Medium', marginBottom: 4 },
-  timeValue:   { fontSize: 22, fontFamily: 'Inter_700Bold', color: NAVY },
+  timeLabel:   { fontSize: 12, color: MUTED, fontFamily: 'Inter_500Medium', marginBottom: 4 },
+  timeValue:   { fontSize: 22, fontFamily: 'Inter_700Bold', color: TEXT },
   timeSep:     { paddingHorizontal: 16 },
   timeSepText: { fontSize: 22, color: GOLD },
 
-  sectionLabel:{ fontSize: 12, color: GRAY, fontFamily: 'Inter_600SemiBold',
-                 letterSpacing: 0.8, marginBottom: 12 },
+  sectionLabel:{ fontSize: 12, color: MUTED, fontFamily: 'Inter_600SemiBold',
+                 letterSpacing: 0.8, marginBottom: 12, textTransform: 'uppercase' },
   dayGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   dayChip:     { borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12,
                  alignItems: 'center', minWidth: 46 },
-  dayChipWork: { backgroundColor: NAVY },
-  dayChipOff:  { backgroundColor: '#F3F4F6' },
-  dayChipText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  dayChipAr:   { fontSize: 10, marginTop: 2 },
-  dayChipTextWork: { color: '#FFFFFF' },
-  dayChipTextOff:  { color: GRAY },
+  // Green for work days, navyDark outline/highlight for active (today)
+  dayChipWork:  { backgroundColor: GREEN_MID },
+  dayChipOff:   { backgroundColor: BORDER },
+  dayChipToday: { backgroundColor: GREEN_DARK, borderWidth: 2, borderColor: GOLD },
+  dayChipText:  { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  dayChipAr:    { fontSize: 10, marginTop: 2 },
+  dayChipTextWork:  { color: '#FFFFFF' },
+  dayChipTextOff:   { color: MUTED },
+  dayChipTextToday: { color: '#FFFFFF' },
 
   badgeRow:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   badge:       { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
   badgeText:   { fontSize: 13, fontFamily: 'Inter_500Medium' },
 
-  notes:       { fontSize: 14, color: GRAY, lineHeight: 20, marginBottom: 12 },
-  weekLabel:   { fontSize: 12, color: GRAY, textAlign: 'right' },
+  notes:       { fontSize: 14, color: MUTED, lineHeight: 20, marginBottom: 12 },
+  weekLabel:   { fontSize: 12, color: MUTED, textAlign: 'right' },
 
-  emptyCard:   { backgroundColor: CARD, borderRadius: 18, padding: 32, alignItems: 'center',
-                 shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10,
-                 shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  emptyCard:   { backgroundColor: WHITE, borderRadius: 18, padding: 32, alignItems: 'center',
+                 borderWidth: 1, borderColor: BORDER,
+                 shadowColor: '#0A4D2E', shadowOpacity: 0.10, shadowRadius: 16,
+                 shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   emptyIcon:   { fontSize: 56, marginBottom: 16 },
-  emptyTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY, marginBottom: 10 },
-  emptyBody:   { fontSize: 15, color: GRAY, lineHeight: 22, textAlign: 'center', marginBottom: 8 },
-  emptyBodyAr: { fontSize: 13, color: GRAY, textAlign: 'center', lineHeight: 20 },
+  emptyTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: TEXT, marginBottom: 10 },
+  emptyBody:   { fontSize: 15, color: MUTED, lineHeight: 22, textAlign: 'center', marginBottom: 8 },
+  emptyBodyAr: { fontSize: 13, color: MUTED, textAlign: 'center', lineHeight: 20 },
   errorText:   { textAlign: 'center', color: RED, marginTop: 24, fontSize: 14 },
 });

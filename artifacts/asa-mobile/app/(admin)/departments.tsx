@@ -5,22 +5,25 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, RefreshControl, TextInput, Modal,
+  Alert, ActivityIndicator, RefreshControl, TextInput, Modal, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { departmentApi, DepartmentDto, ApiError } from '@/services/api';
+import colors from '@/constants/colors';
 
-const NAVY   = '#1A2332';
-const GOLD   = '#C9A84C';
-const GRAY   = '#6B7280';
-const BG     = '#F8F9FA';
-const CARD   = '#FFFFFF';
-const GREEN  = '#10B981';
-const RED    = '#EF4444';
-const BORDER = '#E5E7EB';
+const { light, government } = colors;
+const GREEN_DARK = government.navyDark;  // "#0A4D2E"
+const GREEN_MID  = government.navy;      // "#0D6B3F"
+const GOLD       = government.gold;      // "#C9963F"
+const CREAM      = light.background;    // "#F9FAF7"
+const WHITE      = light.card;          // "#FFFFFF"
+const TEXT       = light.text;          // "#1A1F1C"
+const MUTED      = light.mutedForeground; // "#6B7A72"
+const BORDER     = light.border;        // "#E4EBE7"
+const RED        = light.destructive;
 
 type FormMode = 'create' | 'edit';
 
@@ -129,7 +132,9 @@ export default function DepartmentsScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" />
+
+      {/* Header — navyDark bg */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
@@ -145,9 +150,9 @@ export default function DepartmentsScreen() {
 
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
+        refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={GREEN_MID} />}
       >
-        {isLoading && <ActivityIndicator color={NAVY} style={{ marginTop: 40 }} />}
+        {isLoading && <ActivityIndicator color={GREEN_MID} style={{ marginTop: 40 }} />}
 
         {!isLoading && departments.length === 0 && (
           <View style={styles.empty}>
@@ -163,10 +168,14 @@ export default function DepartmentsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.nameAr}>{dept.nameAr}</Text>
                 <Text style={styles.nameEn}>{dept.nameEn}</Text>
-                <Text style={styles.code}>Code: {dept.code}</Text>
+                {/* Gold department code badge */}
+                <View style={styles.codeBadge}>
+                  <Text style={styles.codeBadgeText}>{dept.code}</Text>
+                </View>
               </View>
-              <View style={[styles.activeBadge, { backgroundColor: dept.isActive ? '#D1FAE5' : '#F3F4F6' }]}>
-                <Text style={[styles.activeBadgeText, { color: dept.isActive ? '#065F46' : GRAY }]}>
+              <View style={[styles.activeBadge,
+                { backgroundColor: dept.isActive ? GREEN_MID + '18' : BORDER }]}>
+                <Text style={[styles.activeBadgeText, { color: dept.isActive ? GREEN_MID : MUTED }]}>
                   {dept.isActive ? 'Active' : 'Inactive'}
                 </Text>
               </View>
@@ -209,6 +218,7 @@ export default function DepartmentsScreen() {
               value={form.nameAr}
               onChangeText={v => setForm(f => ({ ...f, nameAr: v }))}
               placeholder="مثال: قسم تقنية المعلومات"
+              placeholderTextColor={MUTED}
               textAlign="right"
             />
 
@@ -218,6 +228,7 @@ export default function DepartmentsScreen() {
               value={form.nameEn}
               onChangeText={v => setForm(f => ({ ...f, nameEn: v }))}
               placeholder="e.g. Information Technology"
+              placeholderTextColor={MUTED}
             />
 
             {modal.mode === 'create' && (
@@ -228,6 +239,7 @@ export default function DepartmentsScreen() {
                   value={form.code}
                   onChangeText={v => setForm(f => ({ ...f, code: v.toUpperCase() }))}
                   placeholder="e.g. IT"
+                  placeholderTextColor={MUTED}
                   autoCapitalize="characters"
                   maxLength={10}
                 />
@@ -250,56 +262,68 @@ export default function DepartmentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:           { flex: 1, backgroundColor: BG },
+  root:           { flex: 1, backgroundColor: CREAM },
+
+  // Header — navyDark
   header:         { flexDirection: 'row', alignItems: 'center', gap: 12,
-                    padding: 16, paddingBottom: 12, backgroundColor: CARD,
-                    borderBottomWidth: 1, borderBottomColor: BORDER },
+                    padding: 16, paddingBottom: 14, backgroundColor: GREEN_DARK },
   backBtn:        { padding: 4 },
-  backText:       { color: GOLD, fontSize: 15, fontFamily: 'Inter_500Medium' },
-  title:          { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY },
-  titleAr:        { fontSize: 13, color: GRAY },
-  addBtn:         { backgroundColor: NAVY, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  addBtnText:     { color: '#FFF', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  backText:       { color: 'rgba(255,255,255,0.8)', fontSize: 15, fontFamily: 'Inter_500Medium' },
+  title:          { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#fff' },
+  titleAr:        { fontSize: 13, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)' },
+  addBtn:         { backgroundColor: GOLD, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  addBtnText:     { color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   scroll:         { padding: 16, paddingBottom: 60 },
 
-  card:           { backgroundColor: CARD, borderRadius: 14, padding: 16, marginBottom: 12,
-                    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
-                    shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  // White list cards
+  card:           { backgroundColor: WHITE, borderRadius: 18, padding: 18, marginBottom: 12,
+                    borderWidth: 1, borderColor: BORDER,
+                    shadowColor: GREEN_DARK, shadowOpacity: 0.10, shadowRadius: 16,
+                    shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   cardInactive:   { opacity: 0.6 },
-  cardTop:        { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
-  nameAr:         { fontSize: 17, fontFamily: 'Inter_700Bold', color: NAVY, textAlign: 'right' },
-  nameEn:         { fontSize: 14, color: GRAY, marginTop: 2 },
-  code:           { fontSize: 12, color: GRAY, marginTop: 4 },
+  cardTop:        { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
+  nameAr:         { fontSize: 17, fontFamily: 'Inter_700Bold', color: TEXT, textAlign: 'right' },
+  nameEn:         { fontSize: 14, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 2 },
+
+  // Gold department badge
+  codeBadge:      { alignSelf: 'flex-start', backgroundColor: GOLD + '22', borderRadius: 8,
+                    paddingHorizontal: 8, paddingVertical: 3, marginTop: 6 },
+  codeBadgeText:  { fontSize: 11, fontFamily: 'Inter_700Bold', color: GOLD },
+
   activeBadge:    { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginLeft: 8 },
   activeBadgeText:{ fontSize: 11, fontFamily: 'Inter_600SemiBold' },
-  cardMeta:       { flexDirection: 'row', gap: 16, marginBottom: 12 },
-  metaText:       { fontSize: 13, color: GRAY },
+  cardMeta:       { flexDirection: 'row', gap: 16, marginBottom: 14 },
+  metaText:       { fontSize: 13, fontFamily: 'Inter_400Regular', color: MUTED },
   cardActions:    { flexDirection: 'row', gap: 10 },
-  editBtn:        { flex: 1, borderWidth: 1, borderColor: NAVY, borderRadius: 8,
-                    padding: 10, alignItems: 'center' },
-  editBtnText:    { color: NAVY, fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  deactivateBtn:  { flex: 1, borderWidth: 1, borderColor: RED, borderRadius: 8,
-                    padding: 10, alignItems: 'center' },
+  editBtn:        { flex: 1, borderWidth: 1.5, borderColor: BORDER, borderRadius: 12,
+                    paddingVertical: 10, alignItems: 'center', backgroundColor: WHITE },
+  editBtnText:    { color: TEXT, fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  deactivateBtn:  { flex: 1, borderWidth: 1.5, borderColor: RED, borderRadius: 12,
+                    paddingVertical: 10, alignItems: 'center' },
   deactivateBtnText: { color: RED, fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 
   empty:          { alignItems: 'center', paddingTop: 60 },
   emptyIcon:      { fontSize: 56, marginBottom: 16 },
-  emptyTitle:     { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: GRAY, marginBottom: 8 },
-  emptyBody:      { fontSize: 14, color: GRAY, textAlign: 'center' },
+  emptyTitle:     { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: MUTED, marginBottom: 8 },
+  emptyBody:      { fontSize: 14, fontFamily: 'Inter_400Regular', color: MUTED, textAlign: 'center' },
 
   modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalBox:       { backgroundColor: CARD, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  modalTitle:     { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY, marginBottom: 16 },
-  label:          { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: NAVY, marginBottom: 6 },
-  input:          { borderWidth: 1, borderColor: BORDER, borderRadius: 10, padding: 12,
-                    fontSize: 15, color: NAVY, backgroundColor: BG, marginBottom: 14 },
-  errorBox:       { backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, marginBottom: 12 },
-  errorText:      { color: RED, fontSize: 13 },
+  modalBox:       { backgroundColor: WHITE, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+                    padding: 24, borderWidth: 1, borderColor: BORDER },
+  modalTitle:     { fontSize: 20, fontFamily: 'Inter_700Bold', color: TEXT, marginBottom: 16 },
+  label:          { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: TEXT, marginBottom: 6 },
+  input:          { borderWidth: 1.5, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14,
+                    height: 54, fontSize: 15, fontFamily: 'Inter_400Regular', color: TEXT,
+                    backgroundColor: WHITE, marginBottom: 14 },
+  errorBox:       { backgroundColor: '#FEF2F2', borderRadius: 10, padding: 10, marginBottom: 12,
+                    borderWidth: 1, borderColor: '#FECACA' },
+  errorText:      { color: RED, fontSize: 13, fontFamily: 'Inter_400Regular' },
   modalActions:   { flexDirection: 'row', gap: 12, marginTop: 4 },
-  cancelBtn:      { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 12,
-                    padding: 14, alignItems: 'center' },
-  cancelBtnText:  { color: GRAY, fontFamily: 'Inter_600SemiBold', fontSize: 15 },
-  saveBtn:        { flex: 1, backgroundColor: NAVY, borderRadius: 12, padding: 14, alignItems: 'center' },
-  saveBtnText:    { color: '#FFF', fontFamily: 'Inter_600SemiBold', fontSize: 15 },
+  cancelBtn:      { flex: 1, borderWidth: 1.5, borderColor: BORDER, borderRadius: 14,
+                    paddingVertical: 14, alignItems: 'center', backgroundColor: WHITE },
+  cancelBtnText:  { color: MUTED, fontFamily: 'Inter_600SemiBold', fontSize: 15 },
+  saveBtn:        { flex: 1, backgroundColor: GREEN_MID, borderRadius: 14,
+                    paddingVertical: 14, alignItems: 'center' },
+  saveBtnText:    { color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 15 },
 });

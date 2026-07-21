@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  StatusBar,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,11 +17,21 @@ import colors from '@/constants/colors';
 import { authApi, ApiError } from '@/services/api';
 
 const { light, government } = colors;
+
+const GREEN_DARK = government.navyDark;
+const GREEN_MID  = government.navy;
+const GOLD       = government.gold;
+const CREAM      = light.background;
+const WHITE      = light.card;
+const TEXT       = light.text;
+const MUTED      = light.mutedForeground;
+const BORDER     = light.border;
+
 const OTP_LENGTH = 6;
 
 export default function VerifyOtpScreen() {
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const { nationalId, maskedPhone } = useLocalSearchParams<{
@@ -107,10 +118,12 @@ export default function VerifyOtpScreen() {
   const digits = otp.split('').concat(Array(OTP_LENGTH - otp.length).fill(''));
 
   return (
-    <View style={[styles.container, { paddingTop: topPad + 24, paddingBottom: bottomPad + 24 }]}>
+    <View style={[styles.container, { paddingTop: topPad, paddingBottom: bottomPad + 24 }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={CREAM} />
+
       {/* Icon */}
       <View style={styles.iconBox}>
-        <Ionicons name="mail-outline" size={36} color={government.gold} />
+        <Ionicons name="mail-outline" size={36} color={GOLD} />
       </View>
 
       <Text style={styles.title}>Verify Your Phone</Text>
@@ -122,25 +135,27 @@ export default function VerifyOtpScreen() {
         {'\n'}أرسلنا رمز تحقق مكون من 6 أرقام إلى هاتفك.
       </Text>
 
-      {/* OTP digit display (taps hidden input) */}
-      <TouchableOpacity
-        style={styles.otpContainer}
-        onPress={() => inputRef.current?.focus()}
-        activeOpacity={1}
-      >
-        {digits.map((digit, i) => (
-          <View
-            key={i}
-            style={[
-              styles.digitBox,
-              digit ? styles.digitBoxFilled : null,
-              i === otp.length ? styles.digitBoxActive : null,
-            ]}
-          >
-            <Text style={styles.digitText}>{digit || ''}</Text>
-          </View>
-        ))}
-      </TouchableOpacity>
+      {/* OTP digit display — white card */}
+      <View style={styles.otpCard}>
+        <TouchableOpacity
+          style={styles.otpContainer}
+          onPress={() => inputRef.current?.focus()}
+          activeOpacity={1}
+        >
+          {digits.map((digit, i) => (
+            <View
+              key={i}
+              style={[
+                styles.digitBox,
+                digit ? styles.digitBoxFilled : null,
+                i === otp.length ? styles.digitBoxActive : null,
+              ]}
+            >
+              <Text style={styles.digitText}>{digit || ''}</Text>
+            </View>
+          ))}
+        </TouchableOpacity>
+      </View>
 
       {/* Hidden real input */}
       <TextInput
@@ -189,7 +204,7 @@ export default function VerifyOtpScreen() {
 
       {/* Security note */}
       <View style={styles.securityNote}>
-        <Ionicons name="time-outline" size={13} color={light.mutedForeground} />
+        <Ionicons name="time-outline" size={13} color={MUTED} />
         <Text style={styles.securityText}>{'  '}Code expires in 5 minutes · الرمز ينتهي خلال 5 دقائق</Text>
       </View>
     </View>
@@ -199,29 +214,35 @@ export default function VerifyOtpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: light.background,
+    backgroundColor: CREAM,
     paddingHorizontal: 32,
     alignItems: 'center',
   },
   iconBox: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: government.navy,
+    width: 80,
+    height: 80,
+    borderRadius: 99,
+    backgroundColor: GREEN_MID,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
+    marginTop: 24,
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
   },
   title: {
     fontSize: 22,
     fontFamily: 'Inter_700Bold',
-    color: light.text,
+    color: TEXT,
     textAlign: 'center',
   },
   titleAr: {
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
     textAlign: 'center',
     marginTop: 4,
     marginBottom: 16,
@@ -229,38 +250,52 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 36,
+    marginBottom: 28,
+  },
+  otpCard: {
+    backgroundColor: WHITE,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 20,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 8,
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
   },
   otpContainer: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 8,
   },
   digitBox: {
     width: 44,
     height: 56,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: light.border,
-    backgroundColor: light.card,
+    borderColor: BORDER,
+    backgroundColor: CREAM,
     alignItems: 'center',
     justifyContent: 'center',
   },
   digitBoxFilled: {
-    borderColor: government.navy,
-    backgroundColor: 'rgba(27,58,107,0.04)',
+    borderColor: GREEN_MID,
+    backgroundColor: 'rgba(13,107,63,0.06)',
   },
   digitBoxActive: {
-    borderColor: government.gold,
+    borderColor: GOLD,
     borderWidth: 2,
   },
   digitText: {
     fontSize: 22,
     fontFamily: 'Inter_700Bold',
-    color: light.text,
+    color: TEXT,
   },
   hiddenInput: {
     position: 'absolute',
@@ -269,12 +304,17 @@ const styles = StyleSheet.create({
     width: 1,
   },
   verifyBtn: {
-    backgroundColor: government.navy,
-    borderRadius: 12,
+    backgroundColor: GREEN_MID,
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     width: '100%',
     marginTop: 24,
+    shadowColor: GREEN_DARK,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
   },
   verifyBtnDisabled: {
     opacity: 0.45,
@@ -282,7 +322,7 @@ const styles = StyleSheet.create({
   verifyBtnText: {
     fontSize: 15,
     fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
+    color: WHITE,
   },
   resendRow: {
     flexDirection: 'row',
@@ -292,15 +332,15 @@ const styles = StyleSheet.create({
   resendLabel: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
   },
   resendBtn: {
     fontSize: 13,
     fontFamily: 'Inter_600SemiBold',
-    color: government.navyLight,
+    color: GOLD,
   },
   resendBtnDisabled: {
-    color: light.mutedForeground,
+    color: MUTED,
   },
   securityNote: {
     flexDirection: 'row',
@@ -310,7 +350,7 @@ const styles = StyleSheet.create({
   securityText: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: light.mutedForeground,
+    color: MUTED,
     textAlign: 'center',
   },
 });

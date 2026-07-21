@@ -5,22 +5,26 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, ActivityIndicator, RefreshControl, TextInput, Modal,
+  Alert, ActivityIndicator, RefreshControl, TextInput, Modal, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi, scheduleApi, EmployeeSummaryDto, ScheduleDto, ApiError } from '@/services/api';
+import colors from '@/constants/colors';
 
-const NAVY   = '#1A2332';
-const GOLD   = '#C9A84C';
-const GRAY   = '#6B7280';
-const BG     = '#F8F9FA';
-const CARD   = '#FFFFFF';
-const GREEN  = '#10B981';
-const RED    = '#EF4444';
-const BORDER = '#E5E7EB';
+const { light, government } = colors;
+const GREEN_DARK = government.navyDark;  // "#0A4D2E"
+const GREEN_MID  = government.navy;      // "#0D6B3F"
+const GOLD       = government.gold;      // "#C9963F"
+const CREAM      = light.background;    // "#F9FAF7"
+const WHITE      = light.card;          // "#FFFFFF"
+const TEXT       = light.text;          // "#1A1F1C"
+const MUTED      = light.mutedForeground; // "#6B7A72"
+const BORDER     = light.border;        // "#E4EBE7"
+const GREEN      = '#22C55E';
+const RED        = light.destructive;
 
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const DAY_LABELS: Record<string, string> = {
@@ -131,7 +135,9 @@ export default function SchedulesScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" />
+
+      {/* Header — navyDark bg */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
@@ -147,9 +153,9 @@ export default function SchedulesScreen() {
 
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={isFetching && !loadingSch} onRefresh={refetch} />}
+        refreshControl={<RefreshControl refreshing={isFetching && !loadingSch} onRefresh={refetch} tintColor={GREEN_MID} />}
       >
-        {/* Assignment Form */}
+        {/* Assignment Form — white card */}
         {showForm && (
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>New Schedule</Text>
@@ -173,6 +179,7 @@ export default function SchedulesScreen() {
               value={form.weekStart}
               onChangeText={v => setForm(f => ({ ...f, weekStart: v }))}
               placeholder="e.g. 2026-07-28"
+              placeholderTextColor={MUTED}
               keyboardType="numbers-and-punctuation"
               maxLength={10}
             />
@@ -202,6 +209,7 @@ export default function SchedulesScreen() {
                   value={form.shiftStart}
                   onChangeText={v => setForm(f => ({ ...f, shiftStart: v }))}
                   placeholder="07:00"
+                  placeholderTextColor={MUTED}
                   maxLength={5}
                 />
               </View>
@@ -212,6 +220,7 @@ export default function SchedulesScreen() {
                   value={form.shiftEnd}
                   onChangeText={v => setForm(f => ({ ...f, shiftEnd: v }))}
                   placeholder="15:00"
+                  placeholderTextColor={MUTED}
                   maxLength={5}
                 />
               </View>
@@ -235,6 +244,7 @@ export default function SchedulesScreen() {
               value={form.notes}
               onChangeText={v => setForm(f => ({ ...f, notes: v }))}
               placeholder="Any additional notes"
+              placeholderTextColor={MUTED}
               multiline
               maxLength={300}
             />
@@ -254,7 +264,7 @@ export default function SchedulesScreen() {
         {/* Recent schedules */}
         <Text style={styles.sectionTitle}>Recent Assignments</Text>
 
-        {loadingSch && <ActivityIndicator color={NAVY} style={{ marginTop: 20 }} />}
+        {loadingSch && <ActivityIndicator color={GREEN_MID} style={{ marginTop: 20 }} />}
 
         {!loadingSch && schedules.length === 0 && (
           <View style={styles.empty}>
@@ -291,9 +301,10 @@ export default function SchedulesScreen() {
               value={empSearch}
               onChangeText={setEmpSearch}
               placeholder="Search by name or ID…"
+              placeholderTextColor={MUTED}
             />
             <ScrollView style={{ maxHeight: 380 }}>
-              {loadingEmp && <ActivityIndicator color={NAVY} />}
+              {loadingEmp && <ActivityIndicator color={GREEN_MID} />}
               {filteredEmployees.map(e => (
                 <TouchableOpacity
                   key={e.id}
@@ -320,73 +331,82 @@ export default function SchedulesScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:          { flex: 1, backgroundColor: BG },
+  root:          { flex: 1, backgroundColor: CREAM },
+
+  // Header — navyDark
   header:        { flexDirection: 'row', alignItems: 'center', gap: 12,
-                   padding: 16, paddingBottom: 12, backgroundColor: CARD,
-                   borderBottomWidth: 1, borderBottomColor: BORDER },
+                   padding: 16, paddingBottom: 14, backgroundColor: GREEN_DARK },
   backBtn:       { padding: 4 },
-  backText:      { color: GOLD, fontSize: 15, fontFamily: 'Inter_500Medium' },
-  title:         { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY },
-  titleAr:       { fontSize: 13, color: GRAY },
-  addBtn:        { backgroundColor: NAVY, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  addBtnText:    { color: '#FFF', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  backText:      { color: 'rgba(255,255,255,0.8)', fontSize: 15, fontFamily: 'Inter_500Medium' },
+  title:         { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#fff' },
+  titleAr:       { fontSize: 13, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)' },
+  addBtn:        { backgroundColor: GOLD, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  addBtnText:    { color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   scroll:        { padding: 16, paddingBottom: 60 },
 
-  formCard:      { backgroundColor: CARD, borderRadius: 16, padding: 20, marginBottom: 20,
-                   shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10,
-                   shadowOffset: { width: 0, height: 3 }, elevation: 3 },
-  formTitle:     { fontSize: 18, fontFamily: 'Inter_700Bold', color: NAVY, marginBottom: 16 },
-  label:         { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: NAVY, marginBottom: 6 },
-  input:         { borderWidth: 1, borderColor: BORDER, borderRadius: 10, padding: 12,
-                   fontSize: 14, color: NAVY, backgroundColor: BG, marginBottom: 14 },
-  pickerBtn:     { borderWidth: 1, borderColor: BORDER, borderRadius: 10, padding: 12,
-                   backgroundColor: BG, marginBottom: 14 },
-  pickerValue:   { fontSize: 14, color: NAVY },
-  pickerPlaceholder: { fontSize: 14, color: GRAY },
+  // White form card
+  formCard:      { backgroundColor: WHITE, borderRadius: 18, padding: 20, marginBottom: 20,
+                   borderWidth: 1, borderColor: BORDER,
+                   shadowColor: GREEN_DARK, shadowOpacity: 0.10, shadowRadius: 16,
+                   shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  formTitle:     { fontSize: 18, fontFamily: 'Inter_700Bold', color: TEXT, marginBottom: 16 },
+  label:         { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: TEXT, marginBottom: 6 },
+  input:         { borderWidth: 1.5, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14,
+                   height: 54, fontSize: 14, fontFamily: 'Inter_400Regular', color: TEXT,
+                   backgroundColor: WHITE, marginBottom: 14 },
+  pickerBtn:     { borderWidth: 1.5, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14,
+                   height: 54, justifyContent: 'center', backgroundColor: WHITE, marginBottom: 14 },
+  pickerValue:   { fontSize: 14, fontFamily: 'Inter_400Regular', color: TEXT },
+  pickerPlaceholder: { fontSize: 14, fontFamily: 'Inter_400Regular', color: MUTED },
   daysRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  dayBtn:        { borderWidth: 1, borderColor: BORDER, borderRadius: 8, paddingHorizontal: 12,
-                   paddingVertical: 8, backgroundColor: BG },
-  dayBtnActive:  { backgroundColor: NAVY, borderColor: NAVY },
-  dayBtnText:    { fontSize: 13, color: GRAY, fontFamily: 'Inter_500Medium' },
-  dayBtnTextActive: { color: '#FFF' },
+  dayBtn:        { borderWidth: 1.5, borderColor: BORDER, borderRadius: 10, paddingHorizontal: 12,
+                   paddingVertical: 8, backgroundColor: WHITE },
+  dayBtnActive:  { backgroundColor: GREEN_MID, borderColor: GREEN_MID },
+  dayBtnText:    { fontSize: 13, fontFamily: 'Inter_500Medium', color: MUTED },
+  dayBtnTextActive: { color: '#fff' },
   timeRow:       { flexDirection: 'row', gap: 12 },
   toggleRow:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
   toggle:        { width: 44, height: 24, borderRadius: 12, backgroundColor: BORDER,
                    justifyContent: 'center', paddingHorizontal: 2 },
   toggleOn:      { backgroundColor: GREEN },
-  toggleThumb:   { width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFF', alignSelf: 'flex-start' },
+  toggleThumb:   { width: 20, height: 20, borderRadius: 10, backgroundColor: WHITE, alignSelf: 'flex-start' },
   toggleThumbOn: { alignSelf: 'flex-end' },
-  toggleLabel:   { fontSize: 14, color: NAVY },
-  saveBtn:       { backgroundColor: NAVY, borderRadius: 12, padding: 14, alignItems: 'center' },
-  saveBtnText:   { color: '#FFF', fontFamily: 'Inter_600SemiBold', fontSize: 15 },
-  errorBox:      { backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, marginBottom: 12 },
-  errorText:     { color: RED, fontSize: 13 },
+  toggleLabel:   { fontSize: 14, fontFamily: 'Inter_400Regular', color: TEXT },
+  saveBtn:       { backgroundColor: GREEN_MID, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  saveBtnText:   { color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 15 },
+  errorBox:      { backgroundColor: '#FEF2F2', borderRadius: 10, padding: 10, marginBottom: 12,
+                   borderWidth: 1, borderColor: '#FECACA' },
+  errorText:     { color: RED, fontSize: 13, fontFamily: 'Inter_400Regular' },
 
-  sectionTitle:  { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: GRAY,
-                   letterSpacing: 0.6, marginBottom: 10, marginTop: 4 },
-  card:          { backgroundColor: CARD, borderRadius: 14, padding: 16, marginBottom: 12,
-                   shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
-                   shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  sectionTitle:  { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: MUTED,
+                   letterSpacing: 0.6, marginBottom: 10, marginTop: 4, textTransform: 'uppercase' },
+
+  // White assignment cards
+  card:          { backgroundColor: WHITE, borderRadius: 16, padding: 16, marginBottom: 12,
+                   borderWidth: 1, borderColor: BORDER,
+                   shadowColor: GREEN_DARK, shadowOpacity: 0.10, shadowRadius: 16,
+                   shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   cardTop:       { flexDirection: 'row', alignItems: 'flex-start' },
-  cardWeek:      { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: NAVY, marginBottom: 4 },
-  cardDays:      { fontSize: 13, color: GRAY, marginBottom: 4 },
-  cardShift:     { fontSize: 13, color: NAVY },
-  weekendTag:    { fontSize: 11, color: '#B45309', backgroundColor: '#FEF3C7', borderRadius: 10,
+  cardWeek:      { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: TEXT, marginBottom: 4 },
+  cardDays:      { fontSize: 13, fontFamily: 'Inter_400Regular', color: MUTED, marginBottom: 4 },
+  cardShift:     { fontSize: 13, fontFamily: 'Inter_400Regular', color: TEXT },
+  weekendTag:    { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#B45309',
+                   backgroundColor: '#FEF3C7', borderRadius: 10,
                    paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start', marginTop: 4 },
-  cardNotes:     { fontSize: 13, color: GRAY, fontStyle: 'italic', marginTop: 4 },
+  cardNotes:     { fontSize: 13, fontFamily: 'Inter_400Regular', color: MUTED, fontStyle: 'italic', marginTop: 4 },
   deleteBtn:     { padding: 8 },
   deleteBtnText: { color: RED, fontSize: 18, fontFamily: 'Inter_700Bold' },
 
   empty:         { alignItems: 'center', paddingTop: 40 },
   emptyIcon:     { fontSize: 48, marginBottom: 12 },
-  emptyTitle:    { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: GRAY },
+  emptyTitle:    { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: MUTED },
 
   modalOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalBox:      { backgroundColor: CARD, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-                   padding: 24, maxHeight: '80%' },
-  modalTitle:    { fontSize: 20, fontFamily: 'Inter_700Bold', color: NAVY, marginBottom: 16 },
-  empRow:        { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: BORDER },
-  empName:       { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: NAVY },
-  empMeta:       { fontSize: 13, color: GRAY, marginTop: 2 },
+  modalBox:      { backgroundColor: WHITE, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+                   padding: 24, maxHeight: '80%', borderWidth: 1, borderColor: BORDER },
+  modalTitle:    { fontSize: 20, fontFamily: 'Inter_700Bold', color: TEXT, marginBottom: 16 },
+  empRow:        { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: BORDER },
+  empName:       { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: TEXT },
+  empMeta:       { fontSize: 13, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 2 },
 });

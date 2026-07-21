@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  Alert, ScrollView, ActivityIndicator, Modal,
+  Alert, ScrollView, ActivityIndicator, Modal, StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,14 @@ import { adminApi, departmentApi, ApiError, CreateEmployeeResponse } from '@/ser
 import colors from '@/constants/colors';
 
 const { light, government } = colors;
+const GREEN_DARK = government.navyDark;  // "#0A4D2E"
+const GREEN_MID  = government.navy;      // "#0D6B3F"
+const GOLD       = government.gold;      // "#C9963F"
+const CREAM      = light.background;    // "#F9FAF7"
+const WHITE      = light.card;          // "#FFFFFF"
+const TEXT       = light.text;          // "#1A1F1C"
+const MUTED      = light.mutedForeground; // "#6B7A72"
+const BORDER     = light.border;        // "#E4EBE7"
 
 const ROLES = [
   { value: 'EMPLOYEE',           label: 'موظف — Employee' },
@@ -93,9 +101,10 @@ export default function AddEmployeeScreen() {
   if (created) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="dark-content" />
         <View style={styles.successCard}>
           <View style={styles.successIcon}>
-            <Ionicons name="checkmark-circle" size={56} color="#22c55e" />
+            <Ionicons name="checkmark-circle" size={56} color={GREEN_MID} />
           </View>
           <Text style={styles.successTitle}>Account Created</Text>
           <Text style={styles.successSubtitle}>تم إنشاء الحساب بنجاح</Text>
@@ -129,12 +138,14 @@ export default function AddEmployeeScreen() {
   // ── Form ────────────────────────────────────────────────────────────────────
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" />
+
+      {/* Header — navyDark bg */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={light.text} />
+          <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Add Employee</Text>
           <Text style={styles.headerTitleAr}>إضافة موظف</Text>
         </View>
@@ -143,81 +154,86 @@ export default function AddEmployeeScreen() {
 
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
 
-        {/* National ID */}
-        <Field label="National ID  رقم الهوية" error={errors.nationalId}>
-          <TextInput
-            style={[styles.input, errors.nationalId ? styles.inputError : null]}
-            placeholder="10-digit national ID"
-            placeholderTextColor={light.mutedForeground}
-            value={form.nationalId}
-            onChangeText={t => setField('nationalId', t.replace(/\D/g, '').slice(0, 10))}
-            keyboardType="number-pad"
-            maxLength={10}
-          />
-        </Field>
+        {/* White form card */}
+        <View style={styles.formCard}>
 
-        {/* First Name */}
-        <Field label="First Name (Arabic)  الاسم الأول" error={errors.firstNameAr}>
-          <TextInput
-            style={[styles.input, errors.firstNameAr ? styles.inputError : null]}
-            placeholder="مثال: محمد"
-            placeholderTextColor={light.mutedForeground}
-            value={form.firstNameAr}
-            onChangeText={t => setField('firstNameAr', t)}
-            textAlign="right"
-          />
-        </Field>
+          {/* National ID */}
+          <Field label="National ID  رقم الهوية" error={errors.nationalId}>
+            <TextInput
+              style={[styles.input, errors.nationalId ? styles.inputError : null]}
+              placeholder="10-digit national ID"
+              placeholderTextColor={MUTED}
+              value={form.nationalId}
+              onChangeText={t => setField('nationalId', t.replace(/\D/g, '').slice(0, 10))}
+              keyboardType="number-pad"
+              maxLength={10}
+            />
+          </Field>
 
-        {/* Last Name */}
-        <Field label="Last Name (Arabic)  اسم العائلة" error={errors.lastNameAr}>
-          <TextInput
-            style={[styles.input, errors.lastNameAr ? styles.inputError : null]}
-            placeholder="مثال: الغامدي"
-            placeholderTextColor={light.mutedForeground}
-            value={form.lastNameAr}
-            onChangeText={t => setField('lastNameAr', t)}
-            textAlign="right"
-          />
-        </Field>
+          {/* First Name */}
+          <Field label="First Name (Arabic)  الاسم الأول" error={errors.firstNameAr}>
+            <TextInput
+              style={[styles.input, errors.firstNameAr ? styles.inputError : null]}
+              placeholder="مثال: محمد"
+              placeholderTextColor={MUTED}
+              value={form.firstNameAr}
+              onChangeText={t => setField('firstNameAr', t)}
+              textAlign="right"
+            />
+          </Field>
 
-        {/* Phone */}
-        <Field label="Phone Number  رقم الجوال" error={errors.phoneNumber}>
-          <TextInput
-            style={[styles.input, errors.phoneNumber ? styles.inputError : null]}
-            placeholder="05xxxxxxxx"
-            placeholderTextColor={light.mutedForeground}
-            value={form.phoneNumber}
-            onChangeText={t => setField('phoneNumber', t.replace(/\D/g, '').slice(0, 10))}
-            keyboardType="phone-pad"
-            maxLength={10}
-          />
-        </Field>
+          {/* Last Name */}
+          <Field label="Last Name (Arabic)  اسم العائلة" error={errors.lastNameAr}>
+            <TextInput
+              style={[styles.input, errors.lastNameAr ? styles.inputError : null]}
+              placeholder="مثال: الغامدي"
+              placeholderTextColor={MUTED}
+              value={form.lastNameAr}
+              onChangeText={t => setField('lastNameAr', t)}
+              textAlign="right"
+            />
+          </Field>
 
-        {/* Department picker */}
-        <Field label="Department  القسم (optional)">
-          <TouchableOpacity
-            style={styles.picker}
-            onPress={() => setDeptOpen(true)}
-          >
-            <Text style={selectedDept ? styles.pickerValue : styles.pickerPlaceholder}>
-              {selectedDept ? selectedDept.nameAr : 'Select department…'}
-            </Text>
-            <Ionicons name="chevron-down" size={16} color={light.mutedForeground} />
-          </TouchableOpacity>
-        </Field>
+          {/* Phone */}
+          <Field label="Phone Number  رقم الجوال" error={errors.phoneNumber}>
+            <TextInput
+              style={[styles.input, errors.phoneNumber ? styles.inputError : null]}
+              placeholder="05xxxxxxxx"
+              placeholderTextColor={MUTED}
+              value={form.phoneNumber}
+              onChangeText={t => setField('phoneNumber', t.replace(/\D/g, '').slice(0, 10))}
+              keyboardType="phone-pad"
+              maxLength={10}
+            />
+          </Field>
 
-        {/* Role picker */}
-        <Field label="Role  الصلاحية" error={errors.role}>
-          <TouchableOpacity
-            style={[styles.picker, errors.role ? styles.inputError : null]}
-            onPress={() => setRoleOpen(true)}
-          >
-            <Text style={selectedRole ? styles.pickerValue : styles.pickerPlaceholder}>
-              {selectedRole?.label ?? 'Select role…'}
-            </Text>
-            <Ionicons name="chevron-down" size={16} color={light.mutedForeground} />
-          </TouchableOpacity>
-        </Field>
+          {/* Department picker */}
+          <Field label="Department  القسم (optional)">
+            <TouchableOpacity
+              style={styles.picker}
+              onPress={() => setDeptOpen(true)}
+            >
+              <Text style={selectedDept ? styles.pickerValue : styles.pickerPlaceholder}>
+                {selectedDept ? selectedDept.nameAr : 'Select department…'}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={MUTED} />
+            </TouchableOpacity>
+          </Field>
+
+          {/* Role picker */}
+          <Field label="Role  الصلاحية" error={errors.role}>
+            <TouchableOpacity
+              style={[styles.picker, errors.role ? styles.inputError : null]}
+              onPress={() => setRoleOpen(true)}
+            >
+              <Text style={selectedRole ? styles.pickerValue : styles.pickerPlaceholder}>
+                {selectedRole?.label ?? 'Select role…'}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={MUTED} />
+            </TouchableOpacity>
+          </Field>
+
+        </View>
 
         <TouchableOpacity
           style={[styles.submitBtn, mutation.isPending && styles.submitBtnDisabled]}
@@ -244,7 +260,7 @@ export default function AddEmployeeScreen() {
             <TouchableOpacity key={d.id} style={styles.sheetItem}
               onPress={() => { setField('departmentId', d.id); setDeptOpen(false); }}>
               <Text style={styles.sheetItemText}>{d.nameAr}</Text>
-              {form.departmentId === d.id && <Ionicons name="checkmark" size={18} color={government.navy} />}
+              {form.departmentId === d.id && <Ionicons name="checkmark" size={18} color={GREEN_MID} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -259,7 +275,7 @@ export default function AddEmployeeScreen() {
             <TouchableOpacity key={r.value} style={styles.sheetItem}
               onPress={() => { setField('role', r.value); setRoleOpen(false); }}>
               <Text style={styles.sheetItemText}>{r.label}</Text>
-              {form.role === r.value && <Ionicons name="checkmark" size={18} color={government.navy} />}
+              {form.role === r.value && <Ionicons name="checkmark" size={18} color={GREEN_MID} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -279,49 +295,72 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 const styles = StyleSheet.create({
-  container:        { flex: 1, backgroundColor: light.background },
+  container:        { flex: 1, backgroundColor: CREAM },
+
+  // Header — navyDark
   header:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                      paddingHorizontal: 16, paddingVertical: 12,
-                      borderBottomWidth: 1, borderBottomColor: light.border },
+                      paddingHorizontal: 16, paddingVertical: 16,
+                      backgroundColor: GREEN_DARK },
   backBtn:          { padding: 4 },
-  headerTitle:      { fontSize: 17, fontWeight: '700', color: light.text, textAlign: 'center' },
-  headerTitleAr:    { fontSize: 12, color: light.mutedForeground, textAlign: 'center' },
-  form:             { padding: 16, gap: 4 },
+  headerTitle:      { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#fff', textAlign: 'center' },
+  headerTitleAr:    { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)', textAlign: 'center' },
+
+  // Form layout
+  form:             { padding: 16, gap: 4, paddingBottom: 32 },
+
+  // White form card
+  formCard:         { backgroundColor: WHITE, borderRadius: 18, borderWidth: 1, borderColor: BORDER,
+                      padding: 20, marginBottom: 4,
+                      shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.10, shadowRadius: 16, elevation: 4 },
+
   fieldGroup:       { marginBottom: 14 },
-  label:            { fontSize: 13, fontWeight: '600', color: light.text, marginBottom: 6 },
-  input:            { backgroundColor: light.card, borderRadius: 10, borderWidth: 1,
-                      borderColor: light.border, padding: 12, fontSize: 15, color: light.foreground },
+  label:            { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: TEXT, marginBottom: 6 },
+
+  // Inputs — white bg, BORDER
+  input:            { backgroundColor: WHITE, borderRadius: 12, borderWidth: 1.5,
+                      borderColor: BORDER, paddingHorizontal: 14, height: 54,
+                      fontSize: 15, fontFamily: 'Inter_400Regular', color: TEXT },
   inputError:       { borderColor: light.destructive },
-  errorText:        { color: light.destructive, fontSize: 12, marginTop: 4 },
+  errorText:        { color: light.destructive, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 4 },
+
+  // Picker
   picker:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                      backgroundColor: light.card, borderRadius: 10, borderWidth: 1,
-                      borderColor: light.border, padding: 12 },
-  pickerValue:      { fontSize: 15, color: light.foreground },
-  pickerPlaceholder:{ fontSize: 15, color: light.mutedForeground },
-  submitBtn:        { backgroundColor: government.navy, borderRadius: 12,
-                      paddingVertical: 15, alignItems: 'center', marginTop: 12 },
+                      backgroundColor: WHITE, borderRadius: 12, borderWidth: 1.5,
+                      borderColor: BORDER, paddingHorizontal: 14, height: 54 },
+  pickerValue:      { fontSize: 15, fontFamily: 'Inter_400Regular', color: TEXT },
+  pickerPlaceholder:{ fontSize: 15, fontFamily: 'Inter_400Regular', color: MUTED },
+
+  // Green submit button
+  submitBtn:        { backgroundColor: GREEN_MID, borderRadius: 14,
+                      paddingVertical: 16, alignItems: 'center', marginTop: 8 },
   submitBtnDisabled:{ opacity: 0.6 },
-  submitBtnText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
+  submitBtnText:    { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+
+  // Bottom sheet modals
   overlay:          { flex: 1, backgroundColor: '#00000044' },
-  sheet:            { backgroundColor: light.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-                      padding: 20 },
-  sheetTitle:       { fontSize: 16, fontWeight: '700', color: light.text, marginBottom: 12 },
+  sheet:            { backgroundColor: WHITE, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+                      padding: 20, borderWidth: 1, borderColor: BORDER },
+  sheetTitle:       { fontSize: 16, fontFamily: 'Inter_700Bold', color: TEXT, marginBottom: 12 },
   sheetItem:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                      paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: light.border },
-  sheetItemText:    { fontSize: 15, color: light.foreground },
-  // Success
+                      paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: BORDER },
+  sheetItemText:    { fontSize: 15, fontFamily: 'Inter_400Regular', color: TEXT },
+
+  // Success state
   successCard:      { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   successIcon:      { marginBottom: 12 },
-  successTitle:     { fontSize: 22, fontWeight: '700', color: light.text },
-  successSubtitle:  { fontSize: 14, color: light.mutedForeground, marginBottom: 24 },
-  tempBox:          { backgroundColor: '#f0fdf4', borderRadius: 14, padding: 20,
-                      borderWidth: 1, borderColor: '#86efac', width: '100%', marginBottom: 24 },
-  tempLabel:        { fontSize: 13, fontWeight: '600', color: '#166534', marginBottom: 12 },
+  successTitle:     { fontSize: 22, fontFamily: 'Inter_700Bold', color: TEXT },
+  successSubtitle:  { fontSize: 14, fontFamily: 'Inter_400Regular', color: MUTED, marginBottom: 24 },
+  tempBox:          { backgroundColor: WHITE, borderRadius: 16, padding: 20,
+                      borderWidth: 1.5, borderColor: BORDER, width: '100%', marginBottom: 24,
+                      shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.10, shadowRadius: 16, elevation: 4 },
+  tempLabel:        { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: GREEN_DARK, marginBottom: 12 },
   tempRow:          { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  tempKey:          { fontSize: 14, color: '#166534' },
-  tempVal:          { fontSize: 14, fontWeight: '700', color: '#166534' },
-  tempNote:         { fontSize: 12, color: '#166534', marginTop: 12, lineHeight: 18 },
-  doneBtn:          { backgroundColor: government.navy, borderRadius: 12,
-                      paddingVertical: 14, paddingHorizontal: 48 },
-  doneBtnText:      { color: '#fff', fontSize: 16, fontWeight: '700' },
+  tempKey:          { fontSize: 14, fontFamily: 'Inter_400Regular', color: GREEN_DARK },
+  tempVal:          { fontSize: 14, fontFamily: 'Inter_700Bold', color: GREEN_DARK },
+  tempNote:         { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 12, lineHeight: 18 },
+  doneBtn:          { backgroundColor: GREEN_MID, borderRadius: 14,
+                      paddingVertical: 16, paddingHorizontal: 48 },
+  doneBtnText:      { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
 });

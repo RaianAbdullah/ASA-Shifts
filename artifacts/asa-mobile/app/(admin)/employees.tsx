@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, ActivityIndicator, RefreshControl,
+  TextInput, ActivityIndicator, RefreshControl, StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,12 +11,20 @@ import { adminApi, EmployeeSummaryDto } from '@/services/api';
 import colors from '@/constants/colors';
 
 const { light, government } = colors;
+const GREEN_DARK = government.navyDark;  // "#0A4D2E"
+const GREEN_MID  = government.navy;      // "#0D6B3F"
+const GOLD       = government.gold;      // "#C9963F"
+const CREAM      = light.background;    // "#F9FAF7"
+const WHITE      = light.card;          // "#FFFFFF"
+const TEXT       = light.text;          // "#1A1F1C"
+const MUTED      = light.mutedForeground; // "#6B7A72"
+const BORDER     = light.border;        // "#E4EBE7"
 
 const STATUS_COLOR: Record<string, string> = {
-  ACTIVE:               '#22c55e',
-  PENDING_VERIFICATION: '#f59e0b',
-  PENDING_APPROVAL:     '#f59e0b',
-  SUSPENDED:            '#ef4444',
+  ACTIVE:               '#22C55E',
+  PENDING_VERIFICATION: '#F59E0B',
+  PENDING_APPROVAL:     '#F59E0B',
+  SUSPENDED:            '#EF4444',
   REJECTED:             '#6b7280',
 };
 
@@ -79,19 +87,21 @@ export default function EmployeesScreen() {
             {(item.status ?? '').replace('_', ' ')}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={14} color={light.mutedForeground} />
+        <Ionicons name="chevron-forward" size={14} color={MUTED} />
       </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" />
+
+      {/* Header — navyDark bg */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={light.text} />
+          <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.title}>All Employees</Text>
           <Text style={styles.titleAr}>جميع الموظفين</Text>
         </View>
@@ -99,23 +109,23 @@ export default function EmployeesScreen() {
           style={styles.addBtn}
           onPress={() => router.push('/(admin)/add-employee' as any)}
         >
-          <Ionicons name="person-add-outline" size={22} color={government.navy} />
+          <Ionicons name="person-add-outline" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {/* Search */}
+      {/* Search — BORDER search bar on cream bg */}
       <View style={styles.searchRow}>
-        <Ionicons name="search-outline" size={16} color={light.mutedForeground} style={{ marginRight: 8 }} />
+        <Ionicons name="search-outline" size={16} color={MUTED} style={{ marginRight: 8 }} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search by name or ID…"
-          placeholderTextColor={light.mutedForeground}
+          placeholderTextColor={MUTED}
           value={search}
           onChangeText={setSearch}
         />
         {search ? (
           <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color={light.mutedForeground} />
+            <Ionicons name="close-circle" size={16} color={MUTED} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -127,7 +137,7 @@ export default function EmployeesScreen() {
 
       {/* List */}
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={government.navy} />
+        <ActivityIndicator style={{ marginTop: 40 }} color={GREEN_MID} />
       ) : isError ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>Failed to load employees</Text>
@@ -143,11 +153,11 @@ export default function EmployeesScreen() {
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch}
-              colors={[government.navy]} tintColor={government.navy} />
+              colors={[GREEN_MID]} tintColor={GREEN_MID} />
           }
           ListEmptyComponent={
             <View style={styles.center}>
-              <Ionicons name="people-outline" size={48} color={light.mutedForeground} />
+              <Ionicons name="people-outline" size={48} color={MUTED} />
               <Text style={styles.emptyText}>No employees found</Text>
             </View>
           }
@@ -158,36 +168,46 @@ export default function EmployeesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: light.background },
+  container:   { flex: 1, backgroundColor: CREAM },
+
+  // Header — navyDark
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                 paddingHorizontal: 16, paddingVertical: 12,
-                 borderBottomWidth: 1, borderBottomColor: light.border },
+                 paddingHorizontal: 16, paddingVertical: 16,
+                 backgroundColor: GREEN_DARK },
   backBtn:     { padding: 4 },
-  title:       { fontSize: 17, fontWeight: '700', color: light.text },
-  titleAr:     { fontSize: 12, color: light.mutedForeground, textAlign: 'center' },
+  title:       { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#fff', textAlign: 'center' },
+  titleAr:     { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)', textAlign: 'center' },
   addBtn:      { padding: 4 },
+
+  // Search bar — white with BORDER
   searchRow:   { flexDirection: 'row', alignItems: 'center', margin: 12,
-                 backgroundColor: light.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
-                 borderWidth: 1, borderColor: light.border },
-  searchInput: { flex: 1, fontSize: 14, color: light.foreground },
-  count:       { fontSize: 12, color: light.mutedForeground, marginLeft: 16, marginBottom: 4 },
-  list:        { paddingHorizontal: 12, paddingBottom: 24 },
-  card:        { flexDirection: 'row', alignItems: 'center', backgroundColor: light.card,
-                 borderRadius: 12, padding: 12, marginBottom: 8,
-                 borderWidth: 1, borderColor: light.border },
-  avatar:      { width: 42, height: 42, borderRadius: 21,
-                 backgroundColor: government.navy + '22',
+                 backgroundColor: WHITE, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
+                 borderWidth: 1.5, borderColor: BORDER },
+  searchInput: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', color: TEXT },
+
+  count:       { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginLeft: 16, marginBottom: 4 },
+  list:        { paddingHorizontal: 12, paddingBottom: 24, gap: 8 },
+
+  // White cards with green avatar
+  card:        { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE,
+                 borderRadius: 16, padding: 14,
+                 borderWidth: 1, borderColor: BORDER,
+                 shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 6 },
+                 shadowOpacity: 0.10, shadowRadius: 16, elevation: 4 },
+  avatar:      { width: 44, height: 44, borderRadius: 99,
+                 backgroundColor: GREEN_MID,
                  alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarText:  { fontSize: 18, fontWeight: '700', color: government.navy },
+  avatarText:  { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
   info:        { flex: 1 },
-  name:        { fontSize: 15, fontWeight: '600', color: light.text },
-  meta:        { fontSize: 12, color: light.mutedForeground, marginTop: 1 },
-  phone:       { fontSize: 12, color: light.mutedForeground, marginTop: 1, letterSpacing: 1 },
+  name:        { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: TEXT },
+  meta:        { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 1 },
+  phone:       { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 1, letterSpacing: 1 },
   badge:       { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, marginLeft: 8 },
-  badgeText:   { fontSize: 10, fontWeight: '600' },
+  badgeText:   { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+
   center:      { alignItems: 'center', marginTop: 60 },
-  errorText:   { color: light.destructive, marginBottom: 12 },
-  retryBtn:    { backgroundColor: government.navy, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 8 },
-  retryText:   { color: '#fff', fontWeight: '600' },
-  emptyText:   { color: light.mutedForeground, marginTop: 12, fontSize: 15 },
+  errorText:   { color: light.destructive, marginBottom: 12, fontFamily: 'Inter_400Regular' },
+  retryBtn:    { backgroundColor: GREEN_MID, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 10 },
+  retryText:   { color: '#fff', fontFamily: 'Inter_600SemiBold' },
+  emptyText:   { color: MUTED, marginTop: 12, fontSize: 15, fontFamily: 'Inter_400Regular' },
 });
