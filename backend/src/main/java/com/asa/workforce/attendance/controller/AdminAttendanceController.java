@@ -31,7 +31,7 @@ public class AdminAttendanceController {
      * Optional ?date=YYYY-MM-DD (defaults to today) and ?departmentId=.
      */
     @GetMapping("/today")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER','DEPARTMENT_MANAGER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER','DEPARTMENT_MANAGER','WEEKEND_MANAGER')")
     @Operation(summary = "Attendance summary for a given date — all employees or per department")
     public ResponseEntity<ApiResponse<AdminAttendanceSummary>> todaySummary(
             @RequestParam(required = false) UUID departmentId,

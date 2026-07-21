@@ -9,6 +9,7 @@ export default function AdminLayout() {
       <Stack.Screen name="add-employee"       options={{ headerShown: false }} />
       <Stack.Screen name="edit-employee"      options={{ headerShown: false }} />
       <Stack.Screen name="attendance-history" options={{ headerShown: false }} />
+      <Stack.Screen name="on-duty"            options={{ headerShown: false }} />
     </Stack>
   );
 }

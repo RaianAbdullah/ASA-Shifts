@@ -222,6 +222,10 @@ export default function AdminPendingScreen() {
           <Ionicons name="bar-chart-outline" size={20} color={government.navy} />
           <Text style={styles.quickNavText}>Attendance</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/on-duty' as any)}>
+          <Ionicons name="radio-outline" size={20} color={government.navy} />
+          <Text style={styles.quickNavText}>On Duty</Text>
+        </TouchableOpacity>
       </View>
 
       {/* List */}
