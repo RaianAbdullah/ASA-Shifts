@@ -24,6 +24,20 @@ public class ScheduleService {
     private final WeeklyScheduleRepository scheduleRepository;
     private final EmployeeRepository       employeeRepository;
 
+    /** Used by ShiftSwapService to locate a specific week's schedule. */
+    @Transactional(readOnly = true)
+    public WeeklySchedule findForEmployeeWeek(UUID employeeId, LocalDate weekStart) {
+        return scheduleRepository.findByEmployeeIdAndWeekStart(employeeId, weekStart)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No schedule found for employee " + employeeId + " week " + weekStart));
+    }
+
+    /** Used by ShiftSwapService to persist swapped schedules. */
+    @Transactional
+    public WeeklySchedule save(WeeklySchedule schedule) {
+        return scheduleRepository.save(schedule);
+    }
+
     // ── Employee: get their current schedule ─────────────────────────────────
 
     @Transactional(readOnly = true)

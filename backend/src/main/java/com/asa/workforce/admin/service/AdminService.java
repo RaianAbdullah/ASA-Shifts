@@ -5,6 +5,7 @@ import com.asa.workforce.admin.dto.CreateEmployeeRequest;
 import com.asa.workforce.admin.dto.CreateEmployeeResponse;
 import com.asa.workforce.admin.dto.EmployeeSummaryDto;
 import com.asa.workforce.admin.dto.PendingEmployeeDto;
+import com.asa.workforce.admin.dto.UpdateEmployeeRequest;
 import com.asa.workforce.audit.AuditService;
 import com.asa.workforce.entity.Department;
 import com.asa.workforce.entity.Employee;
@@ -251,6 +252,7 @@ public class AdminService {
                         .role(e.getRole().name())
                         .status(e.getStatus().name())
                         .maskedPhone(maskPhone(e.getPhoneNumber()))
+                        .vacationDaysPerYear(e.getVacationDaysPerYear())
                         .build())
                 .toList();
     }
@@ -271,6 +273,48 @@ public class AdminService {
                         .role(e.getRole().name())
                         .build())
                 .toList();
+    }
+
+    // ── Update employee (role, status, details, vacation days) ───────────────
+
+    @Transactional
+    public EmployeeSummaryDto updateEmployee(UUID employeeId, UpdateEmployeeRequest req) {
+        Employee emp = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        if (req.getFirstNameAr()  != null) emp.setFirstNameAr(req.getFirstNameAr());
+        if (req.getLastNameAr()   != null) emp.setLastNameAr(req.getLastNameAr());
+        if (req.getPhoneNumber()  != null) emp.setPhoneNumber(req.getPhoneNumber());
+        if (req.getVacationDaysPerYear() != null) emp.setVacationDaysPerYear(req.getVacationDaysPerYear());
+
+        if (req.getRole() != null) {
+            try { emp.setRole(Employee.Role.valueOf(req.getRole())); }
+            catch (IllegalArgumentException ex) { throw new IllegalArgumentException("Invalid role: " + req.getRole()); }
+        }
+        if (req.getStatus() != null) {
+            try { emp.setStatus(Employee.Status.valueOf(req.getStatus())); }
+            catch (IllegalArgumentException ex) { throw new IllegalArgumentException("Invalid status: " + req.getStatus()); }
+        }
+        if (req.getDepartmentId() != null) {
+            Department dept = departmentRepository.findById(req.getDepartmentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found"));
+            emp.setDepartment(dept);
+        }
+
+        emp = employeeRepository.save(emp);
+
+        return EmployeeSummaryDto.builder()
+                .id(emp.getId())
+                .nationalId(emp.getNationalId())
+                .firstNameAr(emp.getFirstNameAr())
+                .lastNameAr(emp.getLastNameAr())
+                .departmentId(emp.getDepartment() != null ? emp.getDepartment().getId() : null)
+                .departmentNameAr(emp.getDepartment() != null ? emp.getDepartment().getNameAr() : null)
+                .role(emp.getRole().name())
+                .status(emp.getStatus().name())
+                .maskedPhone(maskPhone(emp.getPhoneNumber()))
+                .vacationDaysPerYear(emp.getVacationDaysPerYear())
+                .build();
     }
 
     private String maskId(String id) {

@@ -11,12 +11,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/v1/admin/attendance")
 @RequiredArgsConstructor
-@Tag(name = "Admin — Attendance", description = "Today's attendance dashboard for managers")
+@Tag(name = "Admin — Attendance", description = "Attendance dashboard for managers")
 @SecurityRequirement(name = "bearerAuth")
 public class AdminAttendanceController {
 
@@ -24,16 +28,17 @@ public class AdminAttendanceController {
 
     /**
      * GET /v1/admin/attendance/today
-     * Optional ?departmentId= filters to a single department.
-     * DEPARTMENT_MANAGER can only see their own department (enforced in service layer in Stage 7).
+     * Optional ?date=YYYY-MM-DD (defaults to today) and ?departmentId=.
      */
     @GetMapping("/today")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER','DEPARTMENT_MANAGER')")
-    @Operation(summary = "Today's attendance summary — all employees or per department")
+    @Operation(summary = "Attendance summary for a given date — all employees or per department")
     public ResponseEntity<ApiResponse<AdminAttendanceSummary>> todaySummary(
-            @RequestParam(required = false) UUID departmentId) {
+            @RequestParam(required = false) UUID departmentId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
-        AdminAttendanceSummary data = attendanceService.getTodaySummary(departmentId);
+        LocalDate target = date != null ? date : LocalDate.now(ZoneOffset.UTC);
+        AdminAttendanceSummary data = attendanceService.getDaySummary(target, departmentId);
         return ResponseEntity.ok(ApiResponse.ok(data));
     }
 }

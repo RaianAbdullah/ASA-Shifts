@@ -3,6 +3,7 @@ package com.asa.workforce.vacation.controller;
 import com.asa.workforce.common.dto.ApiResponse;
 import com.asa.workforce.vacation.dto.ReviewVacationRequest;
 import com.asa.workforce.vacation.dto.SubmitVacationRequest;
+import com.asa.workforce.vacation.dto.VacationBalanceDto;
 import com.asa.workforce.vacation.dto.VacationRequestDto;
 import com.asa.workforce.vacation.service.VacationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,6 +37,13 @@ public class VacationController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(vacationService.submit(user.getUsername(), request)));
+    }
+
+    @GetMapping("/balance")
+    @Operation(summary = "Get the current employee's vacation day balance for the current year")
+    public ResponseEntity<ApiResponse<VacationBalanceDto>> getBalance(
+            @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(ApiResponse.ok(vacationService.getBalance(user.getUsername())));
     }
 
     @GetMapping("/my")

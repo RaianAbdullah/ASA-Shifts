@@ -85,6 +85,13 @@ function RequestCard({
 export default function VacationsScreen() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+
+  const { data: balanceRes } = useQuery({
+    queryKey: ['vacation-balance'],
+    queryFn:  () => vacationApi.getBalance(),
+    staleTime: 60_000,
+  });
+  const balance = balanceRes?.data;
   const [startDate, setStartDate] = useState('');
   const [endDate,   setEndDate]   = useState('');
   const [reason,    setReason]    = useState('');
@@ -167,6 +174,29 @@ export default function VacationsScreen() {
             <Text style={styles.newBtnText}>{showForm ? '✕ Close' : '+ New Request'}</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Balance card */}
+        {balance && (
+          <View style={styles.balanceCard}>
+            <Text style={styles.balanceTitle}>Vacation Balance {balance.year} — رصيد الإجازة</Text>
+            <View style={styles.balanceRow}>
+              <View style={styles.balanceStat}>
+                <Text style={[styles.balanceNum, { color: NAVY }]}>{balance.daysAllowed}</Text>
+                <Text style={styles.balanceLabel}>Allowed</Text>
+              </View>
+              <View style={styles.balanceDivider} />
+              <View style={styles.balanceStat}>
+                <Text style={[styles.balanceNum, { color: '#f59e0b' }]}>{balance.daysUsed}</Text>
+                <Text style={styles.balanceLabel}>Used</Text>
+              </View>
+              <View style={styles.balanceDivider} />
+              <View style={styles.balanceStat}>
+                <Text style={[styles.balanceNum, { color: GREEN }]}>{balance.daysRemaining}</Text>
+                <Text style={styles.balanceLabel}>Remaining</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Submit form */}
         {showForm && (
@@ -264,6 +294,15 @@ const styles = StyleSheet.create({
   titleAr:      { fontSize: 16, color: GRAY, marginTop: 2 },
   newBtn:       { backgroundColor: NAVY, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, marginTop: 4 },
   newBtnText:   { color: '#FFF', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+
+  balanceCard:    { backgroundColor: CARD, borderRadius: 16, padding: 16, marginBottom: 20,
+                    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  balanceTitle:   { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: GRAY, marginBottom: 12, textAlign: 'center' },
+  balanceRow:     { flexDirection: 'row', alignItems: 'center' },
+  balanceStat:    { flex: 1, alignItems: 'center' },
+  balanceNum:     { fontSize: 28, fontFamily: 'Inter_700Bold' },
+  balanceLabel:   { fontSize: 12, color: GRAY, marginTop: 2 },
+  balanceDivider: { width: 1, height: 40, backgroundColor: BORDER },
 
   formCard:     { backgroundColor: CARD, borderRadius: 16, padding: 20, marginBottom: 20,
                   shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 3 },

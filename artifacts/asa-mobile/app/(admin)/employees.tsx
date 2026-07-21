@@ -44,7 +44,22 @@ export default function EmployeesScreen() {
     : all;
 
   const renderItem = ({ item }: { item: EmployeeSummaryDto }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.78}
+      onPress={() => router.push({
+        pathname: '/(admin)/edit-employee' as any,
+        params: {
+          id:           item.id,
+          firstNameAr:  item.firstNameAr,
+          lastNameAr:   item.lastNameAr,
+          phone:        item.maskedPhone ?? '',
+          role:         item.role,
+          status:       item.status ?? 'ACTIVE',
+          vacationDays: String(item.vacationDaysPerYear ?? 21),
+        },
+      })}
+    >
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{item.firstNameAr?.[0] ?? '?'}</Text>
       </View>
@@ -58,12 +73,15 @@ export default function EmployeesScreen() {
           <Text style={styles.phone}>{item.maskedPhone}</Text>
         ) : null}
       </View>
-      <View style={[styles.badge, { backgroundColor: (STATUS_COLOR[item.status ?? ''] ?? '#6b7280') + '22' }]}>
-        <Text style={[styles.badgeText, { color: STATUS_COLOR[item.status ?? ''] ?? '#6b7280' }]}>
-          {(item.status ?? '').replace('_', ' ')}
-        </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View style={[styles.badge, { backgroundColor: (STATUS_COLOR[item.status ?? ''] ?? '#6b7280') + '22' }]}>
+          <Text style={[styles.badgeText, { color: STATUS_COLOR[item.status ?? ''] ?? '#6b7280' }]}>
+            {(item.status ?? '').replace('_', ' ')}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={14} color={light.mutedForeground} />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

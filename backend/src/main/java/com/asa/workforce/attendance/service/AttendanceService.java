@@ -192,8 +192,8 @@ public class AttendanceService {
     // ── Admin: today's summary ────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public AdminAttendanceSummary getTodaySummary(UUID departmentId) {
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+    public AdminAttendanceSummary getDaySummary(LocalDate date, UUID departmentId) {
+        LocalDate today = date != null ? date : LocalDate.now(ZoneOffset.UTC);
 
         List<Attendance> records = departmentId != null
                 ? attendanceRepository.findAllByDateAndDepartment(today, departmentId)

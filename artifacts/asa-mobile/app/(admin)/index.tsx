@@ -207,6 +207,10 @@ export default function AdminPendingScreen() {
           <Ionicons name="notifications-outline" size={20} color={government.navy} />
           <Text style={styles.quickNavText}>Notifications</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/attendance-history' as any)}>
+          <Ionicons name="bar-chart-outline" size={20} color={government.navy} />
+          <Text style={styles.quickNavText}>Attendance</Text>
+        </TouchableOpacity>
       </View>
 
       {/* List */}

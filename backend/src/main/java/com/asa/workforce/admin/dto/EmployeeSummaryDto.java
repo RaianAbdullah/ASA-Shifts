@@ -18,4 +18,5 @@ public class EmployeeSummaryDto {
     private String role;
     private String status;
     private String maskedPhone;
+    private int    vacationDaysPerYear;
 }

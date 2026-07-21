@@ -270,15 +270,16 @@ export interface PageResponse<T> {
 }
 
 export interface EmployeeSummaryDto {
-  id:               string;
-  nationalId:       string;
-  firstNameAr:      string;
-  lastNameAr:       string;
-  departmentId?:    string;
-  departmentNameAr?:string;
-  role:             string;
-  status?:          string;
-  maskedPhone?:     string;
+  id:                   string;
+  nationalId:           string;
+  firstNameAr:          string;
+  lastNameAr:           string;
+  departmentId?:        string;
+  departmentNameAr?:    string;
+  role:                 string;
+  status?:              string;
+  maskedPhone?:         string;
+  vacationDaysPerYear?: number;
 }
 
 export interface CreateEmployeeRequest {
@@ -333,6 +334,30 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }, true),
+
+  /** Active employees — for pickers and swap screens. */
+  listActiveEmployees: () =>
+    request<EmployeeSummaryDto[]>('/v1/admin/employees/active', {}, true),
+
+  updateEmployee: (id: string, body: {
+    firstNameAr?: string; lastNameAr?: string; phoneNumber?: string;
+    role?: string; status?: string; departmentId?: string; vacationDaysPerYear?: number;
+  }) =>
+    request<EmployeeSummaryDto>(`/v1/admin/employees/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }, true),
+
+  getAttendanceSummary: (date?: string, departmentId?: string) => {
+    const p: string[] = [];
+    if (date)         p.push(`date=${date}`);
+    if (departmentId) p.push(`departmentId=${departmentId}`);
+    return request<AdminAttendanceSummary>(
+      `/v1/admin/attendance/today${p.length ? '?' + p.join('&') : ''}`, {}, true);
+  },
+
+  listDepartments: () =>
+    request<DepartmentDto[]>('/v1/departments', {}, true),
 };
 
 // ── Attendance endpoints ──────────────────────────────────────────────────────
@@ -476,6 +501,30 @@ export const scheduleApi = {
 
   deleteSchedule: (id: string) =>
     request<void>(`/v1/schedules/${id}`, { method: 'DELETE' }, true),
+
+  getMySwaps: () =>
+    request<SwapRequestDto[]>('/v1/schedule/swaps/my', {}, true),
+
+  createSwapRequest: (body: {
+    targetEmployeeId: string; myWeekStart: string; theirWeekStart: string; reason?: string;
+  }) =>
+    request<SwapRequestDto>('/v1/schedule/swaps', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }, true),
+
+  getPendingSwaps: () =>
+    request<SwapRequestDto[]>('/v1/schedule/swaps/pending', {}, true),
+
+  approveSwap: (id: string, notes?: string) =>
+    request<SwapRequestDto>(`/v1/schedule/swaps/${id}/approve`, {
+      method: 'PATCH', body: JSON.stringify({ notes }),
+    }, true),
+
+  rejectSwap: (id: string, notes?: string) =>
+    request<SwapRequestDto>(`/v1/schedule/swaps/${id}/reject`, {
+      method: 'PATCH', body: JSON.stringify({ notes }),
+    }, true),
 };
 
 // ── Vacation endpoints ────────────────────────────────────────────────────────
@@ -501,7 +550,31 @@ export interface VacationRequestDto {
   createdAt:        string;
 }
 
+export interface VacationBalanceDto {
+  daysAllowed:   number;
+  daysUsed:      number;
+  daysRemaining: number;
+  year:          number;
+}
+
+export interface SwapRequestDto {
+  id:                 string;
+  requesterId:        string;
+  requesterName:      string;
+  targetId:           string;
+  targetName:         string;
+  requesterWeekStart: string;
+  targetWeekStart:    string;
+  reason?:            string;
+  status:             string;
+  reviewNotes?:       string;
+  createdAt:          string;
+}
+
 export const vacationApi = {
+  getBalance: () =>
+    request<VacationBalanceDto>('/v1/vacations/balance', {}, true),
+
   submit:   (startDate: string, endDate: string, reason?: string) =>
     request<VacationRequestDto>('/v1/vacations', {
       method: 'POST',

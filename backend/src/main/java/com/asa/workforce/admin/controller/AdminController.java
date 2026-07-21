@@ -5,6 +5,7 @@ import com.asa.workforce.admin.dto.CreateEmployeeRequest;
 import com.asa.workforce.admin.dto.CreateEmployeeResponse;
 import com.asa.workforce.admin.dto.EmployeeSummaryDto;
 import com.asa.workforce.admin.dto.PendingEmployeeDto;
+import com.asa.workforce.admin.dto.UpdateEmployeeRequest;
 import com.asa.workforce.admin.service.AdminService;
 import com.asa.workforce.common.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -101,6 +102,17 @@ public class AdminController {
     @Operation(summary = "List active employees only (for schedule/picker flows)")
     public ResponseEntity<ApiResponse<List<EmployeeSummaryDto>>> listActiveEmployees() {
         return ResponseEntity.ok(ApiResponse.ok(adminService.listActiveEmployees()));
+    }
+
+    // ── PATCH /v1/admin/employees/{employeeId} ───────────────────────────────
+
+    @PatchMapping("/employees/{employeeId}")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER')")
+    @Operation(summary = "Update an employee's details, role, or status")
+    public ResponseEntity<ApiResponse<EmployeeSummaryDto>> updateEmployee(
+            @PathVariable UUID employeeId,
+            @RequestBody UpdateEmployeeRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(adminService.updateEmployee(employeeId, request)));
     }
 
     // ── POST /v1/admin/employees ─────────────────────────────────────────────

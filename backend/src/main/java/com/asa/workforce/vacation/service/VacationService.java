@@ -8,6 +8,7 @@ import com.asa.workforce.repository.EmployeeRepository;
 import com.asa.workforce.repository.VacationRequestRepository;
 import com.asa.workforce.vacation.dto.ReviewVacationRequest;
 import com.asa.workforce.vacation.dto.SubmitVacationRequest;
+import com.asa.workforce.vacation.dto.VacationBalanceDto;
 import com.asa.workforce.vacation.dto.VacationRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -41,6 +42,16 @@ public class VacationService {
         }
         if (req.getEndDate().isBefore(req.getStartDate())) {
             throw new IllegalArgumentException("End date must be on or after start date");
+        }
+
+        // Check vacation balance before saving
+        int year = LocalDate.now().getYear();
+        long requestedDays = req.getEndDate().toEpochDay() - req.getStartDate().toEpochDay() + 1;
+        VacationBalanceDto balance = computeBalance(emp, year);
+        if (requestedDays > balance.getDaysRemaining()) {
+            throw new IllegalArgumentException(
+                    "Insufficient vacation balance. Requested: " + requestedDays +
+                    " days, Remaining: " + balance.getDaysRemaining() + " days.");
         }
 
         VacationRequest vr = VacationRequest.builder()
@@ -189,6 +200,35 @@ public class VacationService {
 
         vr.setStatus(VacationStatus.REJECTED);
         return toDto(vacationRepository.save(vr));
+    }
+
+    // ── Vacation balance ──────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public VacationBalanceDto getBalance(String nationalId) {
+        Employee emp = findEmployee(nationalId);
+        int year = LocalDate.now().getYear();
+        return computeBalance(emp, year);
+    }
+
+    private VacationBalanceDto computeBalance(Employee emp, int year) {
+        LocalDate from = LocalDate.of(year, 1, 1);
+        LocalDate to   = LocalDate.of(year, 12, 31);
+
+        int daysUsed = vacationRepository.findApprovedInRange(emp.getId(), from, to)
+                .stream()
+                .mapToInt(v -> (int)(v.getEndDate().toEpochDay() - v.getStartDate().toEpochDay() + 1))
+                .sum();
+
+        int daysAllowed   = emp.getVacationDaysPerYear();
+        int daysRemaining = Math.max(daysAllowed - daysUsed, 0);
+
+        return VacationBalanceDto.builder()
+                .year(year)
+                .daysAllowed(daysAllowed)
+                .daysUsed(daysUsed)
+                .daysRemaining(daysRemaining)
+                .build();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

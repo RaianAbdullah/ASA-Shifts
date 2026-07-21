@@ -24,4 +24,6 @@ public interface WeeklyScheduleRepository extends JpaRepository<WeeklySchedule, 
         ORDER BY s.weekStart DESC
     """)
     Optional<WeeklySchedule> findCurrentForEmployee(UUID employeeId, LocalDate date, LocalDate weekAgo);
+
+    Optional<WeeklySchedule> findByEmployeeIdAndWeekStart(UUID employeeId, LocalDate weekStart);
 }

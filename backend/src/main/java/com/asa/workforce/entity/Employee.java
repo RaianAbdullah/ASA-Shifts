@@ -86,6 +86,10 @@ public class Employee {
     @Builder.Default
     private boolean mustChangePassword = false;
 
+    @Column(name = "vacation_days_per_year", nullable = false)
+    @Builder.Default
+    private int vacationDaysPerYear = 21;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;

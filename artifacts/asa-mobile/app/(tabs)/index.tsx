@@ -121,24 +121,6 @@ export default function HomeScreen() {
     },
   });
 
-  // Check-out mutation
-  const checkOutMutation = useMutation({
-    mutationFn: async () => {
-      setLocating(true);
-      const coords = await getCurrentLocation().finally(() => setLocating(false));
-      return attendanceApi.checkOut(coords.latitude, coords.longitude);
-    },
-    onSuccess: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      qc.invalidateQueries({ queryKey: ['attendance', 'today'] });
-    },
-    onError: (err) => {
-      const msg = err instanceof ApiError ? err.message
-                : typeof err === 'string' ? err
-                : 'Check-out failed. Please try again.';
-      Alert.alert('Check-out Failed', msg);
-    },
-  });
 
   const handleCheckIn = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -152,17 +134,6 @@ export default function HomeScreen() {
     );
   }, [checkInMutation]);
 
-  const handleCheckOut = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      'Confirm Check-out',
-      `Worked so far: ${timer}\n\nتأكيد تسجيل الانصراف`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Check Out', onPress: () => checkOutMutation.mutate() },
-      ]
-    );
-  }, [checkOutMutation, timer]);
 
   const handleSignOut = useCallback(async () => {
     const current = await loadSession();
@@ -179,7 +150,7 @@ export default function HomeScreen() {
     );
   }
 
-  const isBusy  = locating || checkInMutation.isPending || checkOutMutation.isPending;
+  const isBusy  = locating || checkInMutation.isPending;
   const todayDate = new Date().toLocaleDateString('ar-SA', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
@@ -244,15 +215,6 @@ export default function HomeScreen() {
           </View>
           <View style={styles.timeDivider} />
           <View style={styles.timeBlock}>
-            <Text style={styles.timeBlockLabel}>Check-out</Text>
-            <Text style={styles.timeBlockValue}>
-              {today?.checkOutTime
-                ? new Date(today.checkOutTime).toLocaleTimeString('en-SA', { hour: '2-digit', minute: '2-digit' })
-                : '—'}
-            </Text>
-          </View>
-          <View style={styles.timeDivider} />
-          <View style={styles.timeBlock}>
             <Text style={styles.timeBlockLabel}>Duration</Text>
             <Text style={[styles.timeBlockValue, styles.timerText]}>
               {today?.checkInTime ? timer : '—'}
@@ -282,31 +244,12 @@ export default function HomeScreen() {
         </TouchableOpacity>
       )}
 
-      {today?.canCheckOut && (
-        <TouchableOpacity
-          testID="btn-check-out"
-          style={[styles.clockBtn, styles.clockBtnOut, isBusy && styles.clockBtnDisabled]}
-          onPress={handleCheckOut}
-          disabled={isBusy}
-          activeOpacity={0.85}
-        >
-          {isBusy ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="exit-outline" size={28} color="#fff" />
-              <Text style={styles.clockBtnText}>Check Out</Text>
-              <Text style={styles.clockBtnTextAr}>تسجيل الانصراف</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      )}
 
-      {!today?.canCheckIn && !today?.canCheckOut && today?.checkOutTime && (
+      {today?.checkInTime && !today?.canCheckIn && (
         <View style={[styles.clockBtn, styles.clockBtnDone]}>
           <Ionicons name="checkmark-circle-outline" size={28} color={GREEN} />
-          <Text style={[styles.clockBtnText, { color: GREEN }]}>Day Complete</Text>
-          <Text style={[styles.clockBtnTextAr, { color: GREEN }]}>اكتمل اليوم</Text>
+          <Text style={[styles.clockBtnText, { color: GREEN }]}>Attendance Recorded</Text>
+          <Text style={[styles.clockBtnTextAr, { color: GREEN }]}>تم تسجيل الحضور</Text>
         </View>
       )}
 
