@@ -198,7 +198,7 @@ export default function ProfileScreen() {
           )}
           {sessions?.map((s) => (
             <View key={s.id} style={styles.sessionCard}>
-              <Ionicons name="phone-portrait-outline" size={18} color={MUTED} style={{ marginRight: 10 }} />
+              <Ionicons name="phone-portrait-outline" size={18} color={MUTED} style={{ marginLeft: 10 }} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.sessionDevice} numberOfLines={1}>
                   {s.deviceInfo ?? '—'}
@@ -310,19 +310,19 @@ const styles = StyleSheet.create({
 
   sessionCard: { flexDirection: 'row-reverse', alignItems: 'center', padding: 14,
                  borderTopWidth: 1, borderTopColor: BORDER },
-  sessionDevice: { fontSize: 14, color: TEXT, fontFamily: 'Inter_500Medium', marginBottom: 3 },
-  sessionDate:   { fontSize: 12, color: MUTED },
+  sessionDevice: { fontSize: 14, color: TEXT, fontFamily: 'Inter_500Medium', marginBottom: 3, textAlign: 'right' },
+  sessionDate:   { fontSize: 12, color: MUTED, textAlign: 'right' },
   revokeBtn:  { backgroundColor: light.destructive + '18', borderRadius: 8,
                 paddingHorizontal: 12, paddingVertical: 6 },
   revokeBtnText: { color: light.destructive, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
 
-  logoutAllBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+  logoutAllBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
                   gap: 8, margin: 12, borderRadius: 10, borderWidth: 1,
                   borderColor: light.destructive + '60', padding: 12 },
   logoutAllText: { color: light.destructive, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
 
   // Sign out — solid red button at bottom
-  signOutBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+  signOutBtn:  { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
                  gap: 8, backgroundColor: light.destructive, borderRadius: 14,
                  padding: 16, marginTop: 4 },
   signOutText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Inter_600SemiBold' },

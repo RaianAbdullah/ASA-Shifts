@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
                    borderWidth: 1, borderColor: BORDER,
                    shadowColor: GREEN_DARK, shadowOpacity: 0.08, shadowRadius: 12,
                    shadowOffset: { width: 0, height: 4 }, elevation: 3 },
-  requestHeader: { flexDirection: 'row', justifyContent: 'space-between',
+  requestHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between',
                    alignItems: 'flex-start', marginBottom: 8 },
   requestDates:  { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: TEXT, textAlign: 'right' },
   requestDays:   { fontSize: 12, color: MUTED, marginTop: 2, textAlign: 'right' },
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
 
   // Modal
   modalHeader: { paddingHorizontal: 20, paddingVertical: 18,
-                 flexDirection: 'row', alignItems: 'center', gap: 12 },
+                 flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
   modalTitle:  { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff',
                  textAlign: 'right' },
   closeBtn:    { padding: 4 },

@@ -377,7 +377,7 @@ export default function HomeScreen() {
         >
           <Ionicons name="time-outline" size={16} color={GREEN_MID} />
           <Text style={styles.historyLinkText}>{t('viewAttendanceHistory')}</Text>
-          <Ionicons name="chevron-forward" size={16} color={GREEN_MID} />
+          <Ionicons name="chevron-back" size={16} color={GREEN_MID} />
         </TouchableOpacity>
 
         {/* ── Dev geofence notice ── */}
@@ -442,8 +442,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.14, shadowRadius: 40, elevation: 8,
     marginBottom: 14,
   },
-  cardTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
-  cardLabel:  { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: MUTED },
+  cardTop:    { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  cardLabel:  { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: MUTED, textAlign: 'right' },
   statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6,
                 borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
   statusDot:  { width: 8, height: 8, borderRadius: 4 },
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
 
   // ── Banner ──
   bannerWrap: { marginHorizontal: 16, marginBottom: 14 },
-  banner:     { borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center',
+  banner:     { borderRadius: 18, padding: 16, flexDirection: 'row-reverse', alignItems: 'center',
                 gap: 14, overflow: 'hidden', position: 'relative' },
   bannerGlow: { position: 'absolute', top: -20, left: 40, width: 80, height: 80,
                 borderRadius: 40, backgroundColor: 'rgba(201,150,63,0.15)' },
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   tileLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
 
   // ── History link ──
-  historyLink: { flexDirection: 'row', alignItems: 'center', gap: 8,
+  historyLink: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
                  marginHorizontal: 16, marginBottom: 8,
                  backgroundColor: WHITE, borderRadius: 14, borderWidth: 1,
                  borderColor: BORDER, padding: 16,

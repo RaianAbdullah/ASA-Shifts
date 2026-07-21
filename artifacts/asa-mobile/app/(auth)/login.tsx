@@ -226,6 +226,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: 'Inter_700Bold',
     color: WHITE,
+    textAlign: 'right',
   },
   formCard: {
     flex: 1,
@@ -243,9 +244,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_600SemiBold',
     color: TEXT,
+    textAlign: 'right',
   },
   inputRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     backgroundColor: WHITE,
     borderWidth: 1.5,
@@ -258,7 +260,7 @@ const styles = StyleSheet.create({
     borderColor: light.destructive,
   },
   inputIcon: {
-    marginRight: 10,
+    marginLeft: 10,
   },
   input: {
     flex: 1,
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   forgotBtn: {
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
     marginTop: -4,
   },
   forgotText: {
