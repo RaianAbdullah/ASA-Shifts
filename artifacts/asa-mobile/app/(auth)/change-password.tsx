@@ -86,6 +86,7 @@ export default function ChangePasswordScreen() {
         <View style={[styles.inputRow, errors.current ? styles.inputError : null]}>
           <Ionicons name="lock-closed-outline" size={18} color={light.mutedForeground} style={styles.icon} />
           <TextInput
+            testID="input-currentPassword"
             style={styles.input}
             placeholder="Enter temporary password"
             placeholderTextColor={light.mutedForeground}
@@ -106,6 +107,7 @@ export default function ChangePasswordScreen() {
         <View style={[styles.inputRow, errors.next ? styles.inputError : null]}>
           <Ionicons name="key-outline" size={18} color={light.mutedForeground} style={styles.icon} />
           <TextInput
+            testID="input-newPassword"
             style={styles.input}
             placeholder="Minimum 8 characters"
             placeholderTextColor={light.mutedForeground}
@@ -126,6 +128,7 @@ export default function ChangePasswordScreen() {
         <View style={[styles.inputRow, errors.confirm ? styles.inputError : null]}>
           <Ionicons name="checkmark-circle-outline" size={18} color={light.mutedForeground} style={styles.icon} />
           <TextInput
+            testID="input-confirmPassword"
             style={styles.input}
             placeholder="Repeat new password"
             placeholderTextColor={light.mutedForeground}
@@ -142,6 +145,7 @@ export default function ChangePasswordScreen() {
       </View>
 
       <TouchableOpacity
+        testID="btn-changePassword"
         style={[styles.btn, loading && styles.btnDisabled]}
         onPress={handleSubmit}
         disabled={loading}
