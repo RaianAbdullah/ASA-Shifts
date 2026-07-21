@@ -232,6 +232,12 @@ export const authApi = {
       body: JSON.stringify({ currentPassword, newPassword }),
     }, true),
 
+  resendOtp: (nationalId: string) =>
+    request<{ message: string }>('/v1/auth/resend-otp', {
+      method: 'POST',
+      body: JSON.stringify({ nationalId }),
+    }),
+
   getSessions: () =>
     request<SessionDto[]>('/v1/auth/sessions', {}, true),
 

@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -35,6 +36,17 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(authService.register(request, httpReq)));
+    }
+
+    @PostMapping("/resend-otp")
+    @Operation(summary = "Resend OTP to a PENDING_VERIFICATION account")
+    public ResponseEntity<ApiResponse<Map<String, String>>> resendOtp(
+            @Valid @RequestBody ResendOtpRequest request,
+            HttpServletRequest httpReq) {
+
+        authService.resendOtp(request, httpReq);
+        return ResponseEntity.ok(ApiResponse.ok(
+                Map.of("message", "A new OTP has been sent to your registered phone number.")));
     }
 
     @PostMapping("/verify-otp")

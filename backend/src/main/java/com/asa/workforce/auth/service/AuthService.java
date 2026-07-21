@@ -126,6 +126,36 @@ public class AuthService {
                 .build();
     }
 
+    // ── Resend OTP ───────────────────────────────────────────────────────────
+
+    @Transactional
+    public void resendOtp(ResendOtpRequest req, HttpServletRequest httpReq) {
+        Employee emp = employeeRepository.findByNationalId(req.getNationalId())
+                .orElseThrow(() -> new IllegalArgumentException("No account found for this national ID"));
+
+        if (emp.getStatus() != Status.PENDING_VERIFICATION) {
+            throw new IllegalStateException(
+                    "OTP can only be resent when the account is awaiting verification.");
+        }
+
+        String otp   = generateOtp();
+        OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES);
+
+        emp.setOtpCode(otp);
+        emp.setOtpExpiresAt(expiresAt);
+        emp.setOtpAttempts((short) 0);
+        employeeRepository.save(emp);
+
+        if (otpLogToConsole) {
+            log.info("[DEV OTP RESEND] National ID={} OTP={} (expires {})",
+                    mask(req.getNationalId()), otp, expiresAt);
+        }
+
+        auditService.log(AuditService.REGISTER, emp,
+                Map.of("action", "otp_resend", "maskedId", mask(req.getNationalId())), httpReq);
+        log.info("[AUTH] OTP resent for nationalId={}", mask(req.getNationalId()));
+    }
+
     // ── Verify OTP ───────────────────────────────────────────────────────────
 
     @Transactional

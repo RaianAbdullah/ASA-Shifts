@@ -92,12 +92,12 @@ export default function VerifyOtpScreen() {
     if (resendCooldown > 0 || resendLoading || !nationalId) return;
     setResendLoading(true);
     try {
-      // Re-register triggers a fresh OTP (same endpoint is idempotent for re-sends in dev)
-      await authApi.getStatus(nationalId);
+      await authApi.resendOtp(nationalId);
       startResendCooldown();
-      Alert.alert('Code Sent', 'A new OTP has been requested. Check the server console.');
-    } catch {
-      Alert.alert('Resend Failed', 'Could not resend the code. Please try again.');
+      Alert.alert('Code Sent', 'A new verification code has been sent to your phone.');
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : 'Could not resend the code. Please try again.';
+      Alert.alert('Resend Failed', msg);
     } finally {
       setResendLoading(false);
     }

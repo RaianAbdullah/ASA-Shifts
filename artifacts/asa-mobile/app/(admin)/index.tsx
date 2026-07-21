@@ -191,6 +191,10 @@ export default function AdminPendingScreen() {
 
       {/* Quick nav row */}
       <View style={styles.quickNav}>
+        <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/employees')}>
+          <Ionicons name="people-outline" size={20} color={government.navy} />
+          <Text style={styles.quickNavText}>Employees</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.quickNavBtn} onPress={() => router.push('/(admin)/departments')}>
           <Ionicons name="business-outline" size={20} color={government.navy} />
           <Text style={styles.quickNavText}>Departments</Text>
