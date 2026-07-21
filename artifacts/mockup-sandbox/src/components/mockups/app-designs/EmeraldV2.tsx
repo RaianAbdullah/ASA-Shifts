@@ -100,19 +100,6 @@ export function EmeraldV2() {
             </div>
           </div>
 
-          {/* Date box */}
-          <div style={{
-            background:"rgba(255,255,255,0.1)",
-            backdropFilter:"blur(10px)",
-            borderRadius:14,
-            padding:"8px 14px",
-            textAlign:"center",
-            border:"1px solid rgba(255,255,255,0.15)",
-          }}>
-            <div style={{ color:"rgba(255,255,255,0.6)", fontSize:10, letterSpacing:0.5 }}>الثلاثاء</div>
-            <div style={{ color:GOLD_LIGHT, fontSize:24, fontWeight:800, lineHeight:1.1 }}>21</div>
-            <div style={{ color:"rgba(255,255,255,0.7)", fontSize:10 }}>يوليو</div>
-          </div>
         </div>
 
         {/* Hijri + Milady date strip */}
