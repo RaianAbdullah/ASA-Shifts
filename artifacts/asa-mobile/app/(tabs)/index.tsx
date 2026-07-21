@@ -356,7 +356,7 @@ export default function HomeScreen() {
           {[
             { icon: 'bar-chart-outline', label: 'سجل الحضور', bg: '#F0FDF7', border: '#A7F3D0', color: GREEN_MID,    route: '/(tabs)/attendance-history' },
             { icon: 'airplane-outline',  label: 'إجازاتي',    bg: '#FFFBEB', border: '#FDE68A', color: '#92400E',    route: '/(tabs)/vacations' },
-            { icon: 'megaphone-outline', label: 'الإعلانات',  bg: '#EFF6FF', border: '#BFDBFE', color: '#1E40AF',    route: '/(tabs)/announcements' },
+            { icon: 'chatbubbles-outline', label: 'الرسائل',   bg: '#EFF6FF', border: '#BFDBFE', color: '#1E40AF',    route: '/(tabs)/messages' },
           ].map(tile => (
             <TouchableOpacity
               key={tile.label}

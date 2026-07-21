@@ -607,6 +607,34 @@ export const vacationApi = {
     }, true),
 };
 
+// ── Message endpoints ─────────────────────────────────────────────────────────
+
+export interface MessageDto {
+  id:           string;
+  senderId:     string;
+  senderNameAr: string;
+  senderRole:   string;
+  body:         string;
+  sentAt:       string;
+}
+
+export const messageApi = {
+  list: () =>
+    request<MessageDto[]>('/v1/messages', {}, true),
+
+  listAfter: (after: string) =>
+    request<MessageDto[]>(`/v1/messages?after=${encodeURIComponent(after)}`, {}, true),
+
+  send: (body: string) =>
+    request<MessageDto>('/v1/messages', {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    }, true),
+
+  delete: (id: string) =>
+    request<void>(`/v1/messages/${id}`, { method: 'DELETE' }, true),
+};
+
 // ── Announcement endpoints ────────────────────────────────────────────────────
 
 export interface ReplyDto {

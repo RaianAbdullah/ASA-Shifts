@@ -153,6 +153,17 @@ const ar = {
   deleteAnnouncement: 'حذف الإعلان',
   deleteAnnouncementConfirm: 'سيتم حذف الإعلان وجميع الردود نهائياً.',
 
+  // ── Messages (group chat) ──────────────────────────────────────────────────
+  messagesTitle: 'الرسائل',
+  teamChat: 'محادثة الفريق',
+  noMessages: 'لا توجد رسائل بعد',
+  startConversation: 'كن أول من يبدأ المحادثة',
+  typeMessage: 'اكتب رسالة…',
+  deleteMessage: 'حذف الرسالة',
+  deleteMessageConfirm: 'هل تريد حذف هذه الرسالة؟',
+  sendFailed: 'فشل الإرسال',
+  deleteFailed: 'فشل الحذف',
+
   // ── Profile ────────────────────────────────────────────────────────────────
   profileTitle: 'الملف الشخصي',
   administration: 'الإدارة',
@@ -491,6 +502,17 @@ const en: typeof ar = {
   rejectionFailed: 'Rejection failed',
   pendingBadge: 'Pending',
   registeredAt: 'Registered',
+
+  // Messages (group chat)
+  messagesTitle: 'Messages',
+  teamChat: 'Team Chat',
+  noMessages: 'No messages yet',
+  startConversation: 'Be the first to start the conversation',
+  typeMessage: 'Type a message…',
+  deleteMessage: 'Delete Message',
+  deleteMessageConfirm: 'Do you want to delete this message?',
+  sendFailed: 'Failed to send',
+  deleteFailed: 'Failed to delete',
 
   // Admin — On Duty
   onDutyTitle: 'On Duty',

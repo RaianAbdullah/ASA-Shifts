@@ -29,9 +29,9 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'sun.max', selected: 'sun.max.fill' }} />
         <Label>{t('vacations')}</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="announcements">
-        <Icon sf={{ default: 'megaphone', selected: 'megaphone.fill' }} />
-        <Label>{t('announcementsTitle')}</Label>
+      <NativeTabs.Trigger name="messages">
+        <Icon sf={{ default: 'bubble.left.and.bubble.right', selected: 'bubble.left.and.bubble.right.fill' }} />
+        <Label>{t('messagesTitle')}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: 'person.circle', selected: 'person.circle.fill' }} />
@@ -109,13 +109,13 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="announcements"
+        name="messages"
         options={{
           tabBarIcon: ({ color, focused }) =>
             isIOS ? (
-              <SymbolView name={focused ? 'megaphone.fill' : 'megaphone'} tintColor={color} size={26} />
+              <SymbolView name={focused ? 'bubble.left.and.bubble.right.fill' : 'bubble.left.and.bubble.right'} tintColor={color} size={26} />
             ) : (
-              <Feather name="message-square" size={24} color={color} />
+              <Feather name="message-circle" size={24} color={color} />
             ),
         }}
       />
@@ -134,6 +134,7 @@ function ClassicTabLayout() {
       <Tabs.Screen name="change-password"    options={{ href: null }} />
       <Tabs.Screen name="attendance-history" options={{ href: null }} />
       <Tabs.Screen name="shift-swap"         options={{ href: null }} />
+      <Tabs.Screen name="announcements"      options={{ href: null }} />
     </Tabs>
   );
 }
