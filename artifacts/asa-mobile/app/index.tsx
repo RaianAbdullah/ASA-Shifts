@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     width: 190,
     height: 190,
     borderRadius: 95,
-    marginBottom: 24,
+    marginBottom: 12,
     overflow: 'hidden',
   },
   appName: {
@@ -119,15 +119,15 @@ const styles = StyleSheet.create({
   },
   line2: {
     fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.80)',
+    fontFamily: 'Inter_700Bold',
+    color: 'rgba(255,255,255,0.90)',
     textAlign: 'center',
     marginBottom: 3,
   },
   line3: {
     fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.60)',
+    fontFamily: 'Inter_700Bold',
+    color: 'rgba(255,255,255,0.75)',
     textAlign: 'center',
   },
   lower: {
