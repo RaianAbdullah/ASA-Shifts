@@ -58,13 +58,8 @@ export default function LoginScreen() {
         return;
       }
 
-      // Management roles go to the admin panel; employees go to main tabs
-      const managementRoles = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'];
-      if (managementRoles.includes(data.role)) {
-        router.replace('/(admin)');
-      } else {
-        router.replace('/(tabs)');
-      }
+      // All roles go to the employee tabs; admins get an Admin Panel shortcut in profile
+      router.replace('/(tabs)');
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const msg = err instanceof ApiError ? err.message : 'Login failed. Please try again.';

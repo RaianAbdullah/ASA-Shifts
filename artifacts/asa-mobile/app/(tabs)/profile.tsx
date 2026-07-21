@@ -23,8 +23,18 @@ const CARD   = '#FFFFFF';
 const BORDER = '#E5E7EB';
 const RED    = '#EF4444';
 
+const MANAGEMENT_ROLES = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'];
+
 export default function ProfileScreen() {
   const qc = useQueryClient();
+  const [userRole, setUserRole] = React.useState<string | null>(null);
+  const [userName, setUserName] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    loadSession().then(s => {
+      if (s) { setUserRole(s.role); setUserName(s.nameAr); }
+    });
+  }, []);
 
   // ── Sessions list ─────────────────────────────────────────────────────────
   const { data: sessions, isLoading: sessLoading } = useQuery<SessionDto[]>({
@@ -106,6 +116,24 @@ export default function ProfileScreen() {
           </TouchableOpacity>
           <Text style={styles.title}>Profile &amp; Settings</Text>
         </View>
+
+        {/* Admin Panel shortcut — visible to management roles only */}
+        {userRole && MANAGEMENT_ROLES.includes(userRole) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>ADMINISTRATION</Text>
+            <TouchableOpacity
+              style={[styles.row, { backgroundColor: NAVY, borderRadius: 12 }]}
+              onPress={() => router.push('/(admin)' as any)}
+            >
+              <Text style={styles.rowIcon}>🏛️</Text>
+              <View style={styles.rowBody}>
+                <Text style={[styles.rowTitle, { color: '#fff' }]}>Admin Panel</Text>
+                <Text style={[styles.rowSub, { color: '#9CA3AF' }]}>Manage employees, attendance & schedules</Text>
+              </View>
+              <Text style={[styles.rowArrow, { color: GOLD }]}>›</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Account section */}
         <View style={styles.section}>

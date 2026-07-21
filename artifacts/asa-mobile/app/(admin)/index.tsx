@@ -167,9 +167,20 @@ export default function AdminPendingScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Pending Registrations</Text>
-          <Text style={styles.headerSubtitle}>طلبات التسجيل المعلّقة</Text>
+        <View style={{ flex: 1 }}>
+          {router.canGoBack() && (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}
+            >
+              <Ionicons name="chevron-back" size={14} color={government.navy} />
+              <Text style={{ fontSize: 12, color: government.navy, fontFamily: 'Inter_500Medium' }}>
+                Employee View
+              </Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.headerTitle}>Admin Panel</Text>
+          <Text style={styles.headerSubtitle}>لوحة الإدارة</Text>
         </View>
         <View style={styles.headerRight}>
           {pending.length > 0 && (
