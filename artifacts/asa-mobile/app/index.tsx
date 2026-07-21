@@ -35,8 +35,6 @@ export default function WelcomeScreen() {
 
       {/* ── Green header area ── */}
       <View style={[styles.header, { paddingTop: topPad + 16 }]}>
-        <Text style={styles.basmala}>بسم الله الرحمن الرحيم</Text>
-
         <Image
           source={require('../assets/images/asa-logo.png')}
           style={styles.logo}
@@ -112,21 +110,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   line1: {
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontSize: 20,
+    fontFamily: 'Inter_700Bold',
     color: WHITE,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   line2: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255,255,255,0.80)',
     textAlign: 'center',
     marginBottom: 3,
   },
   line3: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255,255,255,0.60)',
     textAlign: 'center',
