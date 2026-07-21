@@ -42,7 +42,6 @@ export default function WelcomeScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.appName}>Agency of Security Affairs</Text>
         <Text style={styles.line1}>المملكة العربية السعودية</Text>
         <Text style={styles.line2}>وكالة وزارة الداخلية للشؤون الأمنية،</Text>
         <Text style={styles.line3}>إدارة العمليات الأمنية</Text>
@@ -58,8 +57,7 @@ export default function WelcomeScreen() {
             onPress={() => router.push('/(auth)/login')}
             activeOpacity={0.82}
           >
-            <Text style={styles.primaryBtnText}>Sign In</Text>
-            <Text style={styles.primaryBtnTextAr}>تسجيل الدخول</Text>
+            <Text style={styles.primaryBtnText}>تسجيل الدخول</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -67,14 +65,13 @@ export default function WelcomeScreen() {
             onPress={() => router.push('/(auth)/register')}
             activeOpacity={0.82}
           >
-            <Text style={styles.secondaryBtnText}>New Employee — Register</Text>
-            <Text style={styles.secondaryBtnTextAr}>موظف جديد — تسجيل</Text>
+            <Text style={styles.secondaryBtnText}>موظف جديد — تسجيل</Text>
           </TouchableOpacity>
         </View>
 
         <View style={{ flex: 1 }} />
 
-        <Text style={styles.footer}>Government Internal System · للاستخدام الداخلي فقط</Text>
+        <Text style={styles.footer}>للاستخدام الداخلي فقط</Text>
       </View>
     </View>
   );
