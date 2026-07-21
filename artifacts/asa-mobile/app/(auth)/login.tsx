@@ -52,6 +52,12 @@ export default function LoginScreen() {
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+      // Admin-created accounts must set a personal password before entering the app
+      if (data.mustChangePassword) {
+        router.replace(`/(auth)/change-password?role=${data.role}`);
+        return;
+      }
+
       // Management roles go to the admin panel; employees go to main tabs
       const managementRoles = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'];
       if (managementRoles.includes(data.role)) {

@@ -5,7 +5,7 @@ import lombok.Data;
 
 import java.util.UUID;
 
-/** Lightweight employee record used for admin pickers (schedule assignment, etc.) */
+/** Lightweight employee record used for admin pickers and employee list screens. */
 @Data
 @Builder
 public class EmployeeSummaryDto {
@@ -16,4 +16,6 @@ public class EmployeeSummaryDto {
     private UUID   departmentId;
     private String departmentNameAr;
     private String role;
+    private String status;
+    private String maskedPhone;
 }

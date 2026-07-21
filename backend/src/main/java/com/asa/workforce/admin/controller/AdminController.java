@@ -1,6 +1,8 @@
 package com.asa.workforce.admin.controller;
 
 import com.asa.workforce.admin.dto.AdminActionRequest;
+import com.asa.workforce.admin.dto.CreateEmployeeRequest;
+import com.asa.workforce.admin.dto.CreateEmployeeResponse;
 import com.asa.workforce.admin.dto.EmployeeSummaryDto;
 import com.asa.workforce.admin.dto.PendingEmployeeDto;
 import com.asa.workforce.admin.service.AdminService;
@@ -85,8 +87,23 @@ public class AdminController {
 
     @GetMapping("/employees")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER','DEPARTMENT_MANAGER')")
-    @Operation(summary = "List all active employees (for admin pickers)")
+    @Operation(summary = "List all employees with status and contact info")
     public ResponseEntity<ApiResponse<List<EmployeeSummaryDto>>> listEmployees() {
-        return ResponseEntity.ok(ApiResponse.ok(adminService.listActiveEmployees()));
+        return ResponseEntity.ok(ApiResponse.ok(adminService.listAllEmployees()));
+    }
+
+    // ── POST /v1/admin/employees ─────────────────────────────────────────────
+
+    @PostMapping("/employees")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER')")
+    @Operation(summary = "Create an employee account directly (active, must change password on first login)")
+    public ResponseEntity<ApiResponse<CreateEmployeeResponse>> createEmployee(
+            @Valid @RequestBody CreateEmployeeRequest req,
+            Authentication auth,
+            HttpServletRequest request) {
+
+        CreateEmployeeResponse result =
+                adminService.createEmployee(req, auth.getName(), request);
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

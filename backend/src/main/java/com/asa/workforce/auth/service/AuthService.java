@@ -245,6 +245,7 @@ public class AuthService {
                 .role(emp.getRole().name())
                 .nameAr(emp.getFirstNameAr() + " " + emp.getLastNameAr())
                 .status(emp.getStatus().name())
+                .mustChangePassword(emp.isMustChangePassword())
                 .build();
     }
 
@@ -448,6 +449,7 @@ public class AuthService {
 
         emp.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         emp.setPasswordChangedAt(OffsetDateTime.now());
+        emp.setMustChangePassword(false);   // clear forced-change flag set by admin creation
         employeeRepository.save(emp);
 
         // Revoke all refresh sessions — user must re-login on all devices

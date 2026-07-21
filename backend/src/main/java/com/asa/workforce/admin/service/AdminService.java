@@ -1,20 +1,26 @@
 package com.asa.workforce.admin.service;
 
 import com.asa.workforce.admin.dto.AdminActionRequest;
+import com.asa.workforce.admin.dto.CreateEmployeeRequest;
+import com.asa.workforce.admin.dto.CreateEmployeeResponse;
 import com.asa.workforce.admin.dto.EmployeeSummaryDto;
 import com.asa.workforce.admin.dto.PendingEmployeeDto;
 import com.asa.workforce.audit.AuditService;
+import com.asa.workforce.entity.Department;
 import com.asa.workforce.entity.Employee;
 import com.asa.workforce.entity.Employee.Status;
 import com.asa.workforce.notification.PushNotificationService;
+import com.asa.workforce.repository.DepartmentRepository;
 import com.asa.workforce.repository.EmployeeRepository;
 import com.asa.workforce.repository.PushTokenRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +34,12 @@ import java.util.UUID;
 @Slf4j
 public class AdminService {
 
-    private final EmployeeRepository   employeeRepository;
-    private final PushTokenRepository  pushTokenRepository;
+    private final EmployeeRepository      employeeRepository;
+    private final DepartmentRepository    departmentRepository;
+    private final PushTokenRepository     pushTokenRepository;
     private final PushNotificationService pushService;
-    private final AuditService         auditService;
+    private final AuditService            auditService;
+    private final BCryptPasswordEncoder   passwordEncoder;
 
     // ── List pending ─────────────────────────────────────────────────────────
 
@@ -164,7 +172,91 @@ public class AdminService {
                 .build();
     }
 
-    // ── List active employees (for admin pickers) ─────────────────────────────
+    // ── Create employee (admin-direct, no signup flow) ────────────────────────
+
+    @Transactional
+    public CreateEmployeeResponse createEmployee(CreateEmployeeRequest req,
+                                                 String adminNationalId,
+                                                 HttpServletRequest httpReq) {
+        if (employeeRepository.existsByNationalId(req.getNationalId())) {
+            throw new IllegalArgumentException("National ID already registered");
+        }
+        if (employeeRepository.existsByPhoneNumber(req.getPhoneNumber())) {
+            throw new IllegalArgumentException("Phone number already registered");
+        }
+
+        Department dept = null;
+        if (req.getDepartmentId() != null && !req.getDepartmentId().isBlank()) {
+            dept = departmentRepository.findById(UUID.fromString(req.getDepartmentId()))
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found"));
+        }
+
+        Employee.Role role;
+        try {
+            role = Employee.Role.valueOf(req.getRole());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid role: " + req.getRole());
+        }
+
+        // Temp password = national ID; employee must change on first login
+        String tempPassword = req.getNationalId();
+
+        Employee emp = Employee.builder()
+                .nationalId(req.getNationalId())
+                .firstNameAr(req.getFirstNameAr())
+                .lastNameAr(req.getLastNameAr())
+                .phoneNumber(req.getPhoneNumber())
+                .department(dept)
+                .passwordHash(passwordEncoder.encode(tempPassword))
+                .role(role)
+                .status(Status.ACTIVE)
+                .mustChangePassword(true)
+                .build();
+
+        emp = employeeRepository.save(emp);
+
+        Employee admin = employeeRepository.findByNationalId(adminNationalId).orElse(null);
+        auditService.log(AuditService.ADMIN_APPROVE, admin, "EMPLOYEE", emp.getId(),
+                Map.of("action", "admin_created",
+                       "employeeName", emp.getFirstNameAr() + " " + emp.getLastNameAr(),
+                       "role", role.name()),
+                httpReq);
+
+        log.info("[ADMIN] {} created employee {} ({})", adminNationalId, emp.getId(), role);
+
+        return CreateEmployeeResponse.builder()
+                .employeeId(emp.getId().toString())
+                .nationalId(emp.getNationalId())
+                .firstNameAr(emp.getFirstNameAr())
+                .lastNameAr(emp.getLastNameAr())
+                .role(role.name())
+                .departmentNameAr(dept != null ? dept.getNameAr() : null)
+                .tempPassword(tempPassword)
+                .message("Account created. Share the temporary password with the employee.")
+                .build();
+    }
+
+    // ── List all employees (admin employee management screen) ─────────────────
+
+    @Transactional(readOnly = true)
+    public List<EmployeeSummaryDto> listAllEmployees() {
+        return employeeRepository.findAll(Sort.by("firstNameAr"))
+                .stream()
+                .map(e -> EmployeeSummaryDto.builder()
+                        .id(e.getId())
+                        .nationalId(e.getNationalId())
+                        .firstNameAr(e.getFirstNameAr())
+                        .lastNameAr(e.getLastNameAr())
+                        .departmentId(e.getDepartment() != null ? e.getDepartment().getId() : null)
+                        .departmentNameAr(e.getDepartment() != null ? e.getDepartment().getNameAr() : null)
+                        .role(e.getRole().name())
+                        .status(e.getStatus().name())
+                        .maskedPhone(maskPhone(e.getPhoneNumber()))
+                        .build())
+                .toList();
+    }
+
+    // ── List active employees (for pickers — schedules, vacations, etc.) ──────
 
     @Transactional(readOnly = true)
     public List<EmployeeSummaryDto> listActiveEmployees() {

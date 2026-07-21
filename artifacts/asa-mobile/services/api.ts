@@ -183,6 +183,7 @@ export interface LoginResponse {
   role:                  string;
   nameAr:                string;
   status:                string;
+  mustChangePassword:    boolean;
 }
 
 export interface SessionDto {
@@ -270,6 +271,28 @@ export interface EmployeeSummaryDto {
   departmentId?:    string;
   departmentNameAr?:string;
   role:             string;
+  status?:          string;
+  maskedPhone?:     string;
+}
+
+export interface CreateEmployeeRequest {
+  nationalId:   string;
+  firstNameAr:  string;
+  lastNameAr:   string;
+  phoneNumber:  string;
+  departmentId?: string;
+  role:         string;
+}
+
+export interface CreateEmployeeResponse {
+  employeeId:       string;
+  nationalId:       string;
+  firstNameAr:      string;
+  lastNameAr:       string;
+  role:             string;
+  departmentNameAr?: string;
+  tempPassword:     string;
+  message:          string;
 }
 
 export const adminApi = {
@@ -293,6 +316,12 @@ export const adminApi = {
 
   listEmployees: () =>
     request<EmployeeSummaryDto[]>('/v1/admin/employees', {}, true),
+
+  createEmployee: (body: CreateEmployeeRequest) =>
+    request<CreateEmployeeResponse>('/v1/admin/employees', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }, true),
 };
 
 // ── Attendance endpoints ──────────────────────────────────────────────────────

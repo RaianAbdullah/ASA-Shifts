@@ -82,6 +82,10 @@ public class Employee {
     @Column(name = "password_changed_at")
     private OffsetDateTime passwordChangedAt;
 
+    @Column(name = "must_change_password", nullable = false)
+    @Builder.Default
+    private boolean mustChangePassword = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;

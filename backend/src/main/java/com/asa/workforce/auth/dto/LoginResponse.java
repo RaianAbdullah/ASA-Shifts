@@ -11,8 +11,10 @@ public class LoginResponse {
     private String tokenType;            // "Bearer"
     private long   accessExpiresInSeconds;
     private long   refreshExpiresInDays;
-    private String employeeId;
-    private String role;
-    private String nameAr;
-    private String status;
+    private String  employeeId;
+    private String  role;
+    private String  nameAr;
+    private String  status;
+    /** True when an admin created this account — employee must set a new password before using the app. */
+    private boolean mustChangePassword;
 }
