@@ -183,7 +183,7 @@ export default function AdminPendingScreen() {
           >
             <Ionicons name="sunny-outline" size={22} color={government.navy} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
+          <TouchableOpacity testID="btn-sign-out" onPress={handleSignOut} style={styles.signOutBtn}>
             <Ionicons name="log-out-outline" size={22} color={government.navy} />
           </TouchableOpacity>
         </View>
