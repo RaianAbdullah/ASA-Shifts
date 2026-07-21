@@ -34,7 +34,11 @@ _Describe the high-level user-facing capabilities of this app once they exist._
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- **Confirm before building**: Before writing any code, restate the understood requirement and wait for explicit confirmation.
+- **Build complete in one shot**: Schema + API + mobile UI all implemented together — no iterative back-and-forth.
+- **No wasted credit**: Parallel tool calls only, read the minimum files needed, no exploratory reads.
+- **Zero errors**: Verify compile + server start before declaring done.
+- **Cheapest deployment**: Use existing autoscale setup; minimize unnecessary rebuilds and restarts.
 
 ## Gotchas
 
