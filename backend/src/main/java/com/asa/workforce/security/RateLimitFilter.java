@@ -94,6 +94,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
         } else if ("POST".equals(method) && path.equals("/api/v1/auth/refresh")) {
             return rate(ip, "refresh", RateLimitService.REFRESH_MAX, RateLimitService.REFRESH_WIN);
 
+        } else if ("POST".equals(method) && path.equals("/api/v1/auth/resend-otp")) {
+            return rate(ip, "resend-otp", RateLimitService.RESEND_OTP_MAX, RateLimitService.RESEND_OTP_WIN);
+
         } else if ("POST".equals(method) && path.equals("/api/v1/auth/forgot-password")) {
             return rate(ip, "forgot", RateLimitService.FORGOT_MAX, RateLimitService.FORGOT_WIN);
 

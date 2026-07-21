@@ -34,6 +34,7 @@ import java.time.ZoneOffset;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -130,14 +131,18 @@ public class AuthService {
 
     @Transactional
     public void resendOtp(ResendOtpRequest req, HttpServletRequest httpReq) {
-        Employee emp = employeeRepository.findByNationalId(req.getNationalId())
-                .orElseThrow(() -> new IllegalArgumentException("No account found for this national ID"));
-
-        if (emp.getStatus() != Status.PENDING_VERIFICATION) {
-            throw new IllegalStateException(
-                    "OTP can only be resent when the account is awaiting verification.");
+        // Silently succeed for unknown national IDs or accounts that are not in
+        // PENDING_VERIFICATION state.  Returning the same generic response
+        // regardless of outcome prevents callers from enumerating account
+        // existence or inferring account lifecycle status.
+        Optional<Employee> empOpt = employeeRepository.findByNationalId(req.getNationalId());
+        if (empOpt.isEmpty() || empOpt.get().getStatus() != Status.PENDING_VERIFICATION) {
+            log.debug("[AUTH] resend-otp: no eligible account for nationalId={}",
+                    mask(req.getNationalId()));
+            return;
         }
 
+        Employee emp = empOpt.get();
         String otp   = generateOtp();
         OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES);
 

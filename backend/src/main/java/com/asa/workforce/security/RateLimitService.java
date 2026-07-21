@@ -42,6 +42,9 @@ public class RateLimitService {
     public static final int  REFRESH_MAX      = 30;
     public static final long REFRESH_WIN      = 60 * 60_000L;
 
+    public static final int  RESEND_OTP_MAX   = 5;           // strict — prevents OTP churn abuse
+    public static final long RESEND_OTP_WIN   = 60 * 60_000L;
+
     public static final int  FORGOT_MAX       = 5;           // strict — prevents enumeration
     public static final long FORGOT_WIN       = 60 * 60_000L;
 
