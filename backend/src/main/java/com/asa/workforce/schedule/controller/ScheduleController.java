@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +46,7 @@ public class ScheduleController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER','WEEKEND_MANAGER')")
     @Operation(summary = "Create a schedule for an employee (admin/manager only)")
     public ResponseEntity<ApiResponse<ScheduleDto>> createSchedule(
             @AuthenticationPrincipal UserDetails user,

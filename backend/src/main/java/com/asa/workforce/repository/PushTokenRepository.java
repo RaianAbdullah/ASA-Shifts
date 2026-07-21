@@ -28,4 +28,12 @@ public interface PushTokenRepository extends JpaRepository<PushToken, UUID> {
     /** Collect push tokens for a specific employee */
     @Query("SELECT pt.token FROM PushToken pt WHERE pt.employee.id = :employeeId")
     List<String> findTokensByEmployeeId(UUID employeeId);
+
+    /** Collect push tokens for all active WEEKEND_MANAGERs */
+    @Query("""
+        SELECT pt.token FROM PushToken pt
+        WHERE pt.employee.role = 'WEEKEND_MANAGER'
+          AND pt.employee.status = 'ACTIVE'
+    """)
+    List<String> findWeekendManagerPushTokens();
 }

@@ -110,7 +110,9 @@ public class Employee {
         /** Standard workforce member — checks in, views schedule, submits leave */
         EMPLOYEE,
         /** Receives approved leave notifications and handles required follow-up */
-        RESPONSIBLE_OFFICER
+        RESPONSIBLE_OFFICER,
+        /** Assigns any employee to weekend shifts; views all vacation requests; notified on approval */
+        WEEKEND_MANAGER
     }
 
     public enum Status {

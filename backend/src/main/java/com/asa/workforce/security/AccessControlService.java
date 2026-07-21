@@ -78,7 +78,7 @@ public class AccessControlService {
     @Transactional(readOnly = true)
     public boolean canAccessEmployee(Employee actor, Employee target) {
         return switch (actor.getRole()) {
-            case SYSTEM_ADMIN, MAIN_MANAGER -> true;
+            case SYSTEM_ADMIN, MAIN_MANAGER, WEEKEND_MANAGER -> true;
             case DEPARTMENT_MANAGER -> {
                 if (departmentRepository.isManagerOfCrossDepartment(actor.getId())) yield true;
                 // Same department only

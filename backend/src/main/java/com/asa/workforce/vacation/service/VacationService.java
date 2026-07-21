@@ -4,7 +4,9 @@ import com.asa.workforce.entity.Employee;
 import com.asa.workforce.entity.Employee.Role;
 import com.asa.workforce.entity.VacationRequest;
 import com.asa.workforce.entity.VacationRequest.VacationStatus;
+import com.asa.workforce.notification.PushNotificationService;
 import com.asa.workforce.repository.EmployeeRepository;
+import com.asa.workforce.repository.PushTokenRepository;
 import com.asa.workforce.repository.VacationRequestRepository;
 import com.asa.workforce.vacation.dto.ReviewVacationRequest;
 import com.asa.workforce.vacation.dto.SubmitVacationRequest;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -27,6 +30,8 @@ public class VacationService {
 
     private final VacationRequestRepository vacationRepository;
     private final EmployeeRepository        employeeRepository;
+    private final PushTokenRepository       pushTokenRepository;
+    private final PushNotificationService   pushNotificationService;
 
     // ── Employee: submit ──────────────────────────────────────────────────────
 
@@ -97,7 +102,7 @@ public class VacationService {
      * their own department only.
      * Main managers and system admins see requests at stage 2 (PENDING_MAIN_MANAGER).
      */
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER', 'WEEKEND_MANAGER')")
     @Transactional(readOnly = true)
     public List<VacationRequestDto> getPending(String reviewerNationalId) {
         Employee reviewer = findEmployee(reviewerNationalId);
@@ -119,7 +124,7 @@ public class VacationService {
                 .stream().map(this::toDto).toList();
     }
 
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER', 'WEEKEND_MANAGER')")
     @Transactional(readOnly = true)
     public List<VacationRequestDto> getAll(String reviewerNationalId) {
         Employee reviewer = findEmployee(reviewerNationalId);
@@ -145,7 +150,7 @@ public class VacationService {
 
     // ── Manager: approve (role-aware, two-stage) ──────────────────────────────
 
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER', 'WEEKEND_MANAGER')")
     @Transactional
     public VacationRequestDto approve(String reviewerNationalId, UUID requestId, ReviewVacationRequest body) {
         Employee reviewer = findEmployee(reviewerNationalId);
@@ -162,13 +167,25 @@ public class VacationService {
             vr.setStatus(VacationStatus.PENDING_MAIN_MANAGER);
 
         } else {
-            // Stage 2: main manager / admin gives final approval
+            // Stage 2: main manager / admin / weekend manager gives final approval
             requireStatus(vr, VacationStatus.PENDING_MAIN_MANAGER);
 
             vr.setReviewedBy(reviewer);
             vr.setReviewedAt(OffsetDateTime.now());
             vr.setReviewNotes(body.getNotes());
             vr.setStatus(VacationStatus.APPROVED);
+
+            // Notify all WEEKEND_MANAGERs so they can plan weekend coverage
+            String empName = vr.getEmployee().getFirstNameAr() + " " + vr.getEmployee().getLastNameAr();
+            List<String> tokens = pushTokenRepository.findWeekendManagerPushTokens();
+            pushNotificationService.sendToTokens(
+                tokens,
+                "إجازة موافق عليها — Vacation Approved",
+                empName + " | " + vr.getStartDate() + " → " + vr.getEndDate(),
+                Map.of("type", "vacation_approved",
+                       "requestId", vr.getId().toString(),
+                       "employeeId", vr.getEmployee().getId().toString())
+            );
         }
 
         return toDto(vacationRepository.save(vr));
@@ -176,7 +193,7 @@ public class VacationService {
 
     // ── Manager: reject (role-aware, either stage) ────────────────────────────
 
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER', 'WEEKEND_MANAGER')")
     @Transactional
     public VacationRequestDto reject(String reviewerNationalId, UUID requestId, ReviewVacationRequest body) {
         Employee reviewer = findEmployee(reviewerNationalId);

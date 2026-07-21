@@ -23,7 +23,7 @@ const CARD   = '#FFFFFF';
 const BORDER = '#E5E7EB';
 const RED    = '#EF4444';
 
-const MANAGEMENT_ROLES = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'];
+const MANAGEMENT_ROLES = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER', 'WEEKEND_MANAGER'];
 
 export default function ProfileScreen() {
   const qc = useQueryClient();
