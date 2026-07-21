@@ -115,23 +115,45 @@ export function EmeraldV2() {
           </div>
         </div>
 
-        {/* Hijri date strip */}
+        {/* Hijri + Milady date strip */}
         <div style={{
           marginTop: 16,
           background:"rgba(255,255,255,0.08)",
           borderRadius:10,
-          padding:"7px 14px",
+          padding:"8px 14px",
           display:"flex",
           alignItems:"center",
-          gap:8,
+          justifyContent:"space-between",
           position:"relative",
         }}>
-          <span style={{ fontSize:14 }}>🕌</span>
-          <span style={{ color:"rgba(255,255,255,0.75)", fontSize:12 }}>
-            ٢٥ محرم ١٤٤٨ هـ  ·  الثلاثاء
-          </span>
-          <div style={{ marginRight:"auto", display:"flex", alignItems:"center", gap:5 }}>
-            <div style={{ width:7, height:7, borderRadius:"50%", background:"#4ADE80" }} />
+          {/* Hijri */}
+          <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+            <span style={{ fontSize:14 }}>🕌</span>
+            <div>
+              <div style={{ color:"rgba(255,255,255,0.5)", fontSize:9, letterSpacing:0.3 }}>هجري</div>
+              <div style={{ color:"rgba(255,255,255,0.85)", fontSize:12, fontWeight:600 }}>
+                ٢٥ محرم ١٤٤٨ هـ
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width:1, height:28, background:"rgba(255,255,255,0.15)" }} />
+
+          {/* Milady */}
+          <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+            <span style={{ fontSize:14 }}>📅</span>
+            <div>
+              <div style={{ color:"rgba(255,255,255,0.5)", fontSize:9, letterSpacing:0.3 }}>ميلادي</div>
+              <div style={{ color:"rgba(255,255,255,0.85)", fontSize:12, fontWeight:600 }}>
+                ٢١ يوليو ٢٠٢٦
+              </div>
+            </div>
+          </div>
+
+          {/* Work day badge */}
+          <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+            <div style={{ width:7, height:7, borderRadius:"50%", background:"#4ADE80", boxShadow:"0 0 0 2px rgba(74,222,128,0.3)" }} />
             <span style={{ color:"#4ADE80", fontSize:11, fontWeight:600 }}>يوم عمل</span>
           </div>
         </div>
