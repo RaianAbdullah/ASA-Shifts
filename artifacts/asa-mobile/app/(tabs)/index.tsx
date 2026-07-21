@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { loadSession, clearSession, Session } from '@/services/auth';
-import { attendanceApi, AttendanceResponse, ApiError } from '@/services/api';
+import { attendanceApi, authApi, AttendanceResponse, ApiError } from '@/services/api';
 import { getCurrentLocation } from '@/services/location';
 import colors from '@/constants/colors';
 

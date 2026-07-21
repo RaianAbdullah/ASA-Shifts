@@ -54,7 +54,7 @@ export default function LoginScreen() {
 
       // Admin-created accounts must set a personal password before entering the app
       if (data.mustChangePassword) {
-        router.replace(`/(auth)/change-password?role=${data.role}`);
+        router.replace({ pathname: '/(auth)/change-password', params: { role: data.role } } as any);
         return;
       }
 

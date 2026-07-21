@@ -117,7 +117,7 @@ export default function AddEmployeeScreen() {
 
           <TouchableOpacity
             style={styles.doneBtn}
-            onPress={() => router.replace('/(admin)/employees')}
+            onPress={() => router.replace('/(admin)/employees' as any)}
           >
             <Text style={styles.doneBtnText}>Done</Text>
           </TouchableOpacity>
@@ -132,7 +132,7 @@ export default function AddEmployeeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={government.foreground} />
+          <Ionicons name="arrow-back" size={22} color={light.text} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Add Employee</Text>
@@ -244,7 +244,7 @@ export default function AddEmployeeScreen() {
             <TouchableOpacity key={d.id} style={styles.sheetItem}
               onPress={() => { setField('departmentId', d.id); setDeptOpen(false); }}>
               <Text style={styles.sheetItemText}>{d.nameAr}</Text>
-              {form.departmentId === d.id && <Ionicons name="checkmark" size={18} color={government.primary} />}
+              {form.departmentId === d.id && <Ionicons name="checkmark" size={18} color={government.navy} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -259,7 +259,7 @@ export default function AddEmployeeScreen() {
             <TouchableOpacity key={r.value} style={styles.sheetItem}
               onPress={() => { setField('role', r.value); setRoleOpen(false); }}>
               <Text style={styles.sheetItemText}>{r.label}</Text>
-              {form.role === r.value && <Ionicons name="checkmark" size={18} color={government.primary} />}
+              {form.role === r.value && <Ionicons name="checkmark" size={18} color={government.navy} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -284,11 +284,11 @@ const styles = StyleSheet.create({
                       paddingHorizontal: 16, paddingVertical: 12,
                       borderBottomWidth: 1, borderBottomColor: light.border },
   backBtn:          { padding: 4 },
-  headerTitle:      { fontSize: 17, fontWeight: '700', color: government.foreground, textAlign: 'center' },
+  headerTitle:      { fontSize: 17, fontWeight: '700', color: light.text, textAlign: 'center' },
   headerTitleAr:    { fontSize: 12, color: light.mutedForeground, textAlign: 'center' },
   form:             { padding: 16, gap: 4 },
   fieldGroup:       { marginBottom: 14 },
-  label:            { fontSize: 13, fontWeight: '600', color: government.foreground, marginBottom: 6 },
+  label:            { fontSize: 13, fontWeight: '600', color: light.text, marginBottom: 6 },
   input:            { backgroundColor: light.card, borderRadius: 10, borderWidth: 1,
                       borderColor: light.border, padding: 12, fontSize: 15, color: light.foreground },
   inputError:       { borderColor: light.destructive },
@@ -298,21 +298,21 @@ const styles = StyleSheet.create({
                       borderColor: light.border, padding: 12 },
   pickerValue:      { fontSize: 15, color: light.foreground },
   pickerPlaceholder:{ fontSize: 15, color: light.mutedForeground },
-  submitBtn:        { backgroundColor: government.primary, borderRadius: 12,
+  submitBtn:        { backgroundColor: government.navy, borderRadius: 12,
                       paddingVertical: 15, alignItems: 'center', marginTop: 12 },
   submitBtnDisabled:{ opacity: 0.6 },
   submitBtnText:    { color: '#fff', fontSize: 16, fontWeight: '700' },
   overlay:          { flex: 1, backgroundColor: '#00000044' },
   sheet:            { backgroundColor: light.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
                       padding: 20 },
-  sheetTitle:       { fontSize: 16, fontWeight: '700', color: government.foreground, marginBottom: 12 },
+  sheetTitle:       { fontSize: 16, fontWeight: '700', color: light.text, marginBottom: 12 },
   sheetItem:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
                       paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: light.border },
   sheetItemText:    { fontSize: 15, color: light.foreground },
   // Success
   successCard:      { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   successIcon:      { marginBottom: 12 },
-  successTitle:     { fontSize: 22, fontWeight: '700', color: government.foreground },
+  successTitle:     { fontSize: 22, fontWeight: '700', color: light.text },
   successSubtitle:  { fontSize: 14, color: light.mutedForeground, marginBottom: 24 },
   tempBox:          { backgroundColor: '#f0fdf4', borderRadius: 14, padding: 20,
                       borderWidth: 1, borderColor: '#86efac', width: '100%', marginBottom: 24 },
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   tempKey:          { fontSize: 14, color: '#166534' },
   tempVal:          { fontSize: 14, fontWeight: '700', color: '#166534' },
   tempNote:         { fontSize: 12, color: '#166534', marginTop: 12, lineHeight: 18 },
-  doneBtn:          { backgroundColor: government.primary, borderRadius: 12,
+  doneBtn:          { backgroundColor: government.navy, borderRadius: 12,
                       paddingVertical: 14, paddingHorizontal: 48 },
   doneBtnText:      { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

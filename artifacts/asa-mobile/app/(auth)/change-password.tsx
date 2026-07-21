@@ -71,7 +71,7 @@ export default function ChangePasswordScreen() {
     >
       {/* Icon */}
       <View style={styles.iconWrap}>
-        <Ionicons name="lock-open-outline" size={56} color={government.primary} />
+        <Ionicons name="lock-open-outline" size={56} color={government.navy} />
       </View>
 
       <Text style={styles.heading}>Set Your Password</Text>
@@ -160,11 +160,11 @@ const styles = StyleSheet.create({
   scroll:       { flex: 1, backgroundColor: light.background },
   content:      { padding: 24, paddingTop: 60 },
   iconWrap:     { alignItems: 'center', marginBottom: 16 },
-  heading:      { fontSize: 22, fontWeight: '700', color: government.foreground, textAlign: 'center' },
+  heading:      { fontSize: 22, fontWeight: '700', color: light.text, textAlign: 'center' },
   headingAr:    { fontSize: 16, color: light.mutedForeground, textAlign: 'center', marginBottom: 12 },
   subtitle:     { fontSize: 14, color: light.mutedForeground, textAlign: 'center', lineHeight: 20, marginBottom: 28 },
   fieldGroup:   { marginBottom: 16 },
-  label:        { fontSize: 13, fontWeight: '600', color: government.foreground, marginBottom: 6 },
+  label:        { fontSize: 13, fontWeight: '600', color: light.text, marginBottom: 6 },
   inputRow:     { flexDirection: 'row', alignItems: 'center', backgroundColor: light.card,
                   borderRadius: 10, borderWidth: 1, borderColor: light.border,
                   paddingHorizontal: 12, paddingVertical: 10 },
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   icon:         { marginRight: 8 },
   input:        { flex: 1, fontSize: 15, color: light.foreground },
   errorText:    { color: light.destructive, fontSize: 12, marginTop: 4 },
-  btn:          { backgroundColor: government.primary, borderRadius: 12,
+  btn:          { backgroundColor: government.navy, borderRadius: 12,
                   paddingVertical: 15, alignItems: 'center', marginTop: 8 },
   btnDisabled:  { opacity: 0.6 },
   btnText:      { color: '#fff', fontSize: 16, fontWeight: '700' },

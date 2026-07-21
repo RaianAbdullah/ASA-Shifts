@@ -32,8 +32,8 @@ export default function EmployeesScreen() {
   const [search, setSearch] = useState('');
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
-    queryKey: ['admin', 'employees'],
-    queryFn:  () => adminApi.listEmployees(),
+    queryKey: ['admin', 'employees', 'all'],
+    queryFn:  () => adminApi.listAllEmployees(),
   });
 
   const all: EmployeeSummaryDto[] = data?.data ?? [];
@@ -71,7 +71,7 @@ export default function EmployeesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={government.foreground} />
+          <Ionicons name="arrow-back" size={22} color={light.text} />
         </TouchableOpacity>
         <View>
           <Text style={styles.title}>All Employees</Text>
@@ -79,9 +79,9 @@ export default function EmployeesScreen() {
         </View>
         <TouchableOpacity
           style={styles.addBtn}
-          onPress={() => router.push('/(admin)/add-employee')}
+          onPress={() => router.push('/(admin)/add-employee' as any)}
         >
-          <Ionicons name="person-add-outline" size={22} color={government.primary} />
+          <Ionicons name="person-add-outline" size={22} color={government.navy} />
         </TouchableOpacity>
       </View>
 
@@ -109,7 +109,7 @@ export default function EmployeesScreen() {
 
       {/* List */}
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={government.primary} />
+        <ActivityIndicator style={{ marginTop: 40 }} color={government.navy} />
       ) : isError ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>Failed to load employees</Text>
@@ -125,7 +125,7 @@ export default function EmployeesScreen() {
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch}
-              colors={[government.primary]} tintColor={government.primary} />
+              colors={[government.navy]} tintColor={government.navy} />
           }
           ListEmptyComponent={
             <View style={styles.center}>
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
                  paddingHorizontal: 16, paddingVertical: 12,
                  borderBottomWidth: 1, borderBottomColor: light.border },
   backBtn:     { padding: 4 },
-  title:       { fontSize: 17, fontWeight: '700', color: government.foreground },
+  title:       { fontSize: 17, fontWeight: '700', color: light.text },
   titleAr:     { fontSize: 12, color: light.mutedForeground, textAlign: 'center' },
   addBtn:      { padding: 4 },
   searchRow:   { flexDirection: 'row', alignItems: 'center', margin: 12,
@@ -158,18 +158,18 @@ const styles = StyleSheet.create({
                  borderRadius: 12, padding: 12, marginBottom: 8,
                  borderWidth: 1, borderColor: light.border },
   avatar:      { width: 42, height: 42, borderRadius: 21,
-                 backgroundColor: government.primary + '22',
+                 backgroundColor: government.navy + '22',
                  alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarText:  { fontSize: 18, fontWeight: '700', color: government.primary },
+  avatarText:  { fontSize: 18, fontWeight: '700', color: government.navy },
   info:        { flex: 1 },
-  name:        { fontSize: 15, fontWeight: '600', color: government.foreground },
+  name:        { fontSize: 15, fontWeight: '600', color: light.text },
   meta:        { fontSize: 12, color: light.mutedForeground, marginTop: 1 },
   phone:       { fontSize: 12, color: light.mutedForeground, marginTop: 1, letterSpacing: 1 },
   badge:       { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, marginLeft: 8 },
   badgeText:   { fontSize: 10, fontWeight: '600' },
   center:      { alignItems: 'center', marginTop: 60 },
   errorText:   { color: light.destructive, marginBottom: 12 },
-  retryBtn:    { backgroundColor: government.primary, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 8 },
+  retryBtn:    { backgroundColor: government.navy, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 8 },
   retryText:   { color: '#fff', fontWeight: '600' },
   emptyText:   { color: light.mutedForeground, marginTop: 12, fontSize: 15 },
 });

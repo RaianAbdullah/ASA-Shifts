@@ -24,9 +24,9 @@ const mockDeleteItemAsync = jest.fn(async (key: string) => { delete mockSecureSt
 
 jest.mock('expo-secure-store', () => ({
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'WHEN_UNLOCKED_THIS_DEVICE_ONLY',
-  setItemAsync:    (...args: unknown[]) => mockSetItemAsync(...args),
-  getItemAsync:    (...args: unknown[]) => mockGetItemAsync(...args),
-  deleteItemAsync: (...args: unknown[]) => mockDeleteItemAsync(...args),
+  setItemAsync:    (key: string, val: string) => mockSetItemAsync(key, val),
+  getItemAsync:    (key: string) => mockGetItemAsync(key),
+  deleteItemAsync: (key: string) => mockDeleteItemAsync(key),
 }));
 
 // ── Imports (after mocks are hoisted) ─────────────────────────────────────────

@@ -314,7 +314,12 @@ export const adminApi = {
       { method: 'PATCH', body: JSON.stringify({ reason }) }, true
     ),
 
+  /** Active employees only — use for pickers/schedule assignment. */
   listEmployees: () =>
+    request<EmployeeSummaryDto[]>('/v1/admin/employees/active', {}, true),
+
+  /** All employees regardless of status — use for admin management screens. */
+  listAllEmployees: () =>
     request<EmployeeSummaryDto[]>('/v1/admin/employees', {}, true),
 
   createEmployee: (body: CreateEmployeeRequest) =>

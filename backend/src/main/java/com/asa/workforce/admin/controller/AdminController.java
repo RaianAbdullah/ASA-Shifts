@@ -84,12 +84,23 @@ public class AdminController {
     }
 
     // ── GET /v1/admin/employees ──────────────────────────────────────────────
+    // Returns ALL employees with status and contact info (for admin management).
 
     @GetMapping("/employees")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER','DEPARTMENT_MANAGER')")
-    @Operation(summary = "List all employees with status and contact info")
+    @Operation(summary = "List all employees with status and contact info (admin management)")
     public ResponseEntity<ApiResponse<List<EmployeeSummaryDto>>> listEmployees() {
         return ResponseEntity.ok(ApiResponse.ok(adminService.listAllEmployees()));
+    }
+
+    // ── GET /v1/admin/employees/active ───────────────────────────────────────
+    // Returns ACTIVE employees only — use for pickers (schedule assignment, etc.).
+
+    @GetMapping("/employees/active")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','MAIN_MANAGER','DEPARTMENT_MANAGER')")
+    @Operation(summary = "List active employees only (for schedule/picker flows)")
+    public ResponseEntity<ApiResponse<List<EmployeeSummaryDto>>> listActiveEmployees() {
+        return ResponseEntity.ok(ApiResponse.ok(adminService.listActiveEmployees()));
     }
 
     // ── POST /v1/admin/employees ─────────────────────────────────────────────

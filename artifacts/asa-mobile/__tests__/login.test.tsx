@@ -94,7 +94,7 @@ import LoginScreen from '../app/(auth)/login';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Build a realistic API success response for authApi.login. */
-function makeLoginResponse(role: string) {
+function makeLoginResponse(role: string, mustChangePassword = false) {
   return {
     success: true,
     data: {
@@ -107,6 +107,7 @@ function makeLoginResponse(role: string) {
       role,
       nameAr:                  'أحمد محمد',
       status:                  'ACTIVE',
+      mustChangePassword,
     },
     timestamp: new Date().toISOString(),
   };
@@ -336,5 +337,64 @@ describe('LoginScreen — session saving and routing', () => {
 
     expect(mockLogin).not.toHaveBeenCalled();
     expect(mockRouterReplace).not.toHaveBeenCalled();
+  });
+
+  // ── 10. mustChangePassword → route to change-password screen ───────────────
+
+  it('routes to /(auth)/change-password with the employee role when mustChangePassword is true', async () => {
+    mockLogin.mockResolvedValueOnce(makeLoginResponse('EMPLOYEE', true));
+
+    const { getByTestId } = await render(<LoginScreen />);
+
+    await act(async () => {
+      fireEvent.changeText(getByTestId('input-employee-number'), '1234567890');
+      fireEvent.changeText(getByTestId('input-password'), 'S3cur3P@ss');
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('btn-login'));
+    });
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pathname: '/(auth)/change-password',
+          params:   expect.objectContaining({ role: 'EMPLOYEE' }),
+        })
+      );
+    });
+
+    // Must NOT proceed to the normal home screen
+    expect(mockRouterReplace).not.toHaveBeenCalledWith('/(tabs)');
+    expect(mockRouterReplace).not.toHaveBeenCalledWith('/(admin)');
+  });
+
+  // ── 11. mustChangePassword for admin role → still routes to change-password ─
+
+  it('routes to /(auth)/change-password (not /(admin)) when mustChangePassword is true for a SYSTEM_ADMIN', async () => {
+    mockLogin.mockResolvedValueOnce(makeLoginResponse('SYSTEM_ADMIN', true));
+
+    const { getByTestId } = await render(<LoginScreen />);
+
+    await act(async () => {
+      fireEvent.changeText(getByTestId('input-employee-number'), '1234567890');
+      fireEvent.changeText(getByTestId('input-password'), 'S3cur3P@ss');
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('btn-login'));
+    });
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pathname: '/(auth)/change-password',
+          params:   expect.objectContaining({ role: 'SYSTEM_ADMIN' }),
+        })
+      );
+    });
+
+    expect(mockRouterReplace).not.toHaveBeenCalledWith('/(admin)');
+    expect(mockRouterReplace).not.toHaveBeenCalledWith('/(tabs)');
   });
 });
