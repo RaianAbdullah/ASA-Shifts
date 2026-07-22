@@ -3,26 +3,26 @@ import {
   View, Text, StyleSheet, TextInput,
   TouchableOpacity, Alert, Platform, Image, StatusBar,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
-import colors from '@/constants/colors';
 import { authApi, ApiError } from '@/services/api';
 import { saveSession, Session } from '@/services/auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const { light, government } = colors;
-
-const GREEN_DARK = government.navyDark;
-const GREEN_MID  = government.navy;
-const GOLD       = government.gold;
-const CREAM      = light.background;
-const WHITE      = light.card;
-const TEXT       = light.text;
-const MUTED      = light.mutedForeground;
-const BORDER     = light.border;
+// ── Midnight Glass palette ────────────────────────────────────────────────────
+const BG      = '#0A0F0D';
+const SURFACE = 'rgba(255,255,255,0.07)';
+const BORDER  = 'rgba(255,255,255,0.12)';
+const NEON    = '#00E676';
+const NEON2   = '#00BFA5';
+const GOLD    = '#C9963F';
+const WHITE   = '#FFFFFF';
+const MUTED   = 'rgba(255,255,255,0.55)';
+const RED     = '#EF4444';
 
 export default function LoginScreen() {
   const insets    = useSafeAreaInsets();
@@ -53,7 +53,6 @@ export default function LoginScreen() {
     try {
       const res = await authApi.login({ nationalId: employeeNumber, password });
       const data = res.data!;
-
       await saveSession({
         token:        data.accessToken,
         refreshToken: data.refreshToken,
@@ -61,16 +60,11 @@ export default function LoginScreen() {
         nameAr:       data.nameAr,
         employeeId:   data.employeeId,
       });
-
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      // Admin-created accounts must set a personal password before entering the app
       if (data.mustChangePassword) {
         router.replace({ pathname: '/(auth)/change-password', params: { role: data.role } } as any);
         return;
       }
-
-      // All roles go to the employee tabs; admins get an Admin Panel shortcut in profile
       router.replace('/(tabs)');
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -87,29 +81,39 @@ export default function LoginScreen() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
 
-      {/* ── Green top section ── */}
+      {/* ── Dark header with ambient glow ── */}
       <View style={[styles.topSection, { paddingTop: topPad + 28 }]}>
-        <Image
-          source={require('../../assets/images/asa-logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        {/* Ambient glow blobs */}
+        <View style={styles.glow1} />
+        <View style={styles.glow2} />
+
+        {/* Logo with neon ring */}
+        <View style={styles.logoRing}>
+          <Image
+            source={require('../../assets/images/asa-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+
         <Text style={styles.heading}>{t('welcomeBack')}</Text>
+        <Text style={styles.subheading}>بوابة الموظفين — وزارة الشؤون الاجتماعية</Text>
       </View>
 
-      {/* ── White form card ── */}
+      {/* ── Glass form card ── */}
       <View style={[styles.formCard, { paddingBottom: bottomPad + 24 }]}>
+
         {/* Employee Number */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>{t('nationalId')}</Text>
           <View style={[styles.inputRow, errors.employeeNumber ? styles.inputError : null]}>
-            <Ionicons name="card-outline" size={18} color={MUTED} style={styles.inputIcon} />
+            <Ionicons name="card-outline" size={18} color={errors.employeeNumber ? RED : NEON} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder={t('nationalIdPlaceholder')}
-              placeholderTextColor={MUTED}
+              placeholderTextColor="rgba(255,255,255,0.25)"
               value={employeeNumber}
               onChangeText={(t) => {
                 setEmployeeNumber(t.replace(/\D/g, '').slice(0, 10));
@@ -129,11 +133,11 @@ export default function LoginScreen() {
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>{t('password')}</Text>
           <View style={[styles.inputRow, errors.password ? styles.inputError : null]}>
-            <Ionicons name="lock-closed-outline" size={18} color={MUTED} style={styles.inputIcon} />
+            <Ionicons name="lock-closed-outline" size={18} color={errors.password ? RED : NEON} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder={t('passwordPlaceholder')}
-              placeholderTextColor={MUTED}
+              placeholderTextColor="rgba(255,255,255,0.25)"
               value={password}
               onChangeText={(t) => {
                 setPassword(t);
@@ -163,21 +167,26 @@ export default function LoginScreen() {
           <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
         </TouchableOpacity>
 
-        {/* Login button */}
+        {/* Login button — neon gradient */}
         <TouchableOpacity
-          style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
           onPress={handleLogin}
           disabled={loading}
-          activeOpacity={0.82}
+          activeOpacity={0.88}
           testID="btn-login"
         >
-          <Text style={styles.loginBtnText}>{loading ? t('signingIn') : t('signIn')}</Text>
+          <LinearGradient
+            colors={loading ? ['rgba(0,230,118,0.4)', 'rgba(0,191,165,0.4)'] : [NEON, NEON2]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={styles.loginBtn}
+          >
+            <Text style={styles.loginBtnText}>{loading ? t('signingIn') : t('signIn')}</Text>
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* Divider */}
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
+          <Text style={styles.dividerText}>أو</Text>
           <View style={styles.dividerLine} />
         </View>
 
@@ -193,7 +202,7 @@ export default function LoginScreen() {
 
         {/* Security note */}
         <View style={styles.securityNote}>
-          <Ionicons name="lock-closed" size={11} color={MUTED} />
+          <Ionicons name="lock-closed" size={11} color={NEON} />
           <Text style={styles.securityNoteText}>  HS512 JWT · BCrypt · Rate-limited</Text>
         </View>
       </View>
@@ -202,147 +211,106 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: GREEN_DARK,
-  },
-  content: {
-    flexGrow: 1,
-  },
+  scroll:   { flex: 1, backgroundColor: BG },
+  content:  { flexGrow: 1 },
+
+  // ── Top section ──
   topSection: {
-    backgroundColor: GREEN_DARK,
+    backgroundColor: BG,
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingBottom: 36,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 16,
+    paddingBottom: 40,
+    position: 'relative',
     overflow: 'hidden',
   },
-  heading: {
-    fontSize: 22,
-    fontFamily: 'Inter_700Bold',
-    color: WHITE,
-    textAlign: 'right',
+  glow1: {
+    position: 'absolute', top: -40, right: -60,
+    width: 200, height: 200, borderRadius: 100,
+    backgroundColor: 'rgba(0,230,118,0.07)',
   },
+  glow2: {
+    position: 'absolute', bottom: 0, left: -40,
+    width: 160, height: 160, borderRadius: 80,
+    backgroundColor: 'rgba(0,230,118,0.04)',
+  },
+  logoRing: {
+    width: 96, height: 96, borderRadius: 48,
+    borderWidth: 1.5, borderColor: 'rgba(0,230,118,0.35)',
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(0,230,118,0.08)',
+    marginBottom: 20,
+    shadowColor: NEON, shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4, shadowRadius: 20, elevation: 8,
+  },
+  logo: { width: 72, height: 72, borderRadius: 36 },
+  heading: {
+    fontSize: 26, fontFamily: 'Inter_700Bold', color: WHITE,
+    textAlign: 'right', letterSpacing: -0.5,
+  },
+  subheading: {
+    fontSize: 13, color: MUTED, marginTop: 6, textAlign: 'right',
+  },
+
+  // ── Glass form card ──
   formCard: {
     flex: 1,
-    backgroundColor: CREAM,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: BORDER,
     paddingHorizontal: 24,
     paddingTop: 32,
     gap: 18,
   },
-  fieldGroup: {
-    gap: 6,
-  },
+  fieldGroup: { gap: 6 },
   label: {
-    fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
-    color: TEXT,
-    textAlign: 'right',
+    fontSize: 13, fontFamily: 'Inter_600SemiBold',
+    color: 'rgba(255,255,255,0.75)', textAlign: 'right',
   },
   inputRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: WHITE,
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 54,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1.5, borderColor: BORDER,
+    borderRadius: 14, paddingHorizontal: 14, height: 56,
   },
-  inputError: {
-    borderColor: light.destructive,
-  },
-  inputIcon: {
-    marginLeft: 10,
-  },
+  inputError: { borderColor: RED },
+  inputIcon:  { marginLeft: 10 },
   input: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    color: TEXT,
+    flex: 1, fontSize: 15, fontFamily: 'Inter_400Regular', color: WHITE,
     ...Platform.select({ web: { outlineWidth: 0 } as any }),
   },
-  eyeBtn: {
-    padding: 6,
-  },
-  errorText: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: light.destructive,
-    marginTop: 2,
-  },
-  forgotBtn: {
-    alignSelf: 'flex-start',
-    marginTop: -4,
-  },
-  forgotText: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: GOLD,
-  },
+  eyeBtn:    { padding: 6 },
+  errorText: { fontSize: 12, fontFamily: 'Inter_400Regular', color: RED, marginTop: 2 },
+
+  forgotBtn: { alignSelf: 'flex-start', marginTop: -4 },
+  forgotText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: GOLD },
+
   loginBtn: {
-    backgroundColor: GREEN_MID,
-    borderRadius: 14,
-    paddingVertical: 16,
+    borderRadius: 16, paddingVertical: 17,
     alignItems: 'center',
-    shadowColor: GREEN_DARK,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowColor: NEON, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35, shadowRadius: 16, elevation: 6,
   },
-  loginBtnDisabled: {
-    opacity: 0.6,
-  },
-  loginBtnText: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    color: WHITE,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: BORDER,
-  },
-  dividerText: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: MUTED,
-  },
+  loginBtnText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#0A0F0D' },
+
+  divider:     { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: BORDER },
+  dividerText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: MUTED },
+
   registerBtn: {
-    borderWidth: 1.5,
-    borderColor: BORDER,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    backgroundColor: WHITE,
+    borderWidth: 1.5, borderColor: BORDER, borderRadius: 16,
+    paddingVertical: 16, alignItems: 'center',
+    backgroundColor: SURFACE,
   },
-  registerBtnText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: TEXT,
-  },
+  registerBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: WHITE },
+
   securityNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', marginTop: 4,
   },
-  securityNoteText: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: MUTED,
-  },
+  securityNoteText: { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(0,230,118,0.5)' },
 });

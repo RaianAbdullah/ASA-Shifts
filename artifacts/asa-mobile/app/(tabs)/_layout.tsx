@@ -1,6 +1,5 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { useColors } from '@/hooks/useColors';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
@@ -8,11 +7,13 @@ import { Tabs } from 'expo-router';
 import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
 import { useLanguage } from '@/contexts/LanguageContext';
-import colors from '@/constants/colors';
 
-const { government, light } = colors;
+const NEON   = '#00E676';
+const MUTED  = 'rgba(255,255,255,0.38)';
+const BG     = 'rgba(10,15,13,0.96)';
+const BORDER = 'rgba(255,255,255,0.09)';
 
-// iOS 26 native tab layout (liquid glass — system-controlled appearance)
+// iOS 26 native tab layout (liquid glass)
 function NativeTabLayout() {
   const { t } = useLanguage();
   return (
@@ -41,7 +42,7 @@ function NativeTabLayout() {
   );
 }
 
-// Android / older iOS / web tab layout — icon only, no labels
+// Android / older iOS / web — Midnight Glass tab bar
 function ClassicTabLayout() {
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
@@ -49,15 +50,15 @@ function ClassicTabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: government.navy,
-        tabBarInactiveTintColor: light.mutedForeground,
+        tabBarActiveTintColor: NEON,
+        tabBarInactiveTintColor: MUTED,
         tabBarShowLabel: false,
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: isIOS ? 'transparent' : '#FFFFFF',
+          backgroundColor: isIOS ? 'transparent' : '#0A0F0D',
           borderTopWidth: 1,
-          borderTopColor: light.border,
+          borderTopColor: BORDER,
           elevation: 0,
           height: isWeb ? 70 : 70,
           paddingBottom: isWeb ? 8 : 6,
@@ -66,12 +67,12 @@ function ClassicTabLayout() {
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={80}
-              tint="light"
+              intensity={90}
+              tint="dark"
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: '#FFFFFF' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0A0F0D' }]} />
           ) : null,
       }}
     >

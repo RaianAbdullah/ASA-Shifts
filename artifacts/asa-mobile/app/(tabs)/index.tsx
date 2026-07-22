@@ -1,5 +1,5 @@
 /**
- * ASA Workforce — Employee Home Screen (EmeraldV2 design)
+ * ASA Workforce — Employee Home Screen (Midnight Glass design)
  */
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
@@ -15,24 +15,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { loadSession, clearSession, Session } from '@/services/auth';
 import { attendanceApi, authApi, AttendanceResponse, ApiError } from '@/services/api';
 import { getCurrentLocation } from '@/services/location';
-import colors from '@/constants/colors';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const { light, government } = colors;
-
-const GREEN_DARK  = government.navyDark;  // "#0A4D2E"
-const GREEN_MID   = government.navy;      // "#0D6B3F"
-const GREEN_LIGHT = '#128A50';
-const GOLD        = government.gold;      // "#C9963F"
-const GOLD_LIGHT  = '#E8B86D';
-const CREAM       = light.background;    // "#F9FAF7"
-const WHITE       = light.card;          // "#FFFFFF"
-const TEXT        = light.text;          // "#1A1F1C"
-const MUTED       = light.mutedForeground; // "#6B7A72"
-const BORDER      = light.border;        // "#E4EBE7"
-const GREEN_PILL  = '#22C55E';
-const AMBER       = '#F59E0B';
-const RED         = '#EF4444';
+// ── Midnight Glass palette ───────────────────────────────────────────────────
+const BG      = '#0A0F0D';
+const SURFACE = 'rgba(255,255,255,0.07)';
+const BORDER  = 'rgba(255,255,255,0.12)';
+const NEON    = '#00E676';
+const NEON2   = '#00BFA5';
+const GOLD    = '#C9963F';
+const WHITE   = '#FFFFFF';
+const MUTED   = 'rgba(255,255,255,0.55)';
+const AMBER   = '#F59E0B';
+const RED     = '#EF4444';
+const GREEN_PILL = '#22C55E';
 
 // ── Live timer ────────────────────────────────────────────────────────────────
 function useWorkTimer(checkInTime: string | undefined, checkOutTime: string | undefined) {
@@ -63,7 +59,6 @@ function useWorkTimer(checkInTime: string | undefined, checkOutTime: string | un
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const insets  = useSafeAreaInsets();
@@ -81,7 +76,6 @@ export default function HomeScreen() {
 
   const isAdmin = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'].includes(session?.role ?? '');
 
-  // Today's attendance
   const { data: todayRes, isLoading, refetch, isRefetching } = useQuery({
     queryKey:  ['attendance', 'today'],
     queryFn:   () => attendanceApi.getToday(),
@@ -91,7 +85,6 @@ export default function HomeScreen() {
   const today: AttendanceResponse | undefined = todayRes?.data;
   const timer = useWorkTimer(today?.checkInTime, today?.checkOutTime);
 
-  // Check-in mutation
   const checkInMutation = useMutation({
     mutationFn: async () => {
       setLocating(true);
@@ -132,19 +125,17 @@ export default function HomeScreen() {
   if (!session || isLoading) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator color={GREEN_MID} size="large" />
+        <ActivityIndicator color={NEON} size="large" />
       </View>
     );
   }
 
   const isBusy = locating || checkInMutation.isPending;
 
-  // Dates
   const now = new Date();
-  const hijriDate = now.toLocaleDateString('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' });
-  const miladiDate = now.toLocaleDateString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' });
+  const hijriDate  = now.toLocaleDateString('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' });
+  const miladiDate = now.toLocaleDateString('ar-SA-u-ca-gregory',  { day: 'numeric', month: 'long', year: 'numeric' });
 
-  // Role label
   const roleLabel: Record<string, string> = {
     SYSTEM_ADMIN: 'مدير النظام',
     MAIN_MANAGER: 'المدير العام',
@@ -158,30 +149,23 @@ export default function HomeScreen() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 80 }]}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={GOLD} />}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 90 }]}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={NEON} />}
       >
-        {/* ── Gradient Header ── */}
-        <LinearGradient
-          colors={[GREEN_DARK, GREEN_MID, GREEN_LIGHT]}
-          start={{ x: 0.2, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.header, { paddingTop: insets.top + 16 }]}
-        >
-          {/* Decorative circles */}
-          <View style={styles.deco1} />
-          <View style={styles.deco2} />
-          <View style={styles.deco3} />
+        {/* ── Dark header with ambient glow ── */}
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+          {/* Ambient glow blobs */}
+          <View style={styles.glow1} />
+          <View style={styles.glow2} />
 
-          {/* Top row — RTL: actions on LEFT, avatar+name on RIGHT */}
+          {/* Top row — RTL: actions LEFT, avatar+name RIGHT */}
           <View style={styles.headerRow}>
-            {/* Actions — left side in Arabic layout */}
             <View style={styles.headerActions}>
               <TouchableOpacity onPress={handleSignOut} style={styles.iconBtn}>
-                <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.70)" />
+                <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.55)" />
               </TouchableOpacity>
               {isAdmin && (
                 <TouchableOpacity onPress={() => router.replace('/(admin)')} style={styles.iconBtn}>
@@ -190,29 +174,27 @@ export default function HomeScreen() {
               )}
             </View>
 
-            {/* Name + avatar — right side in Arabic layout */}
             <View style={styles.headerLeft}>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={styles.greeting}>أهلاً بك 👋</Text>
                 <Text style={styles.name}>{session.nameAr}</Text>
                 {(session.role in roleLabel) && (
-                  <Text style={styles.roleBadge}>
-                    {roleLabel[session.role] ?? session.role}
-                  </Text>
+                  <Text style={styles.roleBadge}>{roleLabel[session.role] ?? session.role}</Text>
                 )}
               </View>
-              {/* Gold gradient avatar — rightmost */}
-              <LinearGradient
-                colors={[GOLD, GOLD_LIGHT]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={styles.avatar}
-              >
-                <Text style={styles.avatarText}>{session.nameAr?.[0] ?? '?'}</Text>
-              </LinearGradient>
+              {/* Gold neon avatar */}
+              <View style={styles.avatarRing}>
+                <LinearGradient
+                  colors={[GOLD, '#E8B86D']}
+                  style={styles.avatar}
+                >
+                  <Text style={styles.avatarText}>{session.nameAr?.[0] ?? '?'}</Text>
+                </LinearGradient>
+              </View>
             </View>
           </View>
 
-          {/* Date strip — glass inside header */}
+          {/* Date strip — glass pill */}
           <View style={styles.dateStrip}>
             <View style={styles.dateBlock}>
               <Text style={styles.dateLabel}>هجري</Text>
@@ -228,21 +210,20 @@ export default function HomeScreen() {
               <Text style={styles.dayBadgeText}>يوم عمل</Text>
             </View>
           </View>
-        </LinearGradient>
+        </View>
 
-        {/* ── Floating Status Card ── */}
+        {/* ── Glass status card (floats up) ── */}
         <View style={styles.floatingCard}>
-          {/* Card header */}
           <View style={styles.cardTop}>
             <Text style={styles.cardLabel}>{t('todaysStatus')}</Text>
             {today && (() => {
               const cfg = {
-                PRESENT: { label: t('present'), color: '#065F46', bg: '#ECFDF5', border: '#6EE7B7' },
-                LATE:    { label: t('late'),    color: '#92400E', bg: '#FFFBEB', border: '#FDE68A' },
-                ABSENT:  { label: t('absent'),  color: RED,       bg: '#FEF2F2', border: '#FECACA' },
-                EXCUSED: { label: t('excused'), color: GREEN_MID, bg: '#F0FDF4', border: '#BBF7D0' },
-                HOLIDAY: { label: t('holiday'), color: MUTED,     bg: light.muted, border: BORDER },
-              }[today.status] ?? { label: today.status, color: RED, bg: '#FEF2F2', border: '#FECACA' };
+                PRESENT: { label: t('present'), color: NEON,  bg: 'rgba(0,230,118,0.15)',  border: 'rgba(0,230,118,0.3)' },
+                LATE:    { label: t('late'),    color: AMBER, bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.3)' },
+                ABSENT:  { label: t('absent'),  color: RED,   bg: 'rgba(239,68,68,0.15)',  border: 'rgba(239,68,68,0.3)' },
+                EXCUSED: { label: t('excused'), color: NEON2, bg: 'rgba(0,191,165,0.15)',  border: 'rgba(0,191,165,0.3)' },
+                HOLIDAY: { label: t('holiday'), color: MUTED, bg: SURFACE, border: BORDER },
+              }[today.status] ?? { label: today.status, color: RED, bg: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.3)' };
               return (
                 <View style={[styles.statusPill, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
                   <View style={[styles.statusDot, { backgroundColor: cfg.color }]} />
@@ -252,11 +233,10 @@ export default function HomeScreen() {
             })()}
           </View>
 
-          {/* 3-column stats */}
           <View style={styles.statsRow}>
             <View style={styles.statBlock}>
               <Text style={styles.statLabel}>{t('checkInTime')}</Text>
-              <Text style={[styles.statValue, { color: GREEN_MID, fontSize: 22 }]}>{checkInFormatted}</Text>
+              <Text style={[styles.statValue, { color: NEON, fontSize: 22 }]}>{checkInFormatted}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statBlock}>
@@ -273,7 +253,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* ── Check-in / Confirmed banner ── */}
+        {/* ── Check-in banner ── */}
         {today?.canCheckIn && (
           <TouchableOpacity
             testID="btn-check-in"
@@ -283,37 +263,37 @@ export default function HomeScreen() {
             style={styles.bannerWrap}
           >
             <LinearGradient
-              colors={[GREEN_DARK, GREEN_MID]}
+              colors={[NEON, NEON2]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={[styles.banner, isBusy && { opacity: 0.6 }]}
             >
               <View style={styles.bannerGlow} />
               <View style={styles.bannerIcon}>
                 {isBusy
-                  ? <ActivityIndicator color="#fff" />
-                  : <Ionicons name="finger-print-outline" size={26} color="#fff" />}
+                  ? <ActivityIndicator color="#0A0F0D" />
+                  : <Ionicons name="finger-print-outline" size={26} color="#0A0F0D" />}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.bannerTitle}>{t('checkIn')}</Text>
                 <Text style={styles.bannerSub}>{t('gpsWillBeRecorded')}</Text>
               </View>
-              <LinearGradient colors={[GOLD, GOLD_LIGHT]} style={styles.bannerBadge}>
-                <Ionicons name="location-outline" size={16} color={GREEN_DARK} />
-              </LinearGradient>
+              <View style={styles.bannerBadge}>
+                <Ionicons name="location-outline" size={16} color="#0A0F0D" />
+              </View>
             </LinearGradient>
           </TouchableOpacity>
         )}
 
         {/* Shift not started yet */}
         {!today?.canCheckIn && !today?.checkInTime && today?.shiftStart && (
-          <View style={[styles.bannerWrap]}>
-            <View style={[styles.banner, { backgroundColor: AMBER + '14', borderWidth: 1.5, borderColor: AMBER + '44' }]}>
+          <View style={styles.bannerWrap}>
+            <View style={[styles.banner, { backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.3)' }]}>
               <View style={styles.bannerIcon}>
                 <Ionicons name="time-outline" size={26} color={AMBER} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.bannerTitle, { color: AMBER }]}>{t('shiftStartsAt')} {today.shiftStart.slice(0,5)}</Text>
-                <Text style={[styles.bannerSub, { color: AMBER + 'AA' }]}>{t('checkInOpens')}</Text>
+                <Text style={[styles.bannerSub, { color: 'rgba(245,158,11,0.7)' }]}>{t('checkInOpens')}</Text>
               </View>
             </View>
           </View>
@@ -322,31 +302,24 @@ export default function HomeScreen() {
         {/* Already checked in */}
         {today?.checkInTime && !today?.canCheckIn && (
           <View style={styles.bannerWrap}>
-            <LinearGradient
-              colors={[GREEN_DARK, GREEN_MID]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={styles.banner}
-            >
-              <View style={styles.bannerGlow} />
+            <View style={[styles.banner, { backgroundColor: 'rgba(0,230,118,0.10)', borderWidth: 1, borderColor: 'rgba(0,230,118,0.25)' }]}>
               <View style={styles.bannerIcon}>
-                <Ionicons name="checkmark-circle-outline" size={26} color={GREEN_PILL} />
+                <Ionicons name="checkmark-circle-outline" size={26} color={NEON} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.bannerTitle}>{t('attendanceRecorded')}</Text>
-                <Text style={styles.bannerSub}>
-                  {miladiDate} · {checkInFormatted}
-                </Text>
+                <Text style={[styles.bannerTitle, { color: NEON }]}>{t('attendanceRecorded')}</Text>
+                <Text style={[styles.bannerSub, { color: MUTED }]}>{miladiDate} · {checkInFormatted}</Text>
               </View>
-              <LinearGradient colors={[GOLD, GOLD_LIGHT]} style={styles.bannerBadge}>
-                <Ionicons name="checkmark" size={16} color={GREEN_DARK} />
-              </LinearGradient>
-            </LinearGradient>
+              <View style={[styles.bannerBadge, { backgroundColor: 'rgba(0,230,118,0.2)' }]}>
+                <Ionicons name="checkmark" size={16} color={NEON} />
+              </View>
+            </View>
           </View>
         )}
 
         {locating && (
           <View style={styles.locatingRow}>
-            <ActivityIndicator size="small" color={GREEN_MID} />
+            <ActivityIndicator size="small" color={NEON} />
             <Text style={styles.locatingText}>{t('gettingLocation')}</Text>
           </View>
         )}
@@ -354,18 +327,20 @@ export default function HomeScreen() {
         {/* ── Quick access tiles ── */}
         <View style={styles.tiles}>
           {[
-            { icon: 'bar-chart-outline', label: 'سجل الحضور', bg: '#F0FDF7', border: '#A7F3D0', color: GREEN_MID,    route: '/(tabs)/attendance-history' },
-            { icon: 'airplane-outline',  label: 'إجازاتي',    bg: '#FFFBEB', border: '#FDE68A', color: '#92400E',    route: '/(tabs)/vacations' },
-            { icon: 'chatbubbles-outline', label: 'الرسائل',   bg: '#EFF6FF', border: '#BFDBFE', color: '#1E40AF',    route: '/(tabs)/messages' },
+            { icon: 'bar-chart-outline',   label: 'سجل الحضور', color: NEON,  route: '/(tabs)/attendance-history' },
+            { icon: 'airplane-outline',    label: 'إجازاتي',    color: GOLD,  route: '/(tabs)/vacations' },
+            { icon: 'chatbubbles-outline', label: 'الرسائل',    color: '#60A5FA', route: '/(tabs)/messages' },
           ].map(tile => (
             <TouchableOpacity
               key={tile.label}
-              style={[styles.tile, { backgroundColor: tile.bg, borderColor: tile.border }]}
+              style={[styles.tile, { borderColor: tile.color + '30' }]}
               onPress={() => router.push(tile.route as any)}
-              activeOpacity={0.78}
+              activeOpacity={0.75}
             >
-              <Ionicons name={tile.icon as any} size={28} color={tile.color} />
-              <Text style={[styles.tileLabel, { color: tile.color }]}>{tile.label}</Text>
+              <View style={[styles.tileIconWrap, { backgroundColor: tile.color + '15' }]}>
+                <Ionicons name={tile.icon as any} size={26} color={tile.color} />
+              </View>
+              <Text style={[styles.tileLabel, { color: WHITE }]}>{tile.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -375,12 +350,11 @@ export default function HomeScreen() {
           style={styles.historyLink}
           onPress={() => router.push('/(tabs)/attendance-history')}
         >
-          <Ionicons name="time-outline" size={16} color={GREEN_MID} />
+          <Ionicons name="time-outline" size={16} color={NEON} />
           <Text style={styles.historyLinkText}>{t('viewAttendanceHistory')}</Text>
-          <Ionicons name="chevron-back" size={16} color={GREEN_MID} />
+          <Ionicons name="chevron-back" size={16} color={NEON} />
         </TouchableOpacity>
 
-        {/* ── Dev geofence notice ── */}
         {today?.geofenceOverride && (
           <View style={styles.devNotice}>
             <Ionicons name="warning-outline" size={14} color={AMBER} />
@@ -393,53 +367,61 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll:   { flex: 1, backgroundColor: CREAM },
+  scroll:   { flex: 1, backgroundColor: BG },
   content:  { flexGrow: 1 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: CREAM },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: BG },
 
   // ── Header ──
   header: {
+    backgroundColor: BG,
     paddingHorizontal: 20,
-    paddingBottom: 28,
+    paddingBottom: 24,
     position: 'relative',
     overflow: 'hidden',
   },
+  glow1: {
+    position: 'absolute', top: -30, right: -40,
+    width: 180, height: 180, borderRadius: 90,
+    backgroundColor: 'rgba(0,230,118,0.07)',
+  },
+  glow2: {
+    position: 'absolute', bottom: -20, left: -20,
+    width: 120, height: 120, borderRadius: 60,
+    backgroundColor: 'rgba(201,150,63,0.05)',
+  },
 
-  // Decorative circles
-  deco1: { position: 'absolute', top: -50, right: -50, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(255,255,255,0.04)' },
-  deco2: { position: 'absolute', bottom: -40, right: 80, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(201,150,63,0.08)' },
-  deco3: { position: 'absolute', top: 10, right: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.03)' },
+  headerRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 },
+  headerLeft:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  iconBtn:       { padding: 8, borderRadius: 20, backgroundColor: SURFACE },
 
-  headerRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
-  headerLeft:   { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerActions:{ flexDirection: 'row', alignItems: 'center', gap: 4 },
-  iconBtn:      { padding: 6 },
-
-  avatar:     { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
-                shadowColor: GOLD, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 14, elevation: 6 },
-  avatarText: { fontSize: 22, fontFamily: 'Inter_700Bold', color: GREEN_DARK },
-  greeting:   { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)', marginBottom: 3, letterSpacing: 0.3, textAlign: 'right' },
-  name:       { fontSize: 18, fontFamily: 'Inter_700Bold', color: WHITE, letterSpacing: -0.3, textAlign: 'right' },
+  avatarRing: {
+    borderWidth: 1.5, borderColor: 'rgba(201,150,63,0.5)',
+    borderRadius: 30, padding: 2,
+  },
+  avatar:     { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#0A0F0D' },
+  greeting:   { fontSize: 12, color: MUTED, marginBottom: 3, textAlign: 'right' },
+  name:       { fontSize: 18, fontFamily: 'Inter_700Bold', color: WHITE, textAlign: 'right' },
   roleBadge:  { fontSize: 11, fontFamily: 'Inter_500Medium', color: GOLD, marginTop: 3, textAlign: 'right' },
 
   // Date strip
-  dateStrip:  { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.10)',
-                borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, gap: 10 },
-  dateBlock:  { flex: 1, alignItems: 'center' },
-  dateLabel:  { fontSize: 9, color: 'rgba(255,255,255,0.50)', letterSpacing: 0.4, marginBottom: 2 },
-  dateValue:  { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: 'rgba(255,255,255,0.88)' },
-  dateDivider:{ width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.15)' },
-  dayBadge:   { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dayDot:     { width: 7, height: 7, borderRadius: 4, backgroundColor: GREEN_PILL },
-  dayBadgeText:{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: GREEN_PILL },
+  dateStrip:   { flexDirection: 'row', alignItems: 'center',
+                 backgroundColor: SURFACE, borderWidth: 1, borderColor: BORDER,
+                 borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, gap: 10 },
+  dateBlock:   { flex: 1, alignItems: 'center' },
+  dateLabel:   { fontSize: 9, color: MUTED, letterSpacing: 0.4, marginBottom: 2 },
+  dateValue:   { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: 'rgba(255,255,255,0.85)' },
+  dateDivider: { width: 1, height: 28, backgroundColor: BORDER },
+  dayBadge:    { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  dayDot:      { width: 7, height: 7, borderRadius: 4, backgroundColor: NEON },
+  dayBadgeText:{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: NEON },
 
   // ── Floating status card ──
   floatingCard: {
-    marginHorizontal: 16, marginTop: -20, zIndex: 2,
-    backgroundColor: WHITE, borderRadius: 22, padding: 20,
+    marginHorizontal: 16, marginTop: -8, zIndex: 2,
+    backgroundColor: SURFACE, borderRadius: 22, padding: 20,
     borderWidth: 1, borderColor: BORDER,
-    shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.14, shadowRadius: 40, elevation: 8,
     marginBottom: 14,
   },
   cardTop:    { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
@@ -452,42 +434,43 @@ const styles = StyleSheet.create({
   statsRow:   { flexDirection: 'row', alignItems: 'center' },
   statBlock:  { flex: 1, alignItems: 'center', gap: 4 },
   statDivider:{ width: 1, height: 36, backgroundColor: BORDER, marginHorizontal: 4 },
-  statLabel:  { fontSize: 10, fontFamily: 'Inter_400Regular', color: MUTED, letterSpacing: 0.3 },
-  statValue:  { fontSize: 17, fontFamily: 'Inter_700Bold', color: TEXT },
+  statLabel:  { fontSize: 10, color: MUTED, letterSpacing: 0.3 },
+  statValue:  { fontSize: 17, fontFamily: 'Inter_700Bold', color: WHITE },
 
   // ── Banner ──
   bannerWrap: { marginHorizontal: 16, marginBottom: 14 },
-  banner:     { borderRadius: 18, padding: 16, flexDirection: 'row-reverse', alignItems: 'center',
+  banner:     { borderRadius: 20, padding: 16, flexDirection: 'row-reverse', alignItems: 'center',
                 gap: 14, overflow: 'hidden', position: 'relative' },
   bannerGlow: { position: 'absolute', top: -20, left: 40, width: 80, height: 80,
-                borderRadius: 40, backgroundColor: 'rgba(201,150,63,0.15)' },
-  bannerIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.15)',
+                borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.1)' },
+  bannerIcon: { width: 48, height: 48, borderRadius: 24,
+                backgroundColor: 'rgba(0,0,0,0.2)',
                 alignItems: 'center', justifyContent: 'center',
-                borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)', flexShrink: 0 },
-  bannerTitle:{ fontSize: 16, fontFamily: 'Inter_700Bold', color: WHITE, marginBottom: 3 },
-  bannerSub:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)' },
-  bannerBadge:{ borderRadius: 10, padding: 8, flexShrink: 0 },
+                borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.2)', flexShrink: 0 },
+  bannerTitle:{ fontSize: 16, fontFamily: 'Inter_700Bold', color: '#0A0F0D', marginBottom: 3 },
+  bannerSub:  { fontSize: 12, color: 'rgba(10,15,13,0.65)' },
+  bannerBadge:{ borderRadius: 10, padding: 8, flexShrink: 0, backgroundColor: 'rgba(0,0,0,0.15)' },
 
   // ── Quick tiles ──
   tiles: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 14 },
-  tile:  { flex: 1, borderRadius: 16, borderWidth: 1.5, paddingVertical: 14,
+  tile:  { flex: 1, borderRadius: 18, borderWidth: 1,
+           backgroundColor: SURFACE, paddingVertical: 14,
            alignItems: 'center', gap: 8 },
-  tileLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
+  tileIconWrap: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  tileLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center', color: WHITE },
 
   // ── History link ──
   historyLink: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
                  marginHorizontal: 16, marginBottom: 8,
-                 backgroundColor: WHITE, borderRadius: 14, borderWidth: 1,
-                 borderColor: BORDER, padding: 16,
-                 shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 2 },
-                 shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
-  historyLinkText: { flex: 1, fontSize: 14, fontFamily: 'Inter_500Medium', color: GREEN_MID },
+                 backgroundColor: SURFACE, borderRadius: 16, borderWidth: 1,
+                 borderColor: BORDER, padding: 16 },
+  historyLinkText: { flex: 1, fontSize: 14, fontFamily: 'Inter_500Medium', color: NEON },
 
   locatingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                  gap: 8, marginBottom: 12 },
-  locatingText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: MUTED },
+  locatingText: { fontSize: 13, color: MUTED },
 
   devNotice:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                  marginTop: 4, opacity: 0.6 },
-  devNoticeText: { fontSize: 11, fontFamily: 'Inter_400Regular', color: AMBER },
+  devNoticeText: { fontSize: 11, color: AMBER },
 });

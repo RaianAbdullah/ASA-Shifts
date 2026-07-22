@@ -1,5 +1,5 @@
 /**
- * Messages — group chat where every active employee can send and receive.
+ * Messages — Midnight Glass design, group chat
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -14,19 +14,18 @@ import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { messageApi, MessageDto, ApiError } from '@/services/api';
 import { loadSession, Session } from '@/services/auth';
-import colors from '@/constants/colors';
 
-const { light, government } = colors;
-const GREEN_DARK = government.navyDark;
-const GREEN_MID  = government.navy;
-const GOLD       = government.gold;
-const CREAM      = light.background;
-const WHITE      = light.card;
-const TEXT       = light.text;
-const MUTED      = light.mutedForeground;
-const BORDER     = light.border;
+// ── Midnight Glass palette ────────────────────────────────────────────────────
+const BG      = '#0A0F0D';
+const SURFACE = 'rgba(255,255,255,0.07)';
+const BORDER  = 'rgba(255,255,255,0.12)';
+const NEON    = '#00E676';
+const NEON2   = '#00BFA5';
+const GOLD    = '#C9963F';
+const WHITE   = '#FFFFFF';
+const MUTED   = 'rgba(255,255,255,0.55)';
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function timeLabel(iso: string): string {
   const d = new Date(iso);
@@ -44,7 +43,7 @@ function avatarLetter(name: string): string {
   return name?.trim()?.[0] ?? '?';
 }
 
-// ── Bubble ────────────────────────────────────────────────────────────────────
+// ── Bubble ───────────────────────────────────────────────────────────────────
 
 function Bubble({
   msg, isMine, onLongPress,
@@ -55,7 +54,6 @@ function Bubble({
 }) {
   return (
     <Pressable onLongPress={onLongPress} delayLongPress={450} style={styles.bubbleRow(isMine) as any}>
-      {/* Avatar — other side only */}
       {!isMine && (
         <View style={styles.bubbleAvatar}>
           <Text style={styles.bubbleAvatarText}>{avatarLetter(msg.senderNameAr)}</Text>
@@ -63,15 +61,13 @@ function Bubble({
       )}
 
       <View style={[styles.bubbleMax, isMine && { alignItems: 'flex-end' }]}>
-        {/* Name (others only) */}
         {!isMine && (
           <Text style={styles.bubbleName}>{msg.senderNameAr}</Text>
         )}
 
-        {/* Body */}
         {isMine ? (
           <LinearGradient
-            colors={[GREEN_MID, GREEN_DARK]}
+            colors={[NEON, NEON2]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             style={[styles.bubble, styles.bubbleMine]}
           >
@@ -83,19 +79,17 @@ function Bubble({
           </View>
         )}
 
-        {/* Time */}
         <Text style={[styles.bubbleTime, isMine && { textAlign: 'right' }]}>
           {timeLabel(msg.sentAt)}
         </Text>
       </View>
 
-      {/* Spacer on other side */}
       {isMine && <View style={{ width: 36 }} />}
     </Pressable>
   );
 }
 
-// ── Screen ─────────────────────────────────────────────────────────────────────
+// ── Screen ───────────────────────────────────────────────────────────────────
 
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
@@ -109,7 +103,6 @@ export default function MessagesScreen() {
     loadSession().then(s => s && setSession(s));
   }, []);
 
-  // ── Initial load ──
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey:  ['messages'],
     queryFn:   () => messageApi.list(),
@@ -119,14 +112,12 @@ export default function MessagesScreen() {
 
   const messages: MessageDto[] = data?.data ?? [];
 
-  // Track the latest message timestamp for polling
   useEffect(() => {
     if (messages.length) {
       lastSeenAt.current = messages[messages.length - 1].sentAt;
     }
   }, [messages.length]);
 
-  // ── Poll for new messages every 5 s ──
   useEffect(() => {
     if (!session) return;
     const id = setInterval(async () => {
@@ -148,14 +139,12 @@ export default function MessagesScreen() {
     return () => clearInterval(id);
   }, [session]);
 
-  // ── Scroll to bottom on new messages ──
   useEffect(() => {
     if (messages.length) {
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [messages.length]);
 
-  // ── Send ──
   const sendMutation = useMutation({
     mutationFn: (body: string) => messageApi.send(body),
     onSuccess: (res) => {
@@ -173,7 +162,6 @@ export default function MessagesScreen() {
     onError: (e: ApiError) => Alert.alert('خطأ', e.message ?? 'فشل الإرسال'),
   });
 
-  // ── Delete ──
   const deleteMutation = useMutation({
     mutationFn: (id: string) => messageApi.delete(id),
     onSuccess: (_, id) => {
@@ -193,13 +181,12 @@ export default function MessagesScreen() {
   }, [draft, sendMutation]);
 
   const handleLongPress = useCallback((msg: MessageDto) => {
-    const isMine = msg.senderId === session?.employeeId;
+    const isMine  = msg.senderId === session?.employeeId;
     const isAdmin = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'].includes(session?.role ?? '');
     if (!isMine && !isAdmin) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
-      'حذف الرسالة',
-      'هل تريد حذف هذه الرسالة؟',
+      'حذف الرسالة', 'هل تريد حذف هذه الرسالة؟',
       [
         { text: 'إلغاء', style: 'cancel' },
         { text: 'حذف', style: 'destructive', onPress: () => deleteMutation.mutate(msg.id) },
@@ -207,36 +194,31 @@ export default function MessagesScreen() {
     );
   }, [session, deleteMutation]);
 
-  // ── Render ──
-
   if (!session || isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={GREEN_MID} size="large" />
+        <ActivityIndicator color={NEON} size="large" />
       </View>
     );
   }
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
 
       {/* Header */}
-      <LinearGradient
-        colors={[GREEN_DARK, GREEN_MID]}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + 12 }]}
-      >
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.headerGlow} />
         <View>
           <Text style={styles.headerTitle}>الرسائل</Text>
           <Text style={styles.headerSub}>محادثة الفريق</Text>
         </View>
         <TouchableOpacity onPress={() => refetch()} style={styles.refreshBtn}>
           {isRefetching
-            ? <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />
-            : <Ionicons name="refresh-outline" size={22} color="rgba(255,255,255,0.7)" />}
+            ? <ActivityIndicator size="small" color={NEON} />
+            : <Ionicons name="refresh-outline" size={22} color={MUTED} />}
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
 
       {/* Message list */}
       <KeyboardAvoidingView
@@ -272,7 +254,7 @@ export default function MessagesScreen() {
           showsVerticalScrollIndicator={false}
         />
 
-        {/* Input bar — sits above the tab bar */}
+        {/* Input bar */}
         <View style={[styles.inputBar, { paddingBottom: insets.bottom + 4 }]}>
           <View style={styles.inputWrap}>
             <TextInput
@@ -293,8 +275,8 @@ export default function MessagesScreen() {
               activeOpacity={0.8}
             >
               {sendMutation.isPending
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Ionicons name="send" size={18} color="#fff" />}
+                ? <ActivityIndicator size="small" color="#0A0F0D" />
+                : <Ionicons name="send" size={18} color="#0A0F0D" />}
             </TouchableOpacity>
           </View>
         </View>
@@ -303,28 +285,29 @@ export default function MessagesScreen() {
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: CREAM, paddingBottom: 70 },
-  centered:{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: CREAM },
+  root:     { flex: 1, backgroundColor: BG, paddingBottom: 70 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: BG },
 
   // Header
-  header:     { paddingHorizontal: 20, paddingBottom: 16,
-                flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-end' },
-  headerTitle:{ fontSize: 20, fontFamily: 'Inter_700Bold', color: '#fff', textAlign: 'right' },
-  headerSub:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.65)', marginTop: 2, textAlign: 'right' },
-  refreshBtn: { padding: 6 },
+  header:     { paddingHorizontal: 20, paddingBottom: 16, overflow: 'hidden', position: 'relative',
+                flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-end',
+                backgroundColor: BG },
+  headerGlow: { position: 'absolute', top: -30, right: -20, width: 130, height: 130, borderRadius: 65,
+                backgroundColor: 'rgba(0,230,118,0.06)' },
+  headerTitle:{ fontSize: 20, fontFamily: 'Inter_700Bold', color: WHITE, textAlign: 'right' },
+  headerSub:  { fontSize: 12, color: MUTED, marginTop: 2, textAlign: 'right' },
+  refreshBtn: { padding: 8, borderRadius: 20, backgroundColor: SURFACE },
 
   // List
   listContent:{ paddingHorizontal: 12, paddingTop: 12, flexGrow: 1 },
 
   // Empty state
-  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: MUTED, marginBottom: 4 },
-  emptySub:  { fontSize: 13, fontFamily: 'Inter_400Regular', color: MUTED },
+  emptyWrap:  { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
+  emptyText:  { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: MUTED, marginBottom: 4 },
+  emptySub:   { fontSize: 13, color: MUTED },
 
-  // Bubble row — function style because isMine is a param
+  // Bubbles
   bubbleRow: (isMine: boolean) => ({
     flexDirection: isMine ? 'row-reverse' : 'row',
     alignItems: 'flex-end',
@@ -334,39 +317,33 @@ const styles = StyleSheet.create({
   bubbleMax:  { maxWidth: '75%' },
   bubbleAvatar:{
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#E8B86D',
+    backgroundColor: 'rgba(201,150,63,0.5)',
+    borderWidth: 1, borderColor: 'rgba(201,150,63,0.4)',
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
   },
-  bubbleAvatarText:{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#fff' },
-  bubbleName: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: MUTED,
+  bubbleAvatarText:{ fontSize: 13, fontFamily: 'Inter_700Bold', color: WHITE },
+  bubbleName: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: GOLD,
                 marginBottom: 3, paddingHorizontal: 4 },
   bubble:     { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, maxWidth: '100%' },
-  bubbleMine: { borderBottomRightRadius: 4,
-                shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2, shadowRadius: 6, elevation: 3 },
-  bubbleOther:{ backgroundColor: WHITE, borderBottomLeftRadius: 4,
-                borderWidth: 1, borderColor: BORDER,
-                shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 },
-  bubbleMineText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#fff', lineHeight: 20 },
-  bubbleOtherText:{ fontSize: 14, fontFamily: 'Inter_400Regular', color: TEXT,  lineHeight: 20 },
-  bubbleTime: { fontSize: 10, fontFamily: 'Inter_400Regular', color: MUTED,
-                marginTop: 3, paddingHorizontal: 4 },
+  bubbleMine: { borderBottomRightRadius: 4 },
+  bubbleOther:{ backgroundColor: SURFACE, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: BORDER },
+  bubbleMineText: { fontSize: 14, color: '#0A0F0D', lineHeight: 20, fontFamily: 'Inter_500Medium' },
+  bubbleOtherText:{ fontSize: 14, color: WHITE, lineHeight: 20 },
+  bubbleTime: { fontSize: 10, color: MUTED, marginTop: 3, paddingHorizontal: 4 },
 
   // Input bar
-  inputBar: { backgroundColor: WHITE, borderTopWidth: 1, borderTopColor: BORDER },
+  inputBar: { backgroundColor: 'rgba(10,15,13,0.98)', borderTopWidth: 1, borderTopColor: BORDER },
   inputWrap: { flexDirection: 'row-reverse', alignItems: 'flex-end', gap: 8,
                paddingHorizontal: 12, paddingVertical: 10 },
-  input:     { flex: 1, backgroundColor: CREAM, borderRadius: 22,
+  input:     { flex: 1, backgroundColor: SURFACE, borderRadius: 22,
                borderWidth: 1, borderColor: BORDER,
                paddingHorizontal: 16, paddingVertical: 10,
-               fontSize: 14, fontFamily: 'Inter_400Regular', color: TEXT,
-               maxHeight: 120 },
+               fontSize: 14, color: WHITE, maxHeight: 120 },
   sendBtn:   { width: 42, height: 42, borderRadius: 21,
-               backgroundColor: GREEN_MID,
+               backgroundColor: NEON,
                alignItems: 'center', justifyContent: 'center',
-               shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 2 },
-               shadowOpacity: 0.3, shadowRadius: 6, elevation: 4 },
-  sendBtnDisabled: { backgroundColor: BORDER, shadowOpacity: 0 },
+               shadowColor: NEON, shadowOffset: { width: 0, height: 2 },
+               shadowOpacity: 0.5, shadowRadius: 8, elevation: 6 },
+  sendBtnDisabled: { backgroundColor: 'rgba(255,255,255,0.1)', shadowOpacity: 0 },
 });

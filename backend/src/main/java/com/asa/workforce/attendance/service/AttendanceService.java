@@ -241,11 +241,24 @@ public class AttendanceService {
 
     // ── Mapping helpers ───────────────────────────────────────────────────────
 
+    /**
+     * Returns true when the current UTC time is at or past (shiftStart − 30 min).
+     * If no schedule is assigned the check-in window is considered open (edge case).
+     */
+    private boolean isWithinCheckInWindow(WeeklySchedule schedule) {
+        if (schedule == null) return true;
+        LocalTime nowUtc   = LocalTime.now(ZoneOffset.UTC);
+        LocalTime earliest = schedule.getShiftStart().minusMinutes(30);
+        return !nowUtc.isBefore(earliest);
+    }
+
     private AttendanceResponse toResponse(Attendance a, WeeklySchedule schedule) {
         Long workedMins = null;
         if (a.getCheckInTime() != null && a.getCheckOutTime() != null) {
             workedMins = ChronoUnit.MINUTES.between(a.getCheckInTime(), a.getCheckOutTime());
         }
+        // canCheckIn requires: no check-in recorded AND shift window is open
+        boolean canCheckIn = a.getCheckInTime() == null && isWithinCheckInWindow(schedule);
         return AttendanceResponse.builder()
                 .id(a.getId().toString())
                 .attendanceDate(a.getAttendanceDate())
@@ -261,22 +274,13 @@ public class AttendanceService {
                 .notes(a.getNotes())
                 .shiftStart(schedule != null ? schedule.getShiftStart().toString() : null)
                 .shiftEnd(schedule != null ? schedule.getShiftEnd().toString() : null)
-                .canCheckIn(a.getCheckInTime() == null)
+                .canCheckIn(canCheckIn)
                 .canCheckOut(a.getCheckInTime() != null && a.getCheckOutTime() == null)
                 .workedMinutes(workedMins)
                 .build();
     }
 
     private AttendanceResponse emptyTodayResponse(LocalDate today, WeeklySchedule schedule) {
-        // Only allow check-in once the shift is within 30 minutes of starting.
-        // If there is no schedule the button remains available (edge case: no shift assigned).
-        boolean canCheckIn = true;
-        if (schedule != null) {
-            LocalTime nowUtc   = LocalTime.now(ZoneOffset.UTC);
-            LocalTime earliest = schedule.getShiftStart().minusMinutes(30);
-            canCheckIn = !nowUtc.isBefore(earliest);
-        }
-
         return AttendanceResponse.builder()
                 .attendanceDate(today)
                 .status(Status.ABSENT.name())
@@ -284,7 +288,7 @@ public class AttendanceService {
                 .geofenceOverride(false)
                 .shiftStart(schedule != null ? schedule.getShiftStart().toString() : null)
                 .shiftEnd(schedule != null ? schedule.getShiftEnd().toString() : null)
-                .canCheckIn(canCheckIn)
+                .canCheckIn(isWithinCheckInWindow(schedule))
                 .canCheckOut(false)
                 .build();
     }
