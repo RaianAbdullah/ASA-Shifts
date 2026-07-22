@@ -5,7 +5,7 @@ import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { scheduleApi, ScheduleDto } from '@/services/api';
 
@@ -127,6 +127,7 @@ function ScheduleCard({ schedule }: { schedule: ScheduleDto }) {
 }
 
 export default function ScheduleScreen() {
+  const insets = useSafeAreaInsets();
   const { data: schedule, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['my-schedule'],
     queryFn: async () => {
@@ -141,7 +142,7 @@ export default function ScheduleScreen() {
       <StatusBar barStyle="light-content" backgroundColor={BG} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View style={styles.headerGlow} />
         <Text style={styles.title}>جدول العمل</Text>
         <Text style={styles.titleSub}>جدول الوردية الأسبوعي</Text>
