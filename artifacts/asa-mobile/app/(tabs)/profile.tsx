@@ -49,32 +49,6 @@ export default function ProfileScreen() {
     });
   }, []);
 
-  // Sessions
-  const { data: sessions, isLoading: sessLoading } = useQuery<SessionDto[]>({
-    queryKey: ['sessions'],
-    queryFn: async () => { const res = await authApi.getSessions(); return res.data ?? []; },
-    staleTime: 30_000,
-  });
-
-  const revokeMutation = useMutation({
-    mutationFn: (sessionId: string) => authApi.revokeSession(sessionId),
-    onSuccess: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      qc.invalidateQueries({ queryKey: ['sessions'] });
-    },
-    onError: (err) => {
-      Alert.alert(t('error'), err instanceof ApiError ? err.message : t('revokeSessionFailed'));
-    },
-  });
-
-  const logoutAllMutation = useMutation({
-    mutationFn: async () => { await authApi.logoutAll(); await clearSession(); },
-    onSuccess: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/');
-    },
-    onError: async () => { await clearSession(); router.replace('/'); },
-  });
 
   const handleSignOut = useCallback(async () => {
     const current = await loadSession();
@@ -82,26 +56,6 @@ export default function ProfileScreen() {
     await clearSession();
     router.replace('/');
   }, []);
-
-  const confirmLogoutAll = () => {
-    Alert.alert(
-      t('signOutAllDevices'), t('signOutAllConfirm'),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        { text: t('signOut'), style: 'destructive', onPress: () => logoutAllMutation.mutate() },
-      ],
-    );
-  };
-
-  const confirmRevokeSession = (sessionId: string, deviceInfo?: string) => {
-    Alert.alert(
-      t('revokeSession'), `${t('revokeSessionFor')}: ${deviceInfo ?? '—'}?`,
-      [
-        { text: t('cancel'), style: 'cancel' },
-        { text: t('revoke'), style: 'destructive', onPress: () => revokeMutation.mutate(sessionId) },
-      ],
-    );
-  };
 
   const handleLanguageToggle = async () => {
     const next = locale === 'ar' ? 'en' : 'ar';
@@ -178,46 +132,6 @@ export default function ProfileScreen() {
               </Text>
             </View>
           </TouchableOpacity>
-        </View>
-
-        {/* Active Sessions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('activeSessions')}</Text>
-          {sessLoading && <ActivityIndicator color={NEON} style={{ marginVertical: 14 }} />}
-          {!sessLoading && (!sessions || sessions.length === 0) && (
-            <Text style={styles.emptyText}>{t('noActiveSessions')}</Text>
-          )}
-          {sessions?.map((s) => (
-            <View key={s.id} style={styles.sessionCard}>
-              <Ionicons name="phone-portrait-outline" size={18} color={MUTED} style={{ marginLeft: 10 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.sessionDevice} numberOfLines={1}>{s.deviceInfo ?? '—'}</Text>
-                <Text style={styles.sessionDate}>
-                  {t('issuedAt')}: {new Date(s.issuedAt).toLocaleDateString()}
-                  {s.lastUsedAt ? `  ·  ${t('lastUsed')}: ${new Date(s.lastUsedAt).toLocaleDateString()}` : ''}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => confirmRevokeSession(s.id, s.deviceInfo ?? undefined)}
-                disabled={revokeMutation.isPending}
-                style={styles.revokeBtn}
-              >
-                <Text style={styles.revokeBtnText}>{t('revoke')}</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-          {(sessions?.length ?? 0) > 0 && (
-            <TouchableOpacity
-              style={styles.logoutAllBtn}
-              onPress={confirmLogoutAll}
-              disabled={logoutAllMutation.isPending}
-            >
-              <Ionicons name="log-out-outline" size={16} color={RED} />
-              <Text style={styles.logoutAllText}>
-                {logoutAllMutation.isPending ? t('signingOut') : t('signOutAllDevices')}
-              </Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Sign out */}
