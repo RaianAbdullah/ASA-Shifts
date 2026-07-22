@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Clock, MapPin, Calendar as CalendarIcon, Loader2, PlayCircle, StopCircle } from 'lucide-react';
+import { Clock, MapPin, Calendar as CalendarIcon, Loader2, PlayCircle } from 'lucide-react';
 import { Link } from 'wouter';
 
 export const Dashboard: React.FC = () => {
@@ -47,32 +47,14 @@ export const Dashboard: React.FC = () => {
     }
   });
 
-  const checkOutMutation = useMutation({
-    mutationFn: (coords: { lat: number, lng: number }) => attendanceApi.checkOut(coords.lat, coords.lng),
-    onSuccess: () => {
-      toast({ title: 'تم تسجيل الخروج', description: 'تم تسجيل الانصراف بنجاح' });
-      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.today });
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: 'خطأ في تسجيل الخروج', 
-        description: error.message || 'حدث خطأ أثناء محاولة تسجيل الانصراف', 
-        variant: 'destructive' 
-      });
-    }
-  });
-
-  const handleAttendanceAction = (action: 'in' | 'out') => {
+  const handleCheckIn = () => {
     if (!navigator.geolocation) {
       toast({ title: 'خطأ', description: 'المتصفح لا يدعم تحديد الموقع', variant: 'destructive' });
       return;
     }
-
-    const mutation = action === 'in' ? checkInMutation : checkOutMutation;
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        mutation.mutate({
+        checkInMutation.mutate({
           lat: position.coords.latitude,
           lng: position.coords.longitude
         });
@@ -86,7 +68,7 @@ export const Dashboard: React.FC = () => {
     );
   };
 
-  const isPending = checkInMutation.isPending || checkOutMutation.isPending;
+  const isPending = checkInMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -148,9 +130,9 @@ export const Dashboard: React.FC = () => {
                     </p>
                   </div>
                   <div className="p-4 rounded-xl border border-border bg-card">
-                    <p className="text-sm text-muted-foreground mb-2">وقت الانصراف</p>
+                    <p className="text-sm text-muted-foreground mb-2">نهاية الوردية</p>
                     <p className="text-xl font-bold font-mono" dir="ltr">
-                      {todayAttendance?.checkOutTime || '--:--'}
+                      {mySchedule?.shiftEnd || '--:--'}
                     </p>
                   </div>
                 </div>
@@ -162,7 +144,7 @@ export const Dashboard: React.FC = () => {
                         <Button 
                           size="lg" 
                           className="w-full sm:w-auto min-w-[200px] h-14 rounded-full text-lg font-bold shadow-[0_0_20px_rgba(0,230,118,0.2)]"
-                          onClick={() => handleAttendanceAction('in')}
+                          onClick={handleCheckIn}
                           disabled={isPending}
                         >
                           {isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : (
@@ -170,22 +152,9 @@ export const Dashboard: React.FC = () => {
                           )}
                         </Button>
                       )}
-                      {todayAttendance?.canCheckOut && (
-                        <Button 
-                          size="lg" 
-                          variant="destructive"
-                          className="w-full sm:w-auto min-w-[200px] h-14 rounded-full text-lg font-bold shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-                          onClick={() => handleAttendanceAction('out')}
-                          disabled={isPending}
-                        >
-                          {isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : (
-                            <><StopCircle className="h-6 w-6 ml-2" /> تسجيل الانصراف</>
-                          )}
-                        </Button>
-                      )}
-                      {!todayAttendance?.canCheckIn && !todayAttendance?.canCheckOut && todayAttendance?.checkOutTime && (
+                      {!todayAttendance?.canCheckIn && todayAttendance?.checkInTime && (
                         <p className="text-[#00E676] font-medium flex items-center gap-2">
-                          <CheckCircle2 className="h-5 w-5" /> تم اكتمال الوردية بنجاح
+                          <CheckCircle2 className="h-5 w-5" /> تم تسجيل الحضور بنجاح
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
