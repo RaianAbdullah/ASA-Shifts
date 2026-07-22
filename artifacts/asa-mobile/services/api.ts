@@ -13,7 +13,7 @@
  */
 import { loadSession, updateTokens, clearSession, isTokenExpired } from './auth';
 
-const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
+export const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
   : '/api';
 
@@ -626,13 +626,22 @@ export const vacationApi = {
 // ── Message endpoints ─────────────────────────────────────────────────────────
 
 export interface MessageDto {
-  id:           string;
-  senderId:     string;
-  senderNameAr: string;
-  senderRole:   string;
-  body:         string;
-  sentAt:       string;
+  id:              string;
+  senderId:        string;
+  senderNameAr:    string;
+  senderRole:      string;
+  body?:           string | null;
+  attachmentUrl?:  string | null;
+  attachmentType?: 'image' | 'file' | null;
+  attachmentName?: string | null;
+  sentAt:          string;
 }
+
+export type AttachmentFile = {
+  uri:      string;
+  name:     string;
+  mimeType: string;
+};
 
 export const messageApi = {
   list: () =>
@@ -646,6 +655,32 @@ export const messageApi = {
       method: 'POST',
       body: JSON.stringify({ body }),
     }, true),
+
+  /** Upload a message with an image or file attachment (optional text body). */
+  sendWithAttachment: async (file: AttachmentFile, body?: string): Promise<ApiResponse<MessageDto>> => {
+    const session = await loadSession();
+    const token   = session?.token ?? '';
+
+    const form = new FormData();
+    if (body?.trim()) form.append('body', body.trim());
+    // React Native / Expo FormData accepts this shape for files
+    form.append('file', { uri: file.uri, name: file.name, type: file.mimeType } as any);
+
+    const res = await fetch(`${BASE_URL}/v1/messages/upload`, {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body:    form,
+    });
+
+    let json: ApiResponse<MessageDto>;
+    try { json = await res.json(); }
+    catch { throw new ApiError('NETWORK_ERROR', `Server error (${res.status})`, res.status); }
+
+    if (!res.ok || !json.success) {
+      throw new ApiError(json.error?.code ?? 'UPLOAD_FAILED', json.error?.message ?? 'Upload failed', res.status);
+    }
+    return json;
+  },
 
   delete: (id: string) =>
     request<void>(`/v1/messages/${id}`, { method: 'DELETE' }, true),

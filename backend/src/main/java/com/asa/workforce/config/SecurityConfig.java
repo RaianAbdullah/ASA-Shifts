@@ -131,6 +131,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/v1/auth/status/**",
+                    "/v1/messages/attachments/**",   // UUID-keyed files — no auth needed
                     "/healthz",
                     "/actuator/health",
                     "/actuator/info"

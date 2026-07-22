@@ -22,8 +22,21 @@ public class Message {
     @JoinColumn(name = "sender_id", nullable = false)
     private Employee sender;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    /** Text body — nullable when the message is attachment-only. */
+    @Column(columnDefinition = "TEXT")
     private String body;
+
+    /** Stored filename relative to the attachments directory. */
+    @Column(name = "attachment_path", length = 500)
+    private String attachmentPath;
+
+    /** "image" or "file" */
+    @Column(name = "attachment_type", length = 20)
+    private String attachmentType;
+
+    /** Original filename shown to the recipient. */
+    @Column(name = "attachment_name", length = 255)
+    private String attachmentName;
 
     @CreationTimestamp
     @Column(name = "sent_at", nullable = false, updatable = false)

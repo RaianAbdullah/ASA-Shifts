@@ -10,8 +10,8 @@ spring:
   # Limit multipart upload size — prevents memory exhaustion / DoS
   servlet:
     multipart:
-      max-file-size:    2MB
-      max-request-size: 2MB
+      max-file-size:    10MB
+      max-request-size: 10MB
 
 server:
   # PORT is injected by the Replit artifact workflow (default 8080)
@@ -30,13 +30,16 @@ server:
     include-binding-errors: never
   # Limit request body size — prevents memory exhaustion / DoS attacks
   tomcat:
-    max-http-form-post-size: 512KB
-    max-swallow-size:        512KB
+    max-http-form-post-size: 10MB
+    max-swallow-size:        10MB
 
 app:
   cors:
     # Override in each profile. Production must set a specific list.
     allowed-origins: ${ALLOWED_CORS_ORIGINS:*}
+  attachments:
+    # Directory where message attachments are stored on disk.
+    dir: ${ATTACHMENTS_DIR:/tmp/asa-attachments}
 
 management:
   endpoints:
