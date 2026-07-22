@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/asa-web/"
+title = "ASA Workforce Web"
+version = "1.0.0"
+id = "artifacts/asa-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/asa-web/" ]
+localPort = 22092
+
+[services.development]
+run = "pnpm --filter @workspace/asa-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/asa-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/asa-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22092"
+BASE_PATH = "/asa-web/"
