@@ -11,6 +11,7 @@ public class PendingEmployeeDto {
     private String         id;
     private String         nationalId;     // masked
     private String         firstNameAr;
+    private String         middleNameAr;
     private String         lastNameAr;
     private String         maskedPhone;
     private String         status;

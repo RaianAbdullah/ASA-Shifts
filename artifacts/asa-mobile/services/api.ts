@@ -156,11 +156,12 @@ export class ApiError extends Error {
 // ── Auth endpoints ────────────────────────────────────────────────────────────
 
 export interface RegisterRequest {
-  nationalId:  string;
-  firstNameAr: string;
-  lastNameAr:  string;
-  phoneNumber: string;
-  password:    string;
+  nationalId:   string;
+  firstNameAr:  string;
+  middleNameAr?: string;
+  lastNameAr:   string;
+  phoneNumber:  string;
+  password:     string;
 }
 export interface RegisterResponse {
   employeeId:  string;
@@ -276,6 +277,7 @@ export interface EmployeeSummaryDto {
   id:                   string;
   nationalId:           string;
   firstNameAr:          string;
+  middleNameAr?:        string;
   lastNameAr:           string;
   departmentId?:        string;
   departmentNameAr?:    string;
@@ -289,12 +291,13 @@ export interface EmployeeSummaryDto {
 }
 
 export interface CreateEmployeeRequest {
-  nationalId:   string;
-  firstNameAr:  string;
-  lastNameAr:   string;
-  phoneNumber:  string;
+  nationalId:    string;
+  firstNameAr:   string;
+  middleNameAr?: string;
+  lastNameAr:    string;
+  phoneNumber:   string;
   departmentId?: string;
-  role:         string;
+  role:          string;
 }
 
 export interface CreateEmployeeResponse {
@@ -351,7 +354,7 @@ export const adminApi = {
     }, true),
 
   updateEmployee: (id: string, body: {
-    firstNameAr?: string; lastNameAr?: string; phoneNumber?: string;
+    firstNameAr?: string; middleNameAr?: string; lastNameAr?: string; phoneNumber?: string;
     /** Full list of roles to assign. Takes precedence over 'role' when provided. */
     roles?: string[];
     role?: string; status?: string; departmentId?: string; vacationDaysPerYear?: number;

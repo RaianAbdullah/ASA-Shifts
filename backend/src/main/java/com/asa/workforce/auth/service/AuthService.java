@@ -93,6 +93,7 @@ public class AuthService {
         Employee emp = Employee.builder()
                 .nationalId(req.getNationalId())
                 .firstNameAr(req.getFirstNameAr())
+                .middleNameAr(req.getMiddleNameAr())
                 .lastNameAr(req.getLastNameAr())
                 .phoneNumber(req.getPhoneNumber())
                 .department(dept)
@@ -279,7 +280,7 @@ public class AuthService {
                 .employeeId(emp.getId().toString())
                 .role(emp.getRole().name())
                 .roles(emp.getRoles().stream().map(Employee.Role::name).toList())
-                .nameAr(emp.getFirstNameAr() + " " + emp.getLastNameAr())
+                .nameAr(fullNameAr(emp))
                 .status(emp.getStatus().name())
                 .mustChangePassword(emp.isMustChangePassword())
                 .build();
@@ -322,7 +323,7 @@ public class AuthService {
                 .employeeId(emp.getId().toString())
                 .role(emp.getRole().name())
                 .roles(emp.getRoles().stream().map(Employee.Role::name).toList())
-                .nameAr(emp.getFirstNameAr() + " " + emp.getLastNameAr())
+                .nameAr(fullNameAr(emp))
                 .status(emp.getStatus().name())
                 .build();
     }
@@ -597,5 +598,14 @@ public class AuthService {
     private String truncate(String s, int max) {
         if (s == null) return null;
         return s.length() > max ? s.substring(0, max) : s;
+    }
+
+    /** Builds the full Arabic display name, including middle name when present. */
+    private static String fullNameAr(Employee emp) {
+        String mid = emp.getMiddleNameAr();
+        if (mid != null && !mid.isBlank()) {
+            return emp.getFirstNameAr() + " " + mid.trim() + " " + emp.getLastNameAr();
+        }
+        return emp.getFirstNameAr() + " " + emp.getLastNameAr();
     }
 }

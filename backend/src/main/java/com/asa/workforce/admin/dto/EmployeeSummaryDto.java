@@ -13,6 +13,7 @@ public class EmployeeSummaryDto {
     private UUID         id;
     private String       nationalId;
     private String       firstNameAr;
+    private String       middleNameAr;
     private String       lastNameAr;
     private UUID         departmentId;
     private String       departmentNameAr;

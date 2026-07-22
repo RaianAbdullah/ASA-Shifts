@@ -45,7 +45,7 @@ export default function EditEmployeeScreen() {
   const qc     = useQueryClient();
 
   const params = useLocalSearchParams<{
-    id: string; firstNameAr: string; lastNameAr: string;
+    id: string; firstNameAr: string; middleNameAr: string; lastNameAr: string;
     phone: string; roles: string; status: string; vacationDays: string;
   }>();
 
@@ -56,6 +56,7 @@ export default function EditEmployeeScreen() {
   })();
 
   const [firstName,    setFirstName]    = useState(params.firstNameAr ?? '');
+  const [middleName,   setMiddleName]   = useState(params.middleNameAr ?? '');
   const [lastName,     setLastName]     = useState(params.lastNameAr ?? '');
   const [vacationDays, setVacationDays] = useState(params.vacationDays ?? '21');
   const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRoles);
@@ -74,6 +75,7 @@ export default function EditEmployeeScreen() {
       }
       return adminApi.updateEmployee(params.id, {
         firstNameAr:        firstName.trim()  || undefined,
+        middleNameAr:       middleName.trim() !== '' ? middleName.trim() : '',
         lastNameAr:         lastName.trim()   || undefined,
         roles:              selectedRoles,
         status,
@@ -173,6 +175,11 @@ export default function EditEmployeeScreen() {
                 textAlign="right" selectionColor={NEON} />
             </View>
           </View>
+
+          <Text style={styles.label}>الاسم الأوسط (اختياري)</Text>
+          <TextInput style={styles.input} value={middleName} onChangeText={setMiddleName}
+            placeholder="مثال: عبدالله" placeholderTextColor={MUTED}
+            textAlign="right" selectionColor={NEON} />
 
           <Text style={styles.label}>أيام الإجازة السنوية</Text>
           <TextInput style={styles.input} value={vacationDays} onChangeText={setVacationDays}

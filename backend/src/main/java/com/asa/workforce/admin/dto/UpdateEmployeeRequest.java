@@ -8,6 +8,7 @@ import java.util.UUID;
 @Data
 public class UpdateEmployeeRequest {
     private String       firstNameAr;
+    private String       middleNameAr;
     private String       lastNameAr;
     private String       phoneNumber;
     /** Single role — used when multi-role list is not provided (backward compat). */

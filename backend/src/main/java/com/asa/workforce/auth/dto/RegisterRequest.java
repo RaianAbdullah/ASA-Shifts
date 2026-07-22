@@ -14,6 +14,10 @@ public class RegisterRequest {
     @Size(min = 2, max = 100)
     private String firstNameAr;
 
+    /** Optional middle name in Arabic */
+    @Size(max = 100)
+    private String middleNameAr;
+
     @NotBlank(message = "Last name (Arabic) is required")
     @Size(min = 2, max = 100)
     private String lastNameAr;

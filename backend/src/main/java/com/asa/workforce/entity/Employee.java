@@ -29,6 +29,9 @@ public class Employee {
     @Column(name = "first_name_ar", nullable = false, length = 100)
     private String firstNameAr;
 
+    @Column(name = "middle_name_ar", length = 100)
+    private String middleNameAr;
+
     @Column(name = "last_name_ar", nullable = false, length = 100)
     private String lastNameAr;
 

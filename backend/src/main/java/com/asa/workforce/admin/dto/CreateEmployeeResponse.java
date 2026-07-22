@@ -9,6 +9,7 @@ public class CreateEmployeeResponse {
     private String employeeId;
     private String nationalId;
     private String firstNameAr;
+    private String middleNameAr;
     private String lastNameAr;
     private String role;
     private String departmentNameAr;

@@ -31,6 +31,7 @@ const BORDER     = light.border;
 
 type FormData = {
   firstNameAr: string;
+  middleNameAr: string;
   lastNameAr: string;
   employeeNumber: string;
   phoneNumber: string;
@@ -47,6 +48,7 @@ export default function RegisterScreen() {
 
   const [form, setForm] = useState<FormData>({
     firstNameAr: '',
+    middleNameAr: '',
     lastNameAr: '',
     employeeNumber: '',
     phoneNumber: '',
@@ -83,11 +85,12 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const res = await authApi.register({
-        nationalId: form.employeeNumber,
-        firstNameAr: form.firstNameAr.trim(),
-        lastNameAr: form.lastNameAr.trim(),
-        phoneNumber: form.phoneNumber.trim(),
-        password: form.password,
+        nationalId:   form.employeeNumber,
+        firstNameAr:  form.firstNameAr.trim(),
+        middleNameAr: form.middleNameAr.trim() || undefined,
+        lastNameAr:   form.lastNameAr.trim(),
+        phoneNumber:  form.phoneNumber.trim(),
+        password:     form.password,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       // Pass nationalId so verify-otp can call the correct endpoint
@@ -180,6 +183,8 @@ export default function RegisterScreen() {
             {renderField('lastNameAr', 'اسم العائلة', 'Last Name (AR)', { autoCapitalize: 'words' })}
           </View>
         </View>
+
+        {renderField('middleNameAr', 'الاسم الأوسط (اختياري)', 'Middle Name (AR) — optional', { autoCapitalize: 'words' })}
 
         {renderField('employeeNumber', 'ID Number', 'رقم الهوية', {
           placeholder: '10-digit national ID',

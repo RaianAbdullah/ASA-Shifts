@@ -35,12 +35,13 @@ export default function AddEmployeeScreen() {
   const qc     = useQueryClient();
 
   const [form, setForm] = useState({
-    nationalId:  '',
-    firstNameAr: '',
-    lastNameAr:  '',
-    phoneNumber: '',
-    departmentId:'',
-    role:        'EMPLOYEE',
+    nationalId:   '',
+    firstNameAr:  '',
+    middleNameAr: '',
+    lastNameAr:   '',
+    phoneNumber:  '',
+    departmentId: '',
+    role:         'EMPLOYEE',
   });
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [deptOpen, setDeptOpen]   = useState(false);
@@ -75,6 +76,7 @@ export default function AddEmployeeScreen() {
     mutationFn: () => adminApi.createEmployee({
       nationalId:   form.nationalId,
       firstNameAr:  form.firstNameAr.trim(),
+      middleNameAr: form.middleNameAr.trim() || undefined,
       lastNameAr:   form.lastNameAr.trim(),
       phoneNumber:  form.phoneNumber,
       departmentId: form.departmentId || undefined,
@@ -180,6 +182,18 @@ export default function AddEmployeeScreen() {
               placeholderTextColor={MUTED}
               value={form.firstNameAr}
               onChangeText={t => setField('firstNameAr', t)}
+              textAlign="right"
+            />
+          </Field>
+
+          {/* Middle Name (optional) */}
+          <Field label="Middle Name (Arabic)  الاسم الأوسط (اختياري)">
+            <TextInput
+              style={styles.input}
+              placeholder="مثال: عبدالله — اختياري"
+              placeholderTextColor={MUTED}
+              value={form.middleNameAr}
+              onChangeText={t => setField('middleNameAr', t)}
               textAlign="right"
             />
           </Field>

@@ -164,6 +164,7 @@ public class AdminService {
                 .id(emp.getId().toString())
                 .nationalId(maskId(emp.getNationalId()))
                 .firstNameAr(emp.getFirstNameAr())
+                .middleNameAr(emp.getMiddleNameAr())
                 .lastNameAr(emp.getLastNameAr())
                 .maskedPhone(maskPhone(emp.getPhoneNumber()))
                 .status(emp.getStatus().name())
@@ -204,6 +205,7 @@ public class AdminService {
         Employee emp = Employee.builder()
                 .nationalId(req.getNationalId())
                 .firstNameAr(req.getFirstNameAr())
+                .middleNameAr(req.getMiddleNameAr())
                 .lastNameAr(req.getLastNameAr())
                 .phoneNumber(req.getPhoneNumber())
                 .department(dept)
@@ -218,7 +220,7 @@ public class AdminService {
         Employee admin = employeeRepository.findByNationalId(adminNationalId).orElse(null);
         auditService.log(AuditService.ADMIN_APPROVE, admin, "EMPLOYEE", emp.getId(),
                 Map.of("action", "admin_created",
-                       "employeeName", emp.getFirstNameAr() + " " + emp.getLastNameAr(),
+                       "employeeName", fullNameAr(emp),
                        "role", role.name()),
                 httpReq);
 
@@ -228,6 +230,7 @@ public class AdminService {
                 .employeeId(emp.getId().toString())
                 .nationalId(emp.getNationalId())
                 .firstNameAr(emp.getFirstNameAr())
+                .middleNameAr(emp.getMiddleNameAr())
                 .lastNameAr(emp.getLastNameAr())
                 .role(role.name())
                 .departmentNameAr(dept != null ? dept.getNameAr() : null)
@@ -246,6 +249,7 @@ public class AdminService {
                         .id(e.getId())
                         .nationalId(e.getNationalId())
                         .firstNameAr(e.getFirstNameAr())
+                        .middleNameAr(e.getMiddleNameAr())
                         .lastNameAr(e.getLastNameAr())
                         .departmentId(e.getDepartment() != null ? e.getDepartment().getId() : null)
                         .departmentNameAr(e.getDepartment() != null ? e.getDepartment().getNameAr() : null)
@@ -268,6 +272,7 @@ public class AdminService {
                         .id(e.getId())
                         .nationalId(e.getNationalId())
                         .firstNameAr(e.getFirstNameAr())
+                        .middleNameAr(e.getMiddleNameAr())
                         .lastNameAr(e.getLastNameAr())
                         .departmentId(e.getDepartment() != null ? e.getDepartment().getId() : null)
                         .departmentNameAr(e.getDepartment() != null ? e.getDepartment().getNameAr() : null)
@@ -278,6 +283,15 @@ public class AdminService {
     }
 
     // ── Update employee (role, status, details, vacation days) ───────────────
+
+    /** Builds the full Arabic display name, including middle name when present. */
+    private static String fullNameAr(Employee emp) {
+        String mid = emp.getMiddleNameAr();
+        if (mid != null && !mid.isBlank()) {
+            return emp.getFirstNameAr() + " " + mid.trim() + " " + emp.getLastNameAr();
+        }
+        return emp.getFirstNameAr() + " " + emp.getLastNameAr();
+    }
 
     /** Role priority used to elect the primary role from a multi-role set. */
     private static final java.util.List<Employee.Role> ROLE_PRIORITY = java.util.List.of(
@@ -299,9 +313,11 @@ public class AdminService {
         Employee emp = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
-        if (req.getFirstNameAr()  != null) emp.setFirstNameAr(req.getFirstNameAr());
-        if (req.getLastNameAr()   != null) emp.setLastNameAr(req.getLastNameAr());
-        if (req.getPhoneNumber()  != null) emp.setPhoneNumber(req.getPhoneNumber());
+        if (req.getFirstNameAr()   != null) emp.setFirstNameAr(req.getFirstNameAr());
+        // Allow explicitly clearing middle name by sending empty string
+        if (req.getMiddleNameAr()  != null) emp.setMiddleNameAr(req.getMiddleNameAr().isBlank() ? null : req.getMiddleNameAr().trim());
+        if (req.getLastNameAr()    != null) emp.setLastNameAr(req.getLastNameAr());
+        if (req.getPhoneNumber()   != null) emp.setPhoneNumber(req.getPhoneNumber());
         if (req.getVacationDaysPerYear() != null) emp.setVacationDaysPerYear(req.getVacationDaysPerYear());
 
         if (req.getRoles() != null && !req.getRoles().isEmpty()) {
@@ -342,6 +358,7 @@ public class AdminService {
                 .id(emp.getId())
                 .nationalId(emp.getNationalId())
                 .firstNameAr(emp.getFirstNameAr())
+                .middleNameAr(emp.getMiddleNameAr())
                 .lastNameAr(emp.getLastNameAr())
                 .departmentId(emp.getDepartment() != null ? emp.getDepartment().getId() : null)
                 .departmentNameAr(emp.getDepartment() != null ? emp.getDepartment().getNameAr() : null)

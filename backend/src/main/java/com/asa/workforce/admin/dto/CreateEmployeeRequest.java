@@ -15,6 +15,10 @@ public class CreateEmployeeRequest {
     @NotBlank @Size(max = 100)
     private String firstNameAr;
 
+    /** Optional middle name in Arabic */
+    @Size(max = 100)
+    private String middleNameAr;
+
     @NotBlank @Size(max = 100)
     private String lastNameAr;
 
