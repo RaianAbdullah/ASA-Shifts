@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi, ApiError } from '@/services/api';
+import * as Haptics from 'expo-haptics';
 
 // ── Midnight Glass palette ────────────────────────────────────────────────────
 const BG      = '#0A0F0D';
@@ -91,6 +92,34 @@ export default function EditEmployeeScreen() {
       Alert.alert('خطأ', msg);
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => adminApi.deleteEmployee(params.id),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'employees'] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('تم الحذف', res.data?.message ?? 'تم حذف الموظف بنجاح.');
+      router.back();
+    },
+    onError: (err) => {
+      const msg = err instanceof ApiError ? err.message
+        : err instanceof Error ? err.message
+        : 'فشل الحذف. يرجى المحاولة مجدداً.';
+      Alert.alert('خطأ', msg);
+    },
+  });
+
+  const handleDelete = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Alert.alert(
+      'حذف الموظف',
+      `هل أنت متأكد من حذف حساب ${params.firstNameAr} ${params.lastNameAr}؟\n\nهذا الإجراء لا يمكن التراجع عنه.`,
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        { text: 'حذف نهائي', style: 'destructive', onPress: () => deleteMutation.mutate() },
+      ]
+    );
+  };
 
   const isSuspended = status === 'SUSPENDED';
 
@@ -229,7 +258,7 @@ export default function EditEmployeeScreen() {
         {/* ── Save button ── */}
         <TouchableOpacity
           onPress={() => mutation.mutate()}
-          disabled={mutation.isPending || selectedRoles.length === 0}
+          disabled={mutation.isPending || deleteMutation.isPending || selectedRoles.length === 0}
           activeOpacity={0.88}
           style={[styles.saveBtnWrap, (mutation.isPending || selectedRoles.length === 0) && { opacity: 0.5 }]}
         >
@@ -242,6 +271,21 @@ export default function EditEmployeeScreen() {
               ? <ActivityIndicator color="#0A0F0D" />
               : <Text style={styles.saveBtnText}>حفظ التغييرات</Text>}
           </LinearGradient>
+        </TouchableOpacity>
+
+        {/* ── Delete button ── */}
+        <TouchableOpacity
+          onPress={handleDelete}
+          disabled={mutation.isPending || deleteMutation.isPending}
+          activeOpacity={0.82}
+          style={[styles.deleteBtn, (mutation.isPending || deleteMutation.isPending) && { opacity: 0.5 }]}
+        >
+          {deleteMutation.isPending
+            ? <ActivityIndicator color={RED} size="small" />
+            : <>
+                <Ionicons name="trash-outline" size={18} color={RED} />
+                <Text style={styles.deleteBtnText}>حذف الحساب نهائياً</Text>
+              </>}
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -335,4 +379,13 @@ const styles = StyleSheet.create({
   },
   saveBtn:     { borderRadius: 16, paddingVertical: 17, alignItems: 'center' },
   saveBtnText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#0A0F0D' },
+
+  // Delete button
+  deleteBtn: {
+    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    gap: 8, borderRadius: 16, paddingVertical: 16,
+    borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.35)',
+    backgroundColor: 'rgba(239,68,68,0.08)',
+  },
+  deleteBtnText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: RED },
 });

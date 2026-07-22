@@ -353,6 +353,27 @@ public class AdminService {
                 .build();
     }
 
+    // ── Delete employee (SYSTEM_ADMIN only) ─────────────────────────────────
+
+    @Transactional
+    public Map<String, Object> deleteEmployee(UUID employeeId, String adminNationalId) {
+        Employee emp = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        // Prevent self-deletion
+        Employee admin = employeeRepository.findByNationalId(adminNationalId)
+                .orElseThrow(() -> new IllegalStateException("Admin account not found"));
+        if (admin.getId().equals(emp.getId())) {
+            throw new IllegalStateException("You cannot delete your own account.");
+        }
+
+        String name = emp.getFirstNameAr() + " " + emp.getLastNameAr();
+        employeeRepository.delete(emp);
+        log.info("[ADMIN] Employee deleted: {} by admin {}", name, adminNationalId);
+
+        return Map.of("message", "تم حذف الموظف بنجاح", "deletedName", name);
+    }
+
     private String maskId(String id) {
         if (id == null || id.length() < 4) return "****";
         return "******" + id.substring(id.length() - 4);

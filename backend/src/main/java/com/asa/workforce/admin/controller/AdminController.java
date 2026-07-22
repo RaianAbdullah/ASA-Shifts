@@ -129,4 +129,17 @@ public class AdminController {
                 adminService.createEmployee(req, auth.getName(), request);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
+
+    // ── DELETE /v1/admin/employees/{employeeId} ──────────────────────────────
+
+    @DeleteMapping("/employees/{employeeId}")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @Operation(summary = "Permanently delete an employee account (SYSTEM_ADMIN only)")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteEmployee(
+            @PathVariable UUID employeeId,
+            Authentication auth) {
+
+        Map<String, Object> result = adminService.deleteEmployee(employeeId, auth.getName());
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
 }

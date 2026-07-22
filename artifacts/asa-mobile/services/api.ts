@@ -345,6 +345,11 @@ export const adminApi = {
   listActiveEmployees: () =>
     request<EmployeeSummaryDto[]>('/v1/admin/employees/active', {}, true),
 
+  deleteEmployee: (id: string) =>
+    request<{ message: string; deletedName: string }>(`/v1/admin/employees/${id}`, {
+      method: 'DELETE',
+    }, true),
+
   updateEmployee: (id: string, body: {
     firstNameAr?: string; lastNameAr?: string; phoneNumber?: string;
     /** Full list of roles to assign. Takes precedence over 'role' when provided. */
