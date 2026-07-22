@@ -278,6 +278,7 @@ public class AuthService {
                 .refreshExpiresInDays(refreshExpiryDays)
                 .employeeId(emp.getId().toString())
                 .role(emp.getRole().name())
+                .roles(emp.getRoles().stream().map(Employee.Role::name).toList())
                 .nameAr(emp.getFirstNameAr() + " " + emp.getLastNameAr())
                 .status(emp.getStatus().name())
                 .mustChangePassword(emp.isMustChangePassword())
@@ -320,6 +321,7 @@ public class AuthService {
                 .refreshExpiresInDays(refreshExpiryDays)
                 .employeeId(emp.getId().toString())
                 .role(emp.getRole().name())
+                .roles(emp.getRoles().stream().map(Employee.Role::name).toList())
                 .nameAr(emp.getFirstNameAr() + " " + emp.getLastNameAr())
                 .status(emp.getStatus().name())
                 .build();

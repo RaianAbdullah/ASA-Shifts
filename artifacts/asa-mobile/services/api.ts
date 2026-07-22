@@ -180,7 +180,10 @@ export interface LoginResponse {
   accessExpiresInSeconds: number;
   refreshExpiresInDays:  number;
   employeeId:            string;
+  /** Primary role (highest-priority). */
   role:                  string;
+  /** Full set of assigned roles. */
+  roles:                 string[];
   nameAr:                string;
   status:                string;
   mustChangePassword:    boolean;
@@ -276,7 +279,10 @@ export interface EmployeeSummaryDto {
   lastNameAr:           string;
   departmentId?:        string;
   departmentNameAr?:    string;
+  /** Primary role (highest-priority). */
   role:                 string;
+  /** Full set of assigned roles. */
+  roles:                string[];
   status?:              string;
   maskedPhone?:         string;
   vacationDaysPerYear?: number;
@@ -341,6 +347,8 @@ export const adminApi = {
 
   updateEmployee: (id: string, body: {
     firstNameAr?: string; lastNameAr?: string; phoneNumber?: string;
+    /** Full list of roles to assign. Takes precedence over 'role' when provided. */
+    roles?: string[];
     role?: string; status?: string; departmentId?: string; vacationDaysPerYear?: number;
   }) =>
     request<EmployeeSummaryDto>(`/v1/admin/employees/${id}`, {

@@ -57,6 +57,7 @@ export default function LoginScreen() {
         token:        data.accessToken,
         refreshToken: data.refreshToken,
         role:         data.role as Session['role'],
+        roles:        (data.roles ?? [data.role]) as Session['roles'],
         nameAr:       data.nameAr,
         employeeId:   data.employeeId,
       });

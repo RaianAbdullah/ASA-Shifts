@@ -1,3 +1,6 @@
+/**
+ * Admin — All Employees (Midnight Glass design)
+ */
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
@@ -8,32 +11,44 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi, EmployeeSummaryDto } from '@/services/api';
-import colors from '@/constants/colors';
 
-const { light, government } = colors;
-const GREEN_DARK = government.navyDark;  // "#0A4D2E"
-const GREEN_MID  = government.navy;      // "#0D6B3F"
-const GOLD       = government.gold;      // "#C9963F"
-const CREAM      = light.background;    // "#F9FAF7"
-const WHITE      = light.card;          // "#FFFFFF"
-const TEXT       = light.text;          // "#1A1F1C"
-const MUTED      = light.mutedForeground; // "#6B7A72"
-const BORDER     = light.border;        // "#E4EBE7"
+// ── Midnight Glass palette ────────────────────────────────────────────────────
+const BG      = '#0A0F0D';
+const SURFACE = 'rgba(255,255,255,0.07)';
+const BORDER  = 'rgba(255,255,255,0.12)';
+const NEON    = '#00E676';
+const GOLD    = '#C9963F';
+const WHITE   = '#FFFFFF';
+const MUTED   = 'rgba(255,255,255,0.55)';
+const RED     = '#EF4444';
 
-const STATUS_COLOR: Record<string, string> = {
-  ACTIVE:               '#22C55E',
-  PENDING_VERIFICATION: '#F59E0B',
-  PENDING_APPROVAL:     '#F59E0B',
-  SUSPENDED:            '#EF4444',
-  REJECTED:             '#6b7280',
+// ── Role config ───────────────────────────────────────────────────────────────
+const ROLE_CONFIG: Record<string, { labelAr: string; color: string }> = {
+  SYSTEM_ADMIN:        { labelAr: 'مشرف النظام',       color: RED },
+  MAIN_MANAGER:        { labelAr: 'المدير العام',       color: GOLD },
+  DEPARTMENT_MANAGER:  { labelAr: 'مدير القسم',         color: '#60A5FA' },
+  WEEKEND_MANAGER:     { labelAr: 'مدير نهاية الأسبوع', color: '#A78BFA' },
+  RESPONSIBLE_OFFICER: { labelAr: 'ضابط مسؤول',         color: '#FB923C' },
+  EMPLOYEE:            { labelAr: 'موظف',               color: NEON },
 };
 
-const ROLE_LABEL: Record<string, string> = {
-  EMPLOYEE:            'موظف',
-  DEPARTMENT_MANAGER:  'مدير قسم',
-  MAIN_MANAGER:        'المدير العام',
-  SYSTEM_ADMIN:        'مشرف النظام',
+const STATUS_CONFIG: Record<string, { labelAr: string; color: string }> = {
+  ACTIVE:               { labelAr: 'نشط',                color: NEON },
+  PENDING_VERIFICATION: { labelAr: 'انتظار التحقق',      color: '#F59E0B' },
+  PENDING_APPROVAL:     { labelAr: 'انتظار الموافقة',    color: '#F59E0B' },
+  SUSPENDED:            { labelAr: 'موقوف',              color: RED },
+  REJECTED:             { labelAr: 'مرفوض',              color: MUTED as string },
 };
+
+function RolePill({ role }: { role: string }) {
+  const cfg = ROLE_CONFIG[role];
+  if (!cfg) return null;
+  return (
+    <View style={[styles.rolePill, { backgroundColor: cfg.color + '18', borderColor: cfg.color + '40' }]}>
+      <Text style={[styles.rolePillText, { color: cfg.color }]}>{cfg.labelAr}</Text>
+    </View>
+  );
+}
 
 export default function EmployeesScreen() {
   const insets = useSafeAreaInsets();
@@ -45,83 +60,105 @@ export default function EmployeesScreen() {
   });
 
   const all: EmployeeSummaryDto[] = data?.data ?? [];
-
   const filtered = search.trim()
-    ? all.filter(e =>
-        `${e.firstNameAr} ${e.lastNameAr} ${e.nationalId}`.includes(search.trim()))
+    ? all.filter(e => `${e.firstNameAr} ${e.lastNameAr} ${e.nationalId}`.includes(search.trim()))
     : all;
 
-  const renderItem = ({ item }: { item: EmployeeSummaryDto }) => (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.78}
-      onPress={() => router.push({
-        pathname: '/(admin)/edit-employee' as any,
-        params: {
-          id:           item.id,
-          firstNameAr:  item.firstNameAr,
-          lastNameAr:   item.lastNameAr,
-          phone:        item.maskedPhone ?? '',
-          role:         item.role,
-          status:       item.status ?? 'ACTIVE',
-          vacationDays: String(item.vacationDaysPerYear ?? 21),
-        },
-      })}
-    >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{item.firstNameAr?.[0] ?? '?'}</Text>
-      </View>
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.firstNameAr} {item.lastNameAr}</Text>
-        <Text style={styles.meta}>{ROLE_LABEL[item.role] ?? item.role}</Text>
-        {item.departmentNameAr ? (
-          <Text style={styles.meta}>{item.departmentNameAr}</Text>
-        ) : null}
-        {item.maskedPhone ? (
-          <Text style={styles.phone}>{item.maskedPhone}</Text>
-        ) : null}
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <View style={[styles.badge, { backgroundColor: (STATUS_COLOR[item.status ?? ''] ?? '#6b7280') + '22' }]}>
-          <Text style={[styles.badgeText, { color: STATUS_COLOR[item.status ?? ''] ?? '#6b7280' }]}>
-            {(item.status ?? '').replace('_', ' ')}
-          </Text>
+  const renderItem = ({ item }: { item: EmployeeSummaryDto }) => {
+    const statusCfg = STATUS_CONFIG[item.status ?? ''] ?? { labelAr: item.status ?? '', color: MUTED as string };
+    const roles = item.roles?.length ? item.roles : [item.role];
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.78}
+        onPress={() => router.push({
+          pathname: '/(admin)/edit-employee' as any,
+          params: {
+            id:           item.id,
+            firstNameAr:  item.firstNameAr,
+            lastNameAr:   item.lastNameAr,
+            roles:        JSON.stringify(roles),
+            status:       item.status ?? 'ACTIVE',
+            vacationDays: String(item.vacationDaysPerYear ?? 21),
+          },
+        })}
+      >
+        {/* Avatar */}
+        <View style={styles.avatarRing}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{item.firstNameAr?.[0] ?? '?'}</Text>
+          </View>
         </View>
-        <Ionicons name="chevron-forward" size={14} color={MUTED} />
-      </View>
-    </TouchableOpacity>
-  );
+
+        {/* Info */}
+        <View style={{ flex: 1, gap: 6 }}>
+          {/* Name row */}
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{item.firstNameAr} {item.lastNameAr}</Text>
+            {/* Status pill */}
+            <View style={[styles.statusPill, {
+              backgroundColor: statusCfg.color + '18',
+              borderColor: statusCfg.color + '40',
+            }]}>
+              <View style={[styles.statusDot, { backgroundColor: statusCfg.color }]} />
+              <Text style={[styles.statusText, { color: statusCfg.color }]}>{statusCfg.labelAr}</Text>
+            </View>
+          </View>
+
+          {/* Department */}
+          {item.departmentNameAr ? (
+            <Text style={styles.dept}>{item.departmentNameAr}</Text>
+          ) : null}
+
+          {/* Role pills */}
+          <View style={styles.rolePillsRow}>
+            {roles.map(r => <RolePill key={r} role={r} />)}
+          </View>
+        </View>
+
+        <Ionicons name="chevron-back" size={16} color={MUTED} style={{ alignSelf: 'center' }} />
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" />
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
 
-      {/* Header — navyDark bg */}
+      {/* Glow */}
+      <View style={styles.glow} />
+
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="chevron-forward" size={22} color={WHITE} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>All Employees</Text>
-          <Text style={styles.titleAr}>جميع الموظفين</Text>
+          <Text style={styles.title}>جميع الموظفين</Text>
+          {!isLoading && (
+            <Text style={styles.titleSub}>{all.length} موظف مسجل</Text>
+          )}
         </View>
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => router.push('/(admin)/add-employee' as any)}
         >
-          <Ionicons name="person-add-outline" size={22} color="#fff" />
+          <Ionicons name="person-add-outline" size={20} color={NEON} />
         </TouchableOpacity>
       </View>
 
-      {/* Search — BORDER search bar on cream bg */}
+      {/* Search */}
       <View style={styles.searchRow}>
-        <Ionicons name="search-outline" size={16} color={MUTED} style={{ marginRight: 8 }} />
+        <Ionicons name="search-outline" size={16} color={MUTED} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by name or ID…"
+          placeholder="البحث بالاسم أو رقم الهوية…"
           placeholderTextColor={MUTED}
           value={search}
           onChangeText={setSearch}
+          textAlign="right"
+          selectionColor={NEON}
         />
         {search ? (
           <TouchableOpacity onPress={() => setSearch('')}>
@@ -130,19 +167,15 @@ export default function EmployeesScreen() {
         ) : null}
       </View>
 
-      {/* Count */}
-      {!isLoading && (
-        <Text style={styles.count}>{filtered.length} employee{filtered.length !== 1 ? 's' : ''}</Text>
-      )}
-
-      {/* List */}
+      {/* Content */}
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={GREEN_MID} />
+        <ActivityIndicator style={{ marginTop: 60 }} color={NEON} size="large" />
       ) : isError ? (
         <View style={styles.center}>
-          <Text style={styles.errorText}>Failed to load employees</Text>
+          <Ionicons name="warning-outline" size={48} color={RED} />
+          <Text style={styles.errorText}>فشل تحميل الموظفين</Text>
           <TouchableOpacity onPress={() => refetch()} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>إعادة المحاولة</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -152,13 +185,12 @@ export default function EmployeesScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch}
-              colors={[GREEN_MID]} tintColor={GREEN_MID} />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={NEON} />
           }
           ListEmptyComponent={
             <View style={styles.center}>
               <Ionicons name="people-outline" size={48} color={MUTED} />
-              <Text style={styles.emptyText}>No employees found</Text>
+              <Text style={styles.emptyText}>لا يوجد موظفون</Text>
             </View>
           }
         />
@@ -168,46 +200,80 @@ export default function EmployeesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: CREAM },
+  root: { flex: 1, backgroundColor: BG },
 
-  // Header — navyDark
-  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                 paddingHorizontal: 16, paddingVertical: 16,
-                 backgroundColor: GREEN_DARK },
-  backBtn:     { padding: 4 },
-  title:       { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#fff', textAlign: 'center' },
-  titleAr:     { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)', textAlign: 'center' },
-  addBtn:      { padding: 4 },
+  glow: {
+    position: 'absolute', top: -30, right: -40,
+    width: 200, height: 200, borderRadius: 100,
+    backgroundColor: 'rgba(0,230,118,0.06)', pointerEvents: 'none',
+  },
 
-  // Search bar — white with BORDER
-  searchRow:   { flexDirection: 'row', alignItems: 'center', margin: 12,
-                 backgroundColor: WHITE, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
-                 borderWidth: 1.5, borderColor: BORDER },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', color: TEXT },
+  // Header
+  header: {
+    flexDirection: 'row-reverse', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14, gap: 12,
+    borderBottomWidth: 1, borderBottomColor: BORDER,
+  },
+  backBtn: { padding: 8, borderRadius: 20, backgroundColor: SURFACE },
+  title:   { fontSize: 18, fontFamily: 'Inter_700Bold', color: WHITE, textAlign: 'right' },
+  titleSub:{ fontSize: 12, color: MUTED, textAlign: 'right', marginTop: 2 },
+  addBtn:  { padding: 10, borderRadius: 20, backgroundColor: SURFACE,
+             borderWidth: 1, borderColor: 'rgba(0,230,118,0.3)' },
 
-  count:       { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginLeft: 16, marginBottom: 4 },
-  list:        { paddingHorizontal: 12, paddingBottom: 24, gap: 8 },
+  // Search
+  searchRow: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 10,
+    margin: 14,
+    backgroundColor: SURFACE, borderRadius: 14,
+    paddingHorizontal: 14, paddingVertical: 12,
+    borderWidth: 1, borderColor: BORDER,
+  },
+  searchInput: {
+    flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', color: WHITE,
+  },
 
-  // White cards with green avatar
-  card:        { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE,
-                 borderRadius: 16, padding: 14,
-                 borderWidth: 1, borderColor: BORDER,
-                 shadowColor: GREEN_DARK, shadowOffset: { width: 0, height: 6 },
-                 shadowOpacity: 0.10, shadowRadius: 16, elevation: 4 },
-  avatar:      { width: 44, height: 44, borderRadius: 99,
-                 backgroundColor: GREEN_MID,
-                 alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarText:  { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
-  info:        { flex: 1 },
-  name:        { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: TEXT },
-  meta:        { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 1 },
-  phone:       { fontSize: 12, fontFamily: 'Inter_400Regular', color: MUTED, marginTop: 1, letterSpacing: 1 },
-  badge:       { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, marginLeft: 8 },
-  badgeText:   { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  list: { paddingHorizontal: 14, paddingBottom: 32, gap: 10 },
 
-  center:      { alignItems: 'center', marginTop: 60 },
-  errorText:   { color: light.destructive, marginBottom: 12, fontFamily: 'Inter_400Regular' },
-  retryBtn:    { backgroundColor: GREEN_MID, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 10 },
-  retryText:   { color: '#fff', fontFamily: 'Inter_600SemiBold' },
-  emptyText:   { color: MUTED, marginTop: 12, fontSize: 15, fontFamily: 'Inter_400Regular' },
+  // Employee card
+  card: {
+    flexDirection: 'row-reverse', alignItems: 'flex-start',
+    backgroundColor: SURFACE, borderRadius: 18, padding: 14,
+    borderWidth: 1, borderColor: BORDER, gap: 12,
+  },
+  avatarRing: {
+    width: 48, height: 48, borderRadius: 24,
+    borderWidth: 1.5, borderColor: 'rgba(0,230,118,0.3)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  avatar:     { width: 40, height: 40, borderRadius: 20,
+                backgroundColor: 'rgba(0,230,118,0.15)',
+                alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: NEON },
+
+  nameRow:  { flexDirection: 'row-reverse', alignItems: 'center',
+              justifyContent: 'space-between', gap: 8 },
+  name:     { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: WHITE, textAlign: 'right', flex: 1 },
+  dept:     { fontSize: 12, color: MUTED, textAlign: 'right' },
+
+  statusPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4,
+    borderWidth: 1, flexShrink: 0,
+  },
+  statusDot:  { width: 6, height: 6, borderRadius: 3 },
+  statusText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+
+  rolePillsRow: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 6 },
+  rolePill: {
+    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+    borderWidth: 1,
+  },
+  rolePillText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+
+  center:    { alignItems: 'center', marginTop: 80, gap: 12 },
+  errorText: { color: RED, fontSize: 15, fontFamily: 'Inter_500Medium' },
+  retryBtn:  { backgroundColor: SURFACE, borderRadius: 14, borderWidth: 1,
+               borderColor: BORDER, paddingHorizontal: 20, paddingVertical: 12 },
+  retryText: { color: WHITE, fontFamily: 'Inter_600SemiBold' },
+  emptyText: { color: MUTED, fontSize: 15, fontFamily: 'Inter_400Regular' },
 });

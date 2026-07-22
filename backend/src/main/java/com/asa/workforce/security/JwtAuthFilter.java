@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * JWT authentication filter — three layers of validation:
@@ -110,11 +111,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
 
             // ── All checks passed — set security context ──────────────────────
-            var auth = new UsernamePasswordAuthenticationToken(
-                    nationalId,
-                    null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
-            );
+            // Build authorities from the live DB roles set (multi-role support).
+            // Fall back to the primary 'role' column if the set is empty.
+            List<SimpleGrantedAuthority> authorities = emp.getRoles().stream()
+                    .map(r -> new SimpleGrantedAuthority("ROLE_" + r.name()))
+                    .collect(Collectors.toList());
+            if (authorities.isEmpty()) {
+                authorities = List.of(new SimpleGrantedAuthority("ROLE_" + emp.getRole().name()));
+            }
+
+            var auth = new UsernamePasswordAuthenticationToken(nationalId, null, authorities);
             auth.setDetails(employeeId);
             SecurityContextHolder.getContext().setAuthentication(auth);
 

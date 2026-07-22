@@ -250,6 +250,7 @@ public class AdminService {
                         .departmentId(e.getDepartment() != null ? e.getDepartment().getId() : null)
                         .departmentNameAr(e.getDepartment() != null ? e.getDepartment().getNameAr() : null)
                         .role(e.getRole().name())
+                        .roles(e.getRoles().stream().map(Employee.Role::name).toList())
                         .status(e.getStatus().name())
                         .maskedPhone(maskPhone(e.getPhoneNumber()))
                         .vacationDaysPerYear(e.getVacationDaysPerYear())
@@ -271,11 +272,27 @@ public class AdminService {
                         .departmentId(e.getDepartment() != null ? e.getDepartment().getId() : null)
                         .departmentNameAr(e.getDepartment() != null ? e.getDepartment().getNameAr() : null)
                         .role(e.getRole().name())
+                        .roles(e.getRoles().stream().map(Employee.Role::name).toList())
                         .build())
                 .toList();
     }
 
     // ── Update employee (role, status, details, vacation days) ───────────────
+
+    /** Role priority used to elect the primary role from a multi-role set. */
+    private static final java.util.List<Employee.Role> ROLE_PRIORITY = java.util.List.of(
+            Employee.Role.SYSTEM_ADMIN,
+            Employee.Role.MAIN_MANAGER,
+            Employee.Role.DEPARTMENT_MANAGER,
+            Employee.Role.WEEKEND_MANAGER,
+            Employee.Role.RESPONSIBLE_OFFICER,
+            Employee.Role.EMPLOYEE
+    );
+
+    private Employee.Role highestRole(java.util.Set<Employee.Role> roles) {
+        return ROLE_PRIORITY.stream().filter(roles::contains).findFirst()
+                .orElse(Employee.Role.EMPLOYEE);
+    }
 
     @Transactional
     public EmployeeSummaryDto updateEmployee(UUID employeeId, UpdateEmployeeRequest req) {
@@ -287,10 +304,28 @@ public class AdminService {
         if (req.getPhoneNumber()  != null) emp.setPhoneNumber(req.getPhoneNumber());
         if (req.getVacationDaysPerYear() != null) emp.setVacationDaysPerYear(req.getVacationDaysPerYear());
 
-        if (req.getRole() != null) {
-            try { emp.setRole(Employee.Role.valueOf(req.getRole())); }
-            catch (IllegalArgumentException ex) { throw new IllegalArgumentException("Invalid role: " + req.getRole()); }
+        if (req.getRoles() != null && !req.getRoles().isEmpty()) {
+            // Multi-role update — replace the roles set and elect a primary role.
+            java.util.Set<Employee.Role> newRoles = new java.util.HashSet<>();
+            for (String r : req.getRoles()) {
+                try { newRoles.add(Employee.Role.valueOf(r)); }
+                catch (IllegalArgumentException ex) { throw new IllegalArgumentException("Invalid role: " + r); }
+            }
+            emp.getRoles().clear();
+            emp.getRoles().addAll(newRoles);
+            emp.setRole(highestRole(newRoles));
+        } else if (req.getRole() != null) {
+            // Single-role fallback — replaces with exactly one role.
+            try {
+                Employee.Role r = Employee.Role.valueOf(req.getRole());
+                emp.getRoles().clear();
+                emp.getRoles().add(r);
+                emp.setRole(r);
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalArgumentException("Invalid role: " + req.getRole());
+            }
         }
+
         if (req.getStatus() != null) {
             try { emp.setStatus(Employee.Status.valueOf(req.getStatus())); }
             catch (IllegalArgumentException ex) { throw new IllegalArgumentException("Invalid status: " + req.getStatus()); }
@@ -311,6 +346,7 @@ public class AdminService {
                 .departmentId(emp.getDepartment() != null ? emp.getDepartment().getId() : null)
                 .departmentNameAr(emp.getDepartment() != null ? emp.getDepartment().getNameAr() : null)
                 .role(emp.getRole().name())
+                .roles(emp.getRoles().stream().map(Employee.Role::name).toList())
                 .status(emp.getStatus().name())
                 .maskedPhone(maskPhone(emp.getPhoneNumber()))
                 .vacationDaysPerYear(emp.getVacationDaysPerYear())

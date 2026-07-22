@@ -17,6 +17,7 @@ import { Platform } from 'react-native';
 const TOKEN_KEY   = 'asa_jwt';
 const REFRESH_KEY = 'asa_refresh';
 const ROLE_KEY    = 'asa_role';
+const ROLES_KEY   = 'asa_roles';
 const NAME_KEY    = 'asa_name';
 const EID_KEY     = 'asa_eid';
 
@@ -42,12 +43,29 @@ async function remove(key: string) {
 
 // ── Session ──────────────────────────────────────────────────────────────────
 
+export type EmployeeRole =
+  | 'SYSTEM_ADMIN'
+  | 'MAIN_MANAGER'
+  | 'DEPARTMENT_MANAGER'
+  | 'WEEKEND_MANAGER'
+  | 'RESPONSIBLE_OFFICER'
+  | 'EMPLOYEE';
+
 export interface Session {
   token:        string;
   refreshToken: string;
-  role:         'SYSTEM_ADMIN' | 'MAIN_MANAGER' | 'DEPARTMENT_MANAGER' | 'EMPLOYEE' | 'RESPONSIBLE_OFFICER';
+  /** Primary role (highest-priority in the roles list). */
+  role:         EmployeeRole;
+  /** Full set of assigned roles. */
+  roles:        EmployeeRole[];
   nameAr:       string;
   employeeId:   string;
+}
+
+/** Returns true if the session has at least one of the given roles. */
+export function hasAnyRole(session: Session | null, ...roles: EmployeeRole[]): boolean {
+  if (!session) return false;
+  return roles.some(r => session.roles.includes(r));
 }
 
 export async function saveSession(session: Session): Promise<void> {
@@ -55,6 +73,7 @@ export async function saveSession(session: Session): Promise<void> {
     save(TOKEN_KEY,   session.token),
     save(REFRESH_KEY, session.refreshToken),
     save(ROLE_KEY,    session.role),
+    save(ROLES_KEY,   JSON.stringify(session.roles)),
     save(NAME_KEY,    session.nameAr),
     save(EID_KEY,     session.employeeId),
   ]);
@@ -70,18 +89,23 @@ export async function updateTokens(accessToken: string, refreshToken: string): P
 
 export async function loadSession(): Promise<Session | null> {
   try {
-    const [token, refreshToken, role, nameAr, employeeId] = await Promise.all([
+    const [token, refreshToken, role, rolesJson, nameAr, employeeId] = await Promise.all([
       load(TOKEN_KEY),
       load(REFRESH_KEY),
       load(ROLE_KEY),
+      load(ROLES_KEY),
       load(NAME_KEY),
       load(EID_KEY),
     ]);
     if (!token || !role) return null;
+    let roles: EmployeeRole[];
+    try { roles = rolesJson ? JSON.parse(rolesJson) : [role as EmployeeRole]; }
+    catch { roles = [role as EmployeeRole]; }
     return {
       token,
       refreshToken: refreshToken ?? '',
-      role: role as Session['role'],
+      role: role as EmployeeRole,
+      roles,
       nameAr: nameAr ?? '',
       employeeId: employeeId ?? '',
     };
@@ -98,6 +122,7 @@ export async function clearSession(): Promise<void> {
     remove(TOKEN_KEY),
     remove(REFRESH_KEY),
     remove(ROLE_KEY),
+    remove(ROLES_KEY),
     remove(NAME_KEY),
     remove(EID_KEY),
   ]);

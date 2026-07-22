@@ -74,7 +74,10 @@ export default function HomeScreen() {
     });
   }, []);
 
-  const isAdmin = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'].includes(session?.role ?? '');
+  const ADMIN_ROLES = ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER'];
+  const isAdmin = session
+    ? (session.roles ?? [session.role]).some(r => ADMIN_ROLES.includes(r))
+    : false;
 
   const { data: todayRes, isLoading, refetch, isRefetching } = useQuery({
     queryKey:  ['attendance', 'today'],
