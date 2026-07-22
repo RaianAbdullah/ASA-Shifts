@@ -45,9 +45,13 @@ export default function EditEmployeeScreen() {
   const qc     = useQueryClient();
 
   const params = useLocalSearchParams<{
-    id: string; firstNameAr: string; middleNameAr: string; lastNameAr: string;
-    phone: string; roles: string; status: string; vacationDays: string;
+    id: string; nationalId: string; firstNameAr: string; middleNameAr: string;
+    lastNameAr: string; phone: string; roles: string; status: string; vacationDays: string;
   }>();
+
+  const maskedNationalId = params.nationalId
+    ? '•'.repeat(Math.max(0, params.nationalId.length - 4)) + params.nationalId.slice(-4)
+    : null;
 
   // Parse roles from navigation param (JSON array string)
   const initialRoles: string[] = (() => {
@@ -140,7 +144,10 @@ export default function EditEmployeeScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>تعديل بيانات الموظف</Text>
-          <Text style={styles.titleSub}>{params.firstNameAr} {params.lastNameAr}</Text>
+          <Text style={styles.titleSub}>
+            {params.firstNameAr} {params.lastNameAr}
+            {maskedNationalId ? `  ·  ${maskedNationalId}` : ''}
+          </Text>
         </View>
       </View>
 

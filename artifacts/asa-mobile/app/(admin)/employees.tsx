@@ -40,6 +40,12 @@ const STATUS_CONFIG: Record<string, { labelAr: string; color: string }> = {
   REJECTED:             { labelAr: 'مرفوض',              color: MUTED as string },
 };
 
+/** Shows only the last 4 digits: ••••••1234 */
+function maskNationalId(id?: string): string {
+  if (!id || id.length < 4) return id ?? '—';
+  return '•'.repeat(id.length - 4) + id.slice(-4);
+}
+
 function RolePill({ role }: { role: string }) {
   const cfg = ROLE_CONFIG[role];
   if (!cfg) return null;
@@ -76,7 +82,9 @@ export default function EmployeesScreen() {
           pathname: '/(admin)/edit-employee' as any,
           params: {
             id:           item.id,
+            nationalId:   item.nationalId,
             firstNameAr:  item.firstNameAr,
+            middleNameAr: item.middleNameAr ?? '',
             lastNameAr:   item.lastNameAr,
             roles:        JSON.stringify(roles),
             status:       item.status ?? 'ACTIVE',
@@ -105,6 +113,9 @@ export default function EmployeesScreen() {
               <Text style={[styles.statusText, { color: statusCfg.color }]}>{statusCfg.labelAr}</Text>
             </View>
           </View>
+
+          {/* National ID (masked) */}
+          <Text style={styles.natId}>{maskNationalId(item.nationalId)}</Text>
 
           {/* Department */}
           {item.departmentNameAr ? (
@@ -253,6 +264,7 @@ const styles = StyleSheet.create({
   nameRow:  { flexDirection: 'row-reverse', alignItems: 'center',
               justifyContent: 'space-between', gap: 8 },
   name:     { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: WHITE, textAlign: 'right', flex: 1 },
+  natId:    { fontSize: 12, color: MUTED, textAlign: 'right', fontFamily: 'Inter_400Regular', letterSpacing: 0.5 },
   dept:     { fontSize: 12, color: MUTED, textAlign: 'right' },
 
   statusPill: {
