@@ -11,8 +11,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authApi, ApiError, SessionDto } from '@/services/api';
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '@/services/api';
 import { loadSession, clearSession } from '@/services/auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -37,7 +37,6 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function ProfileScreen() {
-  const qc           = useQueryClient();
   const insets       = useSafeAreaInsets();
   const { t, locale, setLocale } = useLanguage();
   const [userRole, setUserRole] = React.useState<string | null>(null);
@@ -212,18 +211,6 @@ const styles = StyleSheet.create({
   langBadgeTextInactive: { color: MUTED },
 
   emptyText: { textAlign: 'center', color: MUTED, padding: 16, fontSize: 14 },
-
-  sessionCard: { flexDirection: 'row-reverse', alignItems: 'center', padding: 14,
-                 borderTopWidth: 1, borderTopColor: BORDER },
-  sessionDevice: { fontSize: 14, color: WHITE, fontFamily: 'Inter_500Medium', marginBottom: 3, textAlign: 'right' },
-  sessionDate:   { fontSize: 12, color: MUTED, textAlign: 'right' },
-  revokeBtn:     { backgroundColor: 'rgba(239,68,68,0.15)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  revokeBtnText: { color: RED, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-
-  logoutAllBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
-                  gap: 8, margin: 12, borderRadius: 10, borderWidth: 1,
-                  borderColor: 'rgba(239,68,68,0.35)', padding: 12 },
-  logoutAllText: { color: RED, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
 
   signOutBtn:  { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
                  gap: 8, backgroundColor: 'rgba(239,68,68,0.85)', borderRadius: 16,

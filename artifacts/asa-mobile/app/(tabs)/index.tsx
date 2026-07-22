@@ -348,14 +348,20 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* ── Attendance history link ── */}
+        {/* ── Announcements card ── */}
         <TouchableOpacity
-          style={styles.historyLink}
-          onPress={() => router.push('/(tabs)/attendance-history')}
+          style={styles.announcementsCard}
+          onPress={() => router.push('/(tabs)/announcements' as any)}
+          activeOpacity={0.8}
         >
-          <Ionicons name="time-outline" size={16} color={NEON} />
-          <Text style={styles.historyLinkText}>{t('viewAttendanceHistory')}</Text>
-          <Ionicons name="chevron-back" size={16} color={NEON} />
+          <View style={styles.announcementsIconWrap}>
+            <Ionicons name="megaphone-outline" size={22} color={GOLD} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.announcementsTitle}>الإشعارات والتبليغات</Text>
+            <Text style={styles.announcementsSub}>اطلع على آخر تبليغات الإدارة</Text>
+          </View>
+          <Ionicons name="chevron-back" size={18} color={GOLD} />
         </TouchableOpacity>
 
         {today?.geofenceOverride && (
@@ -463,7 +469,20 @@ const styles = StyleSheet.create({
   tileLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center', color: WHITE },
 
   // ── History link ──
-  historyLink: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
+  announcementsCard: {
+   flexDirection: 'row-reverse', alignItems: 'center', gap: 12,
+   backgroundColor: 'rgba(201,150,63,0.08)',
+   borderRadius: 16, padding: 16, marginHorizontal: 16, marginTop: 8,
+   borderWidth: 1, borderColor: 'rgba(201,150,63,0.22)',
+ },
+ announcementsIconWrap: {
+   width: 44, height: 44, borderRadius: 22,
+   backgroundColor: 'rgba(201,150,63,0.15)',
+   alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+ },
+ announcementsTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: WHITE, textAlign: 'right' },
+ announcementsSub:   { fontSize: 12, color: MUTED, marginTop: 2, textAlign: 'right' },
+ historyLink: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
                  marginHorizontal: 16, marginBottom: 8,
                  backgroundColor: SURFACE, borderRadius: 16, borderWidth: 1,
                  borderColor: BORDER, padding: 16 },

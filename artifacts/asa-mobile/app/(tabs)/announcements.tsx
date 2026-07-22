@@ -1,6 +1,5 @@
 /**
- * Announcements — feed of manager announcements; any employee can reply.
- * Emojis and GIFs are blocked both client-side and server-side.
+ * الإشعارات والتبليغات — Midnight Glass design, Arabic UI
  */
 import React, { useState, useRef } from 'react';
 import {
@@ -9,40 +8,40 @@ import {
   Platform, ScrollView, RefreshControl, Pressable, StatusBar,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
 import { announcementApi, AnnouncementDto, ReplyDto, ApiError } from '@/services/api';
 import { loadSession } from '@/services/auth';
-import colors from '@/constants/colors';
 
-const { light, government } = colors;
-
-const GREEN_DARK  = government.navyDark;  // "#0A4D2E"
-const GREEN_MID   = government.navy;      // "#0D6B3F"
-const GOLD        = government.gold;      // "#C9963F"
-const CREAM       = light.background;    // "#F9FAF7"
-const WHITE       = light.card;          // "#FFFFFF"
-const TEXT        = light.text;          // "#1A1F1C"
-const MUTED       = light.mutedForeground; // "#6B7A72"
-const BORDER      = light.border;        // "#E4EBE7"
-const AMBER       = '#F59E0B';
+// ── Midnight Glass palette ────────────────────────────────────────────────────
+const BG      = '#0A0F0D';
+const SURFACE = 'rgba(255,255,255,0.07)';
+const BORDER  = 'rgba(255,255,255,0.12)';
+const NEON    = '#00E676';
+const NEON2   = '#00BFA5';
+const GOLD    = '#C9963F';
+const WHITE   = '#FFFFFF';
+const MUTED   = 'rgba(255,255,255,0.55)';
+const RED     = '#EF4444';
 
 const POSTER_ROLES = ['SYSTEM_ADMIN', 'MAIN_MANAGER'];
 
-// Emoji detection (mirrors backend logic)
-function containsEmoji(text: string): boolean {
-  return /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/u.test(text);
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1)  return 'just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1)  return 'الآن';
+  if (mins < 60) return `منذ ${mins} د`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24)  return `منذ ${hrs} س`;
+  return `منذ ${Math.floor(hrs / 24)} يوم`;
+}
+
+function containsEmoji(text: string): boolean {
+  return /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/u.test(text);
 }
 
 // ── Thread modal ──────────────────────────────────────────────────────────────
@@ -55,15 +54,14 @@ function ThreadModal({
   onClose: () => void;
   myRole: string;
 }) {
-  const qc = useQueryClient();
+  const qc     = useQueryClient();
   const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
-  const inputRef = useRef<TextInput>(null);
 
   const { data: thread, isLoading } = useQuery({
     queryKey: ['announcement-thread', announcement?.id],
-    queryFn: () => announcementApi.getThread(announcement!.id),
-    enabled: visible && !!announcement,
+    queryFn:  () => announcementApi.getThread(announcement!.id),
+    enabled:  visible && !!announcement,
   });
 
   const replyMut = useMutation({
@@ -74,7 +72,7 @@ function ThreadModal({
       qc.invalidateQueries({ queryKey: ['announcements'] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
-    onError: (e: ApiError) => Alert.alert('Error', e.message),
+    onError: (e: ApiError) => Alert.alert('خطأ', e.message),
   });
 
   const deleteMut = useMutation({
@@ -83,14 +81,14 @@ function ThreadModal({
       qc.invalidateQueries({ queryKey: ['announcements'] });
       onClose();
     },
-    onError: (e: ApiError) => Alert.alert('Error', e.message),
+    onError: (e: ApiError) => Alert.alert('خطأ', e.message),
   });
 
   function handleSend() {
     const trimmed = text.trim();
     if (!trimmed) return;
     if (containsEmoji(trimmed)) {
-      Alert.alert('Not allowed', 'Emojis and special symbols are not permitted.');
+      Alert.alert('غير مسموح', 'لا يُسمح باستخدام الرموز التعبيرية.');
       return;
     }
     replyMut.mutate(trimmed);
@@ -98,11 +96,11 @@ function ThreadModal({
 
   function handleDelete() {
     Alert.alert(
-      'Delete Announcement',
-      'This will permanently delete the announcement and all replies.',
+      'حذف التبليغ',
+      'سيتم حذف هذا التبليغ وجميع الردود عليه نهائياً.',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteMut.mutate() },
+        { text: 'إلغاء', style: 'cancel' },
+        { text: 'حذف', style: 'destructive', onPress: () => deleteMut.mutate() },
       ],
     );
   }
@@ -112,21 +110,21 @@ function ThreadModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: CREAM }}
+        style={{ flex: 1, backgroundColor: BG }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
       >
-        {/* Header — green strip */}
-        <SafeAreaView style={styles.threadHeader} edges={['top']}>
-          <TouchableOpacity onPress={onClose} style={styles.threadBack}>
-            <Feather name="x" size={22} color="#FFFFFF" />
+        {/* Header */}
+        <SafeAreaView style={[styles.modalHeader, { paddingTop: insets.top + 4 }]} edges={[]}>
+          <View style={styles.headerGlow} />
+          <TouchableOpacity onPress={onClose} style={styles.headerBtn}>
+            <Ionicons name="close" size={22} color={WHITE} />
           </TouchableOpacity>
-          <Text style={styles.threadHeaderTitle} numberOfLines={1}>Announcement</Text>
+          <Text style={styles.modalHeaderTitle}>التبليغ</Text>
           {canDelete ? (
-            <TouchableOpacity onPress={handleDelete} style={styles.threadBack}>
-              <Feather name="trash-2" size={20} color="rgba(255,255,255,0.8)" />
+            <TouchableOpacity onPress={handleDelete} style={styles.headerBtn} disabled={deleteMut.isPending}>
+              <Ionicons name="trash-outline" size={20} color={RED} />
             </TouchableOpacity>
           ) : <View style={{ width: 40 }} />}
         </SafeAreaView>
@@ -134,7 +132,7 @@ function ThreadModal({
         {/* Content */}
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 12 }}
           keyboardDismissMode="interactive"
         >
           {/* Announcement body */}
@@ -143,7 +141,7 @@ function ThreadModal({
               {announcement.pinned && (
                 <View style={styles.pinnedBadge}>
                   <Ionicons name="pin" size={12} color={GOLD} />
-                  <Text style={styles.pinnedText}>Pinned</Text>
+                  <Text style={styles.pinnedText}>مثبّت</Text>
                 </View>
               )}
               <Text style={styles.threadTitle}>{announcement.title}</Text>
@@ -154,17 +152,15 @@ function ThreadModal({
             </View>
           )}
 
-          {/* Replies */}
+          {/* Replies header */}
           <Text style={styles.repliesLabel}>
-            {replies.length === 0 ? 'No replies yet' : `${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
+            {replies.length === 0 ? 'لا توجد ردود بعد' : `${replies.length} ${replies.length === 1 ? 'رد' : 'ردود'}`}
           </Text>
-          {isLoading && <ActivityIndicator color={GREEN_MID} style={{ marginTop: 12 }} />}
+          {isLoading && <ActivityIndicator color={NEON} style={{ marginTop: 12 }} />}
           {replies.map(r => (
             <View key={r.id} style={styles.replyCard}>
               <View style={styles.replyAvatar}>
-                <Text style={styles.replyAvatarText}>
-                  {r.authorNameAr.charAt(0)}
-                </Text>
+                <Text style={styles.replyAvatarText}>{r.authorNameAr.charAt(0)}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.replyAuthor}>{r.authorNameAr}</Text>
@@ -177,41 +173,38 @@ function ThreadModal({
 
         {/* Reply input */}
         <View style={[styles.replyInputRow, { paddingBottom: insets.bottom + 8 }]}>
+          <TouchableOpacity
+            style={[styles.replySendBtn, (!text.trim() || replyMut.isPending) && styles.replySendBtnOff]}
+            onPress={handleSend}
+            disabled={!text.trim() || replyMut.isPending}
+          >
+            {replyMut.isPending
+              ? <ActivityIndicator color={BG} size="small" />
+              : <Ionicons name="send" size={18} color={BG} />}
+          </TouchableOpacity>
           <TextInput
-            ref={inputRef}
             style={styles.replyInput}
-            placeholder="Write a reply…"
+            placeholder="اكتب ردًّا…"
             placeholderTextColor={MUTED}
             value={text}
             onChangeText={setText}
             multiline
             maxLength={1000}
-            returnKeyType="default"
+            textAlign="right"
           />
-          <TouchableOpacity
-            style={[styles.sendBtn, (!text.trim() || replyMut.isPending) && { opacity: 0.4 }]}
-            onPress={handleSend}
-            disabled={!text.trim() || replyMut.isPending}
-          >
-            {replyMut.isPending
-              ? <ActivityIndicator color="#fff" size="small" />
-              : <Feather name="send" size={18} color="#fff" />}
-          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
-// ── New announcement form modal ───────────────────────────────────────────────
+// ── New announcement modal (managers only) ────────────────────────────────────
 
-function NewAnnouncementModal({
-  visible, onClose,
-}: { visible: boolean; onClose: () => void }) {
+function NewAnnouncementModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const insets = useSafeAreaInsets();
-  const [title, setTitle] = useState('');
-  const [body,  setBody]  = useState('');
+  const [title,  setTitle]  = useState('');
+  const [body,   setBody]   = useState('');
   const [pinned, setPinned] = useState(false);
 
   const createMut = useMutation({
@@ -222,16 +215,16 @@ function NewAnnouncementModal({
       onClose();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
-    onError: (e: ApiError) => Alert.alert('Error', e.message),
+    onError: (e: ApiError) => Alert.alert('خطأ', e.message),
   });
 
   function handlePost() {
     if (!title.trim() || !body.trim()) {
-      Alert.alert('Missing fields', 'Title and body are required.');
+      Alert.alert('حقول ناقصة', 'العنوان والمحتوى مطلوبان.');
       return;
     }
     if (containsEmoji(title) || containsEmoji(body)) {
-      Alert.alert('Not allowed', 'Emojis and special symbols are not permitted.');
+      Alert.alert('غير مسموح', 'لا يُسمح باستخدام الرموز التعبيرية.');
       return;
     }
     createMut.mutate();
@@ -239,64 +232,62 @@ function NewAnnouncementModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: CREAM }}
+        style={{ flex: 1, backgroundColor: BG }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <SafeAreaView style={styles.threadHeader} edges={['top']}>
-          <TouchableOpacity onPress={onClose} style={styles.threadBack}>
-            <Feather name="x" size={22} color="#FFFFFF" />
+        <SafeAreaView style={[styles.modalHeader, { paddingTop: insets.top + 4 }]} edges={[]}>
+          <View style={styles.headerGlow} />
+          <TouchableOpacity onPress={onClose} style={styles.headerBtn}>
+            <Ionicons name="close" size={22} color={WHITE} />
           </TouchableOpacity>
-          <Text style={styles.threadHeaderTitle}>New Announcement</Text>
+          <Text style={styles.modalHeaderTitle}>تبليغ جديد</Text>
           <TouchableOpacity
             style={[styles.postBtn, (!title.trim() || !body.trim() || createMut.isPending) && { opacity: 0.4 }]}
             onPress={handlePost}
             disabled={!title.trim() || !body.trim() || createMut.isPending}
           >
             {createMut.isPending
-              ? <ActivityIndicator color="#fff" size="small" />
-              : <Text style={styles.postBtnText}>Post</Text>}
+              ? <ActivityIndicator color={BG} size="small" />
+              : <Text style={styles.postBtnText}>نشر</Text>}
           </TouchableOpacity>
         </SafeAreaView>
 
         <ScrollView style={{ flex: 1, padding: 16 }} keyboardDismissMode="interactive">
-          <Text style={styles.formLabel}>Title</Text>
+          <Text style={styles.formLabel}>العنوان</Text>
           <TextInput
             style={styles.formInput}
-            placeholder="Announcement title…"
+            placeholder="عنوان التبليغ…"
             placeholderTextColor={MUTED}
             value={title}
             onChangeText={setTitle}
             maxLength={200}
-            returnKeyType="next"
+            textAlign="right"
           />
 
-          <Text style={styles.formLabel}>Message</Text>
+          <Text style={styles.formLabel}>المحتوى</Text>
           <TextInput
             style={[styles.formInput, { height: 160, textAlignVertical: 'top' }]}
-            placeholder="Write your announcement here…"
+            placeholder="اكتب محتوى التبليغ هنا…"
             placeholderTextColor={MUTED}
             value={body}
             onChangeText={setBody}
             multiline
             maxLength={5000}
+            textAlign="right"
           />
 
           <TouchableOpacity style={styles.pinnedToggle} onPress={() => setPinned(p => !p)}>
             <Ionicons
               name={pinned ? 'checkbox' : 'square-outline'}
               size={22}
-              color={pinned ? GREEN_MID : MUTED}
+              color={pinned ? NEON : MUTED}
             />
-            <Text style={[styles.pinnedToggleText, pinned && { color: GREEN_MID }]}>
-              Pin this announcement
+            <Text style={[styles.pinnedToggleText, pinned && { color: NEON }]}>
+              تثبيت هذا التبليغ
             </Text>
           </TouchableOpacity>
-
-          <Text style={styles.emojiNote}>
-            ⚠️ Emojis and GIFs are not allowed in announcements or replies.
-          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
@@ -305,38 +296,36 @@ function NewAnnouncementModal({
 
 // ── Announcement card ─────────────────────────────────────────────────────────
 
-function AnnouncementCard({
-  item, onPress,
-}: { item: AnnouncementDto; onPress: () => void }) {
+function AnnouncementCard({ item, onPress }: { item: AnnouncementDto; onPress: () => void }) {
+  const isNew = Date.now() - new Date(item.createdAt).getTime() < 86_400_000;
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+    <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.cardTop}>
         <View style={{ flex: 1 }}>
           {item.pinned && (
             <View style={styles.pinnedBadge}>
               <Ionicons name="pin" size={11} color={GOLD} />
-              <Text style={styles.pinnedText}>Pinned</Text>
+              <Text style={styles.pinnedText}>مثبّت</Text>
             </View>
           )}
-          <Text style={styles.cardTitle}>{item.title}</Text>
+          <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
         </View>
-        {/* Gold badge for new items (< 24h) */}
-        {Date.now() - new Date(item.createdAt).getTime() < 86_400_000 && (
+        {isNew && (
           <View style={styles.newBadge}>
-            <Text style={styles.newBadgeText}>NEW</Text>
+            <Text style={styles.newBadgeText}>جديد</Text>
           </View>
         )}
-        <Feather name="chevron-right" size={18} color={MUTED} />
+        <Ionicons name="chevron-back" size={18} color={MUTED} />
       </View>
       <Text style={styles.cardBody} numberOfLines={2}>{item.body}</Text>
       <View style={styles.cardFooter}>
-        <Text style={styles.cardMeta}>{item.authorNameAr} · {timeAgo(item.createdAt)}</Text>
         <View style={styles.replyCountBadge}>
-          <Feather name="message-square" size={12} color={GREEN_MID} />
+          <Ionicons name="chatbubble-outline" size={12} color={NEON} />
           <Text style={styles.replyCountText}>{item.replyCount}</Text>
         </View>
+        <Text style={styles.cardMeta}>{item.authorNameAr} · {timeAgo(item.createdAt)}</Text>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -344,11 +333,10 @@ function AnnouncementCard({
 
 export default function AnnouncementsScreen() {
   const insets = useSafeAreaInsets();
-  const [myRole, setMyRole] = useState<string>('');
+  const [myRole, setMyRole] = useState('');
   React.useEffect(() => {
     loadSession().then(s => { if (s?.role) setMyRole(s.role); });
   }, []);
-  const canPost = POSTER_ROLES.includes(myRole);
 
   const [selectedItem, setSelectedItem] = useState<AnnouncementDto | null>(null);
   const [showThread,   setShowThread]   = useState(false);
@@ -356,8 +344,10 @@ export default function AnnouncementsScreen() {
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['announcements'],
-    queryFn: announcementApi.list,
+    queryFn:  announcementApi.list,
   });
+
+  const canPost = POSTER_ROLES.includes(myRole);
 
   function openThread(item: AnnouncementDto) {
     setSelectedItem(item);
@@ -365,28 +355,45 @@ export default function AnnouncementsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.root} edges={['bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor={GREEN_DARK} />
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
 
-      {/* Green header strip */}
-      <View style={[styles.screenHeader, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.screenTitle}>Announcements</Text>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerGlow} />
+        <View>
+          <Text style={styles.headerTitle}>الإشعارات والتبليغات</Text>
+          <Text style={styles.headerSub}>تبليغات الإدارة والفريق</Text>
+        </View>
+        <TouchableOpacity onPress={() => refetch()} style={styles.refreshBtn}>
+          {isRefetching
+            ? <ActivityIndicator size="small" color={NEON} />
+            : <Ionicons name="refresh-outline" size={22} color={MUTED} />}
+        </TouchableOpacity>
       </View>
 
       <FlatList
         data={data?.data ?? []}
         keyExtractor={i => i.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: insets.bottom + 100 },
+        ]}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={GREEN_MID} />
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={NEON}
+          />
         }
         ListEmptyComponent={
           isLoading
-            ? <ActivityIndicator color={GREEN_MID} style={{ marginTop: 40 }} />
+            ? <ActivityIndicator color={NEON} style={{ marginTop: 60 }} />
             : (
-              <View style={styles.empty}>
-                <Feather name="message-square" size={40} color={MUTED} />
-                <Text style={styles.emptyText}>No announcements yet</Text>
+              <View style={styles.emptyWrap}>
+                <Ionicons name="megaphone-outline" size={52} color={MUTED} style={{ marginBottom: 12 }} />
+                <Text style={styles.emptyText}>لا توجد تبليغات بعد</Text>
+                <Text style={styles.emptySub}>ستظهر هنا تبليغات الإدارة</Text>
               </View>
             )
         }
@@ -397,8 +404,18 @@ export default function AnnouncementsScreen() {
 
       {/* FAB — managers only */}
       {canPost && (
-        <TouchableOpacity style={styles.fab} onPress={() => setShowNew(true)}>
-          <Feather name="plus" size={26} color="#fff" />
+        <TouchableOpacity
+          style={[styles.fab, { bottom: insets.bottom + 90 }]}
+          onPress={() => setShowNew(true)}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={[NEON, NEON2]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={styles.fabGradient}
+          >
+            <Ionicons name="add" size={28} color={BG} />
+          </LinearGradient>
         </TouchableOpacity>
       )}
 
@@ -408,103 +425,146 @@ export default function AnnouncementsScreen() {
         onClose={() => setShowThread(false)}
         myRole={myRole}
       />
-      <NewAnnouncementModal
-        visible={showNew}
-        onClose={() => setShowNew(false)}
-      />
-    </SafeAreaView>
+      <NewAnnouncementModal visible={showNew} onClose={() => setShowNew(false)} />
+    </View>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root:  { flex: 1, backgroundColor: CREAM },
+  root:    { flex: 1, backgroundColor: BG },
 
-  // Green header strip
-  screenHeader: { backgroundColor: GREEN_DARK, paddingHorizontal: 20, paddingBottom: 16 },
-  screenTitle:  { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  // Header
+  header: {
+    paddingHorizontal: 20, paddingBottom: 16, overflow: 'hidden',
+    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-end',
+    backgroundColor: BG,
+  },
+  headerGlow: {
+    position: 'absolute', top: -30, right: -20,
+    width: 140, height: 140, borderRadius: 70,
+    backgroundColor: 'rgba(201,150,63,0.07)',
+  },
+  headerTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: WHITE, textAlign: 'right' },
+  headerSub:   { fontSize: 12, color: MUTED, marginTop: 2, textAlign: 'right' },
+  refreshBtn:  { padding: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.07)' },
 
-  // Cards — white with shadow
-  card:  { backgroundColor: WHITE, borderRadius: 16, padding: 16, marginBottom: 12,
-           borderWidth: 1, borderColor: BORDER,
-           shadowColor: '#0A4D2E', shadowOpacity: 0.10, shadowRadius: 16,
-           shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-  cardTop:    { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
-  cardTitle:  { fontSize: 15, fontWeight: '700', color: GREEN_DARK, fontFamily: 'Inter_700Bold', flexShrink: 1 },
-  cardBody:   { fontSize: 13, color: TEXT, fontFamily: 'Inter_400Regular', lineHeight: 20, marginBottom: 10 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardMeta:   { fontSize: 12, color: MUTED, fontFamily: 'Inter_400Regular' },
+  // List
+  listContent: { paddingHorizontal: 14, paddingTop: 12 },
 
-  // Gold badge for new items
-  newBadge:     { backgroundColor: GOLD, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, marginRight: 4 },
-  newBadgeText: { fontSize: 10, color: '#FFFFFF', fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
+  // Cards
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 18, padding: 16, marginBottom: 12,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+  },
+  cardTop:   { flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
+  cardTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: WHITE, flexShrink: 1, textAlign: 'right' },
+  cardBody:  { fontSize: 13, color: MUTED, lineHeight: 20, marginBottom: 10, textAlign: 'right' },
+  cardFooter:{ flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' },
+  cardMeta:  { fontSize: 12, color: MUTED },
 
-  replyCountBadge: { flexDirection: 'row', alignItems: 'center', gap: 4,
-                     backgroundColor: GREEN_MID + '14', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
-  replyCountText:  { fontSize: 12, color: GREEN_MID, fontFamily: 'Inter_600SemiBold' },
+  newBadge:     { backgroundColor: GOLD, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
+  newBadgeText: { fontSize: 10, color: BG, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
 
-  pinnedBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 },
+  replyCountBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(0,230,118,0.1)', borderRadius: 20,
+    paddingHorizontal: 8, paddingVertical: 2,
+  },
+  replyCountText: { fontSize: 12, color: NEON, fontFamily: 'Inter_600SemiBold' },
+
+  pinnedBadge: { flexDirection: 'row-reverse', alignItems: 'center', gap: 3, marginBottom: 4 },
   pinnedText:  { fontSize: 11, color: GOLD, fontFamily: 'Inter_600SemiBold' },
 
-  // Empty
-  empty:      { alignItems: 'center', marginTop: 80, gap: 12 },
-  emptyText:  { fontSize: 15, color: MUTED, fontFamily: 'Inter_400Regular' },
+  // Empty state
+  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
+  emptyText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: MUTED, marginBottom: 4 },
+  emptySub:  { fontSize: 13, color: MUTED },
 
   // FAB
-  fab: { position: 'absolute', bottom: 24, right: 20, width: 56, height: 56,
-         borderRadius: 28, backgroundColor: GREEN_MID, alignItems: 'center', justifyContent: 'center',
-         shadowColor: '#0A4D2E', shadowOpacity: 0.30, shadowRadius: 10, shadowOffset: { width: 0, height: 4 },
-         elevation: 6 },
+  fab:         { position: 'absolute', right: 20 },
+  fabGradient: {
+    width: 56, height: 56, borderRadius: 28,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: NEON, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 10, elevation: 8,
+  },
 
-  // Thread modal header — green strip
-  threadHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                       paddingHorizontal: 16, paddingVertical: 14,
-                       backgroundColor: GREEN_DARK },
-  threadBack:        { width: 40, alignItems: 'center' },
-  threadHeaderTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '700',
-                       color: '#FFFFFF', fontFamily: 'Inter_700Bold' },
-  threadBody:        { backgroundColor: WHITE, borderRadius: 16, padding: 16, marginBottom: 20,
-                       borderWidth: 1, borderColor: BORDER,
-                       shadowColor: '#0A4D2E', shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
-  threadTitle:       { fontSize: 18, fontWeight: '700', color: GREEN_DARK, fontFamily: 'Inter_700Bold', marginBottom: 10 },
-  threadBodyText:    { fontSize: 14, color: TEXT, fontFamily: 'Inter_400Regular', lineHeight: 22 },
-  threadMeta:        { marginTop: 12, fontSize: 12, color: MUTED, fontFamily: 'Inter_400Regular' },
+  // Modal header
+  modalHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 12, paddingVertical: 14,
+    backgroundColor: BG, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.12)',
+    overflow: 'hidden',
+  },
+  modalHeaderTitle: {
+    flex: 1, textAlign: 'center', fontSize: 16, fontFamily: 'Inter_700Bold', color: WHITE,
+  },
+  headerBtn: { width: 40, alignItems: 'center', padding: 4 },
 
-  repliesLabel: { fontSize: 13, fontWeight: '600', color: MUTED,
-                  fontFamily: 'Inter_600SemiBold', marginBottom: 10 },
+  // Thread body
+  threadBody: {
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 16, padding: 16, marginBottom: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+  },
+  threadTitle:    { fontSize: 18, fontFamily: 'Inter_700Bold', color: WHITE, marginBottom: 10, textAlign: 'right' },
+  threadBodyText: { fontSize: 14, color: 'rgba(255,255,255,0.85)', lineHeight: 22, textAlign: 'right' },
+  threadMeta:     { marginTop: 12, fontSize: 12, color: MUTED, textAlign: 'right' },
 
-  replyCard:       { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  replyAvatar:     { width: 36, height: 36, borderRadius: 99, backgroundColor: GOLD + '30',
-                     alignItems: 'center', justifyContent: 'center' },
-  replyAvatarText: { fontSize: 14, fontWeight: '700', color: GREEN_DARK },
-  replyAuthor:     { fontSize: 13, fontWeight: '600', color: TEXT, fontFamily: 'Inter_600SemiBold' },
-  replyText:       { fontSize: 13, color: TEXT, fontFamily: 'Inter_400Regular', lineHeight: 20, marginTop: 2 },
-  replyTime:       { fontSize: 11, color: MUTED, fontFamily: 'Inter_400Regular', marginTop: 4 },
+  repliesLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: MUTED, marginBottom: 10, textAlign: 'right' },
 
-  replyInputRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingTop: 8,
-                   borderTopWidth: 1, borderTopColor: BORDER, backgroundColor: WHITE, alignItems: 'flex-end' },
-  replyInput:    { flex: 1, minHeight: 40, maxHeight: 120, backgroundColor: CREAM,
-                   borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
-                   fontSize: 14, color: TEXT, fontFamily: 'Inter_400Regular',
-                   borderWidth: 1.5, borderColor: BORDER },
-  sendBtn:       { width: 40, height: 40, borderRadius: 20, backgroundColor: GREEN_MID,
-                   alignItems: 'center', justifyContent: 'center' },
+  replyCard:       { flexDirection: 'row-reverse', gap: 10, marginBottom: 14 },
+  replyAvatar:     {
+    width: 36, height: 36, borderRadius: 99,
+    backgroundColor: 'rgba(201,150,63,0.3)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  replyAvatarText: { fontSize: 14, fontFamily: 'Inter_700Bold', color: GOLD },
+  replyAuthor:     { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: WHITE, textAlign: 'right' },
+  replyText:       { fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 20, marginTop: 2, textAlign: 'right' },
+  replyTime:       { fontSize: 11, color: MUTED, marginTop: 4, textAlign: 'right' },
 
-  // New form
-  formLabel: { fontSize: 13, fontWeight: '600', color: GREEN_DARK, fontFamily: 'Inter_600SemiBold',
-               marginBottom: 6, marginTop: 16 },
-  formInput:  { backgroundColor: WHITE, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
-                fontSize: 14, color: TEXT, fontFamily: 'Inter_400Regular',
-                borderWidth: 1.5, borderColor: BORDER, height: 54 },
+  replyInputRow: {
+    flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingTop: 10,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(10,15,13,0.98)', alignItems: 'flex-end',
+  },
+  replyInput: {
+    flex: 1, minHeight: 42, maxHeight: 120,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10,
+    fontSize: 14, color: WHITE,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+  },
+  replySendBtn: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: NEON,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    shadowColor: NEON, shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.45, shadowRadius: 8, elevation: 5,
+  },
+  replySendBtnOff: { backgroundColor: 'rgba(255,255,255,0.10)', shadowOpacity: 0 },
 
-  pinnedToggle:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20 },
-  pinnedToggleText: { fontSize: 14, color: MUTED, fontFamily: 'Inter_400Regular' },
+  // New announcement form
+  formLabel: {
+    fontSize: 13, fontFamily: 'Inter_600SemiBold', color: MUTED,
+    marginBottom: 6, marginTop: 20, textAlign: 'right',
+  },
+  formInput: {
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, color: WHITE,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', height: 54,
+  },
+  pinnedToggle:     { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, marginTop: 20 },
+  pinnedToggleText: { fontSize: 14, color: MUTED },
 
-  emojiNote: { marginTop: 16, fontSize: 12, color: MUTED, fontFamily: 'Inter_400Regular',
-               backgroundColor: GOLD + '18', padding: 10, borderRadius: 8,
-               borderWidth: 1, borderColor: GOLD + '40' },
-
-  postBtn:     { backgroundColor: GREEN_MID, paddingHorizontal: 16, paddingVertical: 7, borderRadius: 10 },
-  postBtnText: { color: '#fff', fontSize: 14, fontWeight: '700', fontFamily: 'Inter_700Bold' },
+  postBtn:     {
+    backgroundColor: NEON, paddingHorizontal: 16, paddingVertical: 7,
+    borderRadius: 10,
+  },
+  postBtnText: { color: BG, fontSize: 14, fontFamily: 'Inter_700Bold' },
 });
