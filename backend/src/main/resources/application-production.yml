@@ -10,9 +10,9 @@ logging:
 
 app:
   cors:
-    # Only allow traffic from the deployed Replit domain.
+    # Allow traffic from the deployed Replit domain and the custom domain.
     # REPLIT_DOMAINS is injected by the platform at runtime.
-    allowed-origins: "https://${REPLIT_DOMAINS:localhost}"
+    allowed-origins: "https://${REPLIT_DOMAINS:localhost},https://asa-force.com"
 
   otp:
     log-to-console: false
