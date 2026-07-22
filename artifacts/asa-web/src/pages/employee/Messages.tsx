@@ -97,7 +97,7 @@ export const Messages: React.FC = () => {
     <div className="h-[calc(100dvh-120px)] flex flex-col space-y-4">
       <PageHeader 
         title="مجموعة التواصل" 
-        description="تواصل مع جميع موظفي المؤسسة في مكان واحد"
+        description="تواصل مع جميع موظفي الوكالة في مكان واحد"
         className="mb-0 shrink-0"
       />
 
