@@ -1,10 +1,10 @@
-# ASA Workforce API — Base Configuration
+# ASA-Force API — Base Configuration
 # Profile-specific files override these values.
 # Never put secrets in this file. Use environment variables.
 
 spring:
   application:
-    name: asa-workforce-api
+    name: asa-force-api
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:development}
   # Limit multipart upload size — prevents memory exhaustion / DoS

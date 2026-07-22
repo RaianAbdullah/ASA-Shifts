@@ -1,6 +1,6 @@
 kind = "mobile"
 previewPath = "/"
-title = "ASA Workforce"
+title = "ASA-Force"
 version = "1.0.0"
 id = "artifacts/asa-mobile"
 router = "expo-domain"

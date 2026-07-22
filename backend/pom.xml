@@ -15,7 +15,7 @@
     <artifactId>asa-workforce</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>ASA Workforce</name>
+    <name>ASA-Force</name>
     <description>Secure Workforce Mobile Application System — ASA</description>
 
     <properties>

@@ -16,11 +16,11 @@ import org.springframework.context.annotation.Configuration;
  */
 @OpenAPIDefinition(
     info = @Info(
-        title = "ASA Workforce API",
+        title = "ASA-Force API",
         description = "Secure Workforce Mobile Application System — Internal Government API. " +
                       "This documentation is for development use only.",
         version = "v1",
-        contact = @Contact(name = "ASA Workforce Team")
+        contact = @Contact(name = "ASA-Force Team")
     ),
     servers = {
         @Server(url = "/api", description = "Default server")

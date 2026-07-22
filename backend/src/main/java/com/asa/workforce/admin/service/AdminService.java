@@ -96,7 +96,7 @@ public class AdminService {
             List<String> tokens = pushTokenRepository.findTokensByEmployeeId(emp.getId());
             pushService.sendToTokens(tokens,
                     "تمت الموافقة على حسابك — Account Approved",
-                    "Your account has been approved. You can now sign in to ASA Workforce.",
+                    "Your account has been approved. You can now sign in to ASA-Force.",
                     Map.of("type", "ACCOUNT_APPROVED"));
         } catch (Exception ex) {
             log.warn("[ADMIN] Push notification failed for approved employee {} — approval is still saved",

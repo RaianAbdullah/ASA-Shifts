@@ -35,7 +35,7 @@ class HealthControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.status", is("UP")))
-            .andExpect(jsonPath("$.service", is("ASA Workforce API")))
+            .andExpect(jsonPath("$.service", is("ASA-Force API")))
             .andExpect(jsonPath("$.timestamp", notNullValue()))
             // Security: ensure no sensitive fields leak
             .andExpect(jsonPath("$.password").doesNotExist())

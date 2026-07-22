@@ -31,7 +31,7 @@ public class HealthController {
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "UP");
-        response.put("service", "ASA Workforce API");
+        response.put("service", "ASA-Force API");
         response.put("timestamp", Instant.now().toString());
         response.put("stage", "1 — Project Foundation");
         return ResponseEntity.ok(response);

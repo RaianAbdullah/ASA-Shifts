@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/asa-web/"
-title = "ASA Workforce Web"
+title = "ASA-Force"
 version = "1.0.0"
 id = "artifacts/asa-web"
 router = "path"

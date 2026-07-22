@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "ASA shifts",
-    "slug": "asashifts",
+    "name": "ASA-Force",
+    "slug": "asa-force",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "asashifts",
+    "scheme": "asaforce",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.asashifts.app"
+      "bundleIdentifier": "com.asaforce.app"
     },
     "android": {
-      "package": "com.asashifts.app"
+      "package": "com.asaforce.app"
     },
     "web": {
       "favicon": "./assets/images/icon.png"

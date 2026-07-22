@@ -29,7 +29,7 @@ import java.util.UUID;
 @Slf4j
 public class JwtService {
 
-    static final String ISSUER = "asa-workforce";
+    static final String ISSUER = "asa-force";
 
     private static final String DEV_DEFAULT =
             "ASA_WORKFORCE_DEV_ONLY_INSECURE_SECRET_SET_JWT_SECRET_IN_PRODUCTION_64_BYTES_MIN!!";
