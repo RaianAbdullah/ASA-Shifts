@@ -1,5 +1,5 @@
 kind = "web"
-previewPath = "/asa-web/"
+previewPath = "/"
 title = "ASA-Force"
 version = "1.0.0"
 id = "artifacts/asa-web"
@@ -7,7 +7,7 @@ router = "path"
 
 [[services]]
 name = "web"
-paths = [ "/asa-web/" ]
+paths = [ "/" ]
 localPort = 22092
 
 [services.development]
@@ -24,4 +24,4 @@ to = "/index.html"
 
 [services.env]
 PORT = "22092"
-BASE_PATH = "/asa-web/"
+BASE_PATH = "/"
