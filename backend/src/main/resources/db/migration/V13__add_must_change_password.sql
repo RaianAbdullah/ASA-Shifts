@@ -3,4 +3,4 @@
 -- set their own password on first login. This flag drives that flow.
 
 ALTER TABLE employees
-    ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+    ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
