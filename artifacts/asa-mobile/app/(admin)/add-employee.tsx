@@ -22,10 +22,12 @@ const MUTED      = light.mutedForeground; // "#6B7A72"
 const BORDER     = light.border;        // "#E4EBE7"
 
 const ROLES = [
-  { value: 'EMPLOYEE',           label: 'موظف — Employee' },
-  { value: 'DEPARTMENT_MANAGER', label: 'مدير قسم — Dept. Manager' },
-  { value: 'MAIN_MANAGER',       label: 'المدير العام — Main Manager' },
-  { value: 'SYSTEM_ADMIN',       label: 'مشرف النظام — System Admin' },
+  { value: 'EMPLOYEE',            label: 'موظف — Employee' },
+  { value: 'RESPONSIBLE_OFFICER', label: 'ضابط مسؤول — Responsible Officer' },
+  { value: 'WEEKEND_MANAGER',     label: 'مدير نهاية الأسبوع — Weekend Manager' },
+  { value: 'DEPARTMENT_MANAGER',  label: 'مدير قسم — Dept. Manager' },
+  { value: 'MAIN_MANAGER',        label: 'المدير العام — Main Manager' },
+  { value: 'SYSTEM_ADMIN',        label: 'مشرف النظام — System Admin' },
 ];
 
 export default function AddEmployeeScreen() {
