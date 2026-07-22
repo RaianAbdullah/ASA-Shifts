@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useRouter } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { 
@@ -20,7 +20,9 @@ import {
   Megaphone,
   LogOut,
   Menu,
-  X
+  X,
+  Shield,
+  UserCircle2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -59,7 +61,18 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
+  const router = useRouter();
   const isAdmin = session ? hasAnyRole(session.roles, ['SYSTEM_ADMIN', 'MAIN_MANAGER', 'DEPARTMENT_MANAGER', 'WEEKEND_MANAGER']) : false;
+  const isInAdminSection = location.startsWith('/admin');
+
+  const handleViewSwitch = () => {
+    setIsMobileMenuOpen(false);
+    if (isInAdminSection) {
+      window.location.href = (router.base || '') + '/';
+    } else {
+      window.location.href = (router.base || '') + '/admin';
+    }
+  };
 
   const NavLinks = ({ items, className }: { items: NavItem[], className?: string }) => (
     <nav className={cn("space-y-1", className)}>
@@ -95,9 +108,21 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           </div>
           <span className="font-semibold text-lg text-white">إدارة الموارد</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
+        <div className="flex items-center gap-1">
+          {isAdmin && (
+            <Button
+              variant="ghost" size="icon"
+              onClick={handleViewSwitch}
+              title={isInAdminSection ? 'عرض بوابة الموظف' : 'عرض لوحة الإدارة'}
+              className={isInAdminSection ? 'text-primary hover:text-primary/80' : 'text-[#C9963F] hover:text-[#C9963F]/80'}
+            >
+              {isInAdminSection ? <UserCircle2 className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
+        </div>
       </div>
 
       {/* Sidebar Overlay (Mobile) */}
@@ -144,7 +169,21 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           </div>
         </ScrollArea>
 
-        <div className="p-4 border-t border-border/50">
+        <div className="p-4 border-t border-border/50 space-y-2">
+          {isAdmin && (
+            <button
+              onClick={handleViewSwitch}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer border ${
+                isInAdminSection
+                  ? 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/15'
+                  : 'bg-[#C9963F]/10 border-[#C9963F]/20 text-[#C9963F] hover:bg-[#C9963F]/15'
+              }`}
+            >
+              {isInAdminSection
+                ? <><UserCircle2 className="h-4 w-4 shrink-0" /> التبديل إلى بوابة الموظف</>
+                : <><Shield className="h-4 w-4 shrink-0" /> التبديل إلى لوحة الإدارة</>}
+            </button>
+          )}
           <div className="bg-card/50 rounded-xl p-3 flex items-center justify-between border border-border">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
