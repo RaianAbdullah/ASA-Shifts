@@ -100,7 +100,7 @@ export default function LoginScreen() {
         </View>
 
         <Text style={styles.heading}>{t('welcomeBack')}</Text>
-        <Text style={styles.subheading}>بوابة الموظفين — وزارة الشؤون الاجتماعية</Text>
+        <Text style={styles.subheading}>بوابة الموظفين</Text>
       </View>
 
       {/* ── Glass form card ── */}
