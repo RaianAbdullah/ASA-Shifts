@@ -14,7 +14,7 @@ export const VerifyOtp: React.FC = () => {
   const nationalId = searchParams.get('nationalId');
   const { toast } = useToast();
   const [otp, setOtp] = useState('');
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
     if (!nationalId) {
