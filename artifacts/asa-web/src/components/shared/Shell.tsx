@@ -106,7 +106,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
             <span className="text-primary font-bold text-sm">ASA</span>
           </div>
-          <span className="font-semibold text-lg text-white">إدارة الموارد</span>
+          <span className="font-semibold text-lg text-white">إدارة العمليات الأمنية</span>
         </div>
         <div className="flex items-center gap-1">
           {isAdmin && (
@@ -143,7 +143,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             <span className="text-primary font-bold">ASA</span>
           </div>
           <div>
-            <h2 className="font-bold tracking-tight text-white">إدارة الموارد</h2>
+            <h2 className="font-bold tracking-tight text-white">إدارة العمليات الأمنية</h2>
             <p className="text-xs text-muted-foreground">بوابة الموظفين</p>
           </div>
         </div>
