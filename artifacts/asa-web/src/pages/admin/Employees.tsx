@@ -211,24 +211,41 @@ export const Employees: React.FC = () => {
             </div>
           ) : (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form
+                onSubmit={form.handleSubmit((d) => {
+                  const payload = {
+                    ...d,
+                    middleNameAr: d.middleNameAr?.trim() || undefined,
+                    departmentId: d.departmentId === 'none' || !d.departmentId ? undefined : d.departmentId,
+                  };
+                  createMutation.mutate(payload);
+                })}
+                className="space-y-4 pt-4"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="firstNameAr" render={({ field }) => (
-                    <FormItem><FormLabel>الاسم الأول</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl></FormItem>
+                    <FormItem><FormLabel>الاسم الأول</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="lastNameAr" render={({ field }) => (
-                    <FormItem><FormLabel>الاسم الأخير</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl></FormItem>
+                    <FormItem><FormLabel>الاسم الأخير</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="middleNameAr" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الاسم الأوسط <span className="text-muted-foreground text-xs">(اختياري)</span></FormLabel>
+                    <FormControl><Input className="bg-black/20" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="nationalId" render={({ field }) => (
-                    <FormItem><FormLabel>رقم الهوية</FormLabel><FormControl><Input className="bg-black/20 text-left" dir="ltr" {...field} /></FormControl></FormItem>
+                    <FormItem><FormLabel>رقم الهوية</FormLabel><FormControl><Input className="bg-black/20 text-left" dir="ltr" placeholder="1234567890" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="phoneNumber" render={({ field }) => (
-                    <FormItem><FormLabel>رقم الجوال</FormLabel><FormControl><Input className="bg-black/20 text-left" dir="ltr" {...field} /></FormControl></FormItem>
+                    <FormItem><FormLabel>رقم الجوال</FormLabel><FormControl><Input className="bg-black/20 text-left" dir="ltr" placeholder="05XXXXXXXX" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="role" render={({ field }) => (
                     <FormItem>
                       <FormLabel>الصلاحية</FormLabel>
@@ -245,7 +262,7 @@ export const Employees: React.FC = () => {
                   <FormField control={form.control} name="departmentId" render={({ field }) => (
                     <FormItem>
                       <FormLabel>القسم (اختياري)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value || "none"}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || 'none'}>
                         <FormControl><SelectTrigger dir="rtl" className="bg-black/20"><SelectValue placeholder="بدون قسم" /></SelectTrigger></FormControl>
                         <SelectContent dir="rtl">
                           <SelectItem value="none">بدون قسم</SelectItem>
