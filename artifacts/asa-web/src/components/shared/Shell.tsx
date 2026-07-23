@@ -102,13 +102,13 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     <div className="min-h-[100dvh] flex flex-col md:flex-row bg-background text-foreground selection:bg-primary/30">
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center border border-primary/30 shrink-0">
             <span className="text-primary font-bold text-sm">ASA</span>
           </div>
-          <span className="font-semibold text-lg text-white">إدارة العمليات الأمنية</span>
+          <span className="font-semibold text-base text-white truncate">إدارة العمليات الأمنية</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0 mr-2">
           {isAdmin && (
             <Button
               variant="ghost" size="icon"
